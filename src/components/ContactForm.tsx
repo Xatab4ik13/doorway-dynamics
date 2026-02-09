@@ -51,7 +51,7 @@ const ContactForm = () => {
             <select
               value={form.city}
               onChange={(e) => setForm({ ...form, city: e.target.value })}
-              className={`${inputClass} bg-background`}
+              className={`${inputClass} bg-background [&>option]:bg-background [&>option]:text-foreground`}
             >
               <option value="moscow">Москва</option>
               <option value="spb">Санкт-Петербург</option>
