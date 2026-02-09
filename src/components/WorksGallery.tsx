@@ -5,14 +5,11 @@ import work2 from "@/assets/work-2.jpg";
 import work3 from "@/assets/work-3.jpg";
 import work4 from "@/assets/work-4.jpg";
 import work5 from "@/assets/work-5.jpg";
+import work6 from "@/assets/work-6.jpg";
+import work7 from "@/assets/work-7.jpg";
+import work8 from "@/assets/work-8.jpg";
 
-const boxes = [
-  { src: work1, text: "Классика" },
-  { src: work2, text: "Модерн" },
-  { src: work3, text: "Экошпон" },
-  { src: work4, text: "Фрезеровка" },
-  { src: work5, text: "Дизайн" },
-];
+const images = [work1, work2, work3, work4, work5, work6, work7, work8];
 
 const WorksGallery = () => {
   return (
@@ -31,12 +28,11 @@ const WorksGallery = () => {
 
       <div className="flex justify-center px-4 md:px-10">
         <div className="works-container">
-          {boxes.map((box, i) => (
+          {images.map((src, i) => (
             <div
               key={i}
               className={`works-box works-box-${i + 1}`}
-              style={{ "--img": `url(${box.src})` } as React.CSSProperties}
-              data-text={box.text}
+              style={{ "--img": `url(${src})` } as React.CSSProperties}
             />
           ))}
         </div>
