@@ -14,30 +14,27 @@ const LoginPage = () => {
   };
 
   const inputClass =
-    "w-full bg-secondary border border-border rounded-sm px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary transition-colors";
+    "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4">
+    <main className="min-h-screen flex items-center justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
+        transition={{ duration: 0.8 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-10">
+        <div className="text-center mb-16">
           <Link to="/">
-            <img src={logo} alt="PrimeDoor Service" className="h-10 w-auto mx-auto mb-6" />
+            <img src={logo} alt="PrimeDoor Service" className="h-10 w-auto mx-auto mb-8 invert" />
           </Link>
-          <h1 className="text-2xl font-heading font-bold">Вход в личный кабинет</h1>
-          <p className="text-sm text-muted-foreground mt-2">
+          <h1 className="heading-md">Вход в кабинет</h1>
+          <p className="text-xs text-muted-foreground mt-3 tracking-wide">
             Для партнёров, замерщиков и бригад
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-gradient-card border border-border/50 rounded-sm p-8 space-y-4"
-        >
+        <form onSubmit={handleSubmit} className="space-y-0">
           <input
             type="email"
             placeholder="Email"
@@ -54,17 +51,16 @@ const LoginPage = () => {
             onChange={(e) => setPassword(e.target.value)}
             className={inputClass}
           />
-          <button
-            type="submit"
-            className="w-full py-3 bg-primary text-primary-foreground text-sm font-semibold tracking-widest uppercase rounded-sm hover:bg-gold-light transition-all duration-300"
-          >
-            Войти
-          </button>
+          <div className="pt-10">
+            <button type="submit" className="btn-primary w-full">
+              Войти
+            </button>
+          </div>
         </form>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-10">
           <Link to="/" className="hover:text-foreground transition-colors">
-            ← Вернуться на главную
+            ← На главную
           </Link>
         </p>
       </motion.div>
