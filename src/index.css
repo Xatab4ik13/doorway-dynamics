@@ -238,36 +238,6 @@
 
 html { scroll-behavior: smooth; }
 
-/* Expandable cards gallery */
-.cards-row {
-  display: flex;
-  flex-wrap: nowrap;
-  height: 400px;
-  overflow: hidden;
-  border-radius: 1rem;
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-
-.card-item {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 100%;
-  cursor: pointer;
-  transition: flex 0.5s ease, filter 0.5s ease;
-  overflow: hidden;
-  background-size: 500px 100%;
-  background-position: center;
-  background-repeat: no-repeat;
-  filter: grayscale(100%);
-}
-
-.card-item:hover {
-  flex: 3;
-  filter: grayscale(0%);
-}
-
-@media (max-width: 768px) {
-  .cards-row {
-    height: 280px;
-  }
-}
+/* Hide scrollbar for thumbnail strip */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
