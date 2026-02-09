@@ -44,27 +44,17 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-background/40" />
       </div>
 
-      {/* Subtitle top-center */}
+      {/* Centered subtitle */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 0.5 }}
-        className="absolute top-28 left-0 right-0 text-center"
+        className="absolute inset-0 flex items-center justify-center"
       >
-        <span className="section-label">установка & сервис</span>
+        <span className="text-lg md:text-2xl lg:text-3xl font-medium uppercase tracking-[0.3em] text-muted-foreground">
+          установка & сервис
+        </span>
       </motion.div>
-
-      {/* Main heading */}
-      <div className="relative w-full px-6 md:px-10 pb-16 md:pb-24">
-        <motion.h1
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="heading-xl max-w-4xl"
-        >
-          Повышаем качество жизни, исключая посредственность
-        </motion.h1>
-      </div>
     </section>
   );
 };
