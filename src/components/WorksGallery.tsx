@@ -18,15 +18,15 @@ const WorksGallery = () => {
   return (
     <section className="bg-background py-20 md:py-32">
       <div className="px-6 md:px-10 mb-12 md:mb-16 text-center">
-        <motion.h2
+        <motion.span
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="heading-lg"
+          className="text-lg md:text-2xl lg:text-3xl font-medium uppercase tracking-[0.3em] text-foreground"
         >
-          Наши работы
-        </motion.h2>
+          наши работы
+        </motion.span>
       </div>
 
       <div className="flex flex-col gap-4 px-4 md:px-10 max-w-[1170px] mx-auto">
