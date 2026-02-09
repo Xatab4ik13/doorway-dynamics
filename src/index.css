@@ -246,7 +246,7 @@ html { scroll-behavior: smooth; }
   gap: 0.75em;
   width: 1100px;
   height: 500px;
-  transition: all 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 400ms;
 }
 
 .works-container:hover .works-box {
@@ -258,7 +258,7 @@ html { scroll-behavior: smooth; }
   background: var(--img) center center;
   background-size: cover;
   border-radius: 1rem;
-  transition: all 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 400ms;
   display: flex;
   justify-content: center;
   align-items: center;
