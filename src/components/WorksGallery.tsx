@@ -203,25 +203,29 @@ const WorksGallery = () => {
           onClick={handleClick}
           className="relative w-full overflow-hidden rounded-2xl cursor-pointer select-none"
           style={{
-            maxHeight: "560px",
             boxShadow:
               "0 26px 70px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08)",
           }}
         >
-          {/* Next image underneath */}
-          <img
-            src={imageSrcs[(current + 1) % imageSrcs.length]}
-            alt="Следующая работа"
-            className="absolute inset-0 w-full h-full object-contain bg-background"
-          />
-
-          {/* Current image (visible when not animating) */}
+          {/* Current image - relative to set container height */}
           {!isAnimating && (
             <img
               src={imageSrcs[current]}
               alt={`Работа ${current + 1}`}
-              className="absolute inset-0 w-full h-full object-contain bg-background z-[1]"
+              className="w-full max-h-[600px] object-contain mx-auto block z-[1] relative"
             />
+          )}
+
+          {/* Next image underneath (absolute, shown during animation) */}
+          <img
+            src={imageSrcs[(current + 1) % imageSrcs.length]}
+            alt="Следующая работа"
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+
+          {/* Spacer when animating (keep height) */}
+          {isAnimating && (
+            <div style={{ height: containerRef.current?.getBoundingClientRect().height || 600 }} />
           )}
 
           {/* Canvas for shatter animation */}
