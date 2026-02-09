@@ -241,13 +241,12 @@ html { scroll-behavior: smooth; }
 /* Accordion image gallery */
 .accordion-row {
   display: flex;
-  height: 420px;
+  height: 280px;
   border-radius: 20px;
   overflow: hidden;
-  gap: 4px;
 }
 @media (min-width: 768px) {
-  .accordion-row { height: 500px; }
+  .accordion-row { height: 320px; }
 }
 
 .accordion-panel {
@@ -262,7 +261,7 @@ html { scroll-behavior: smooth; }
   height: 100%;
   object-fit: cover;
   filter: grayscale(100%) brightness(0.7);
-  transition: filter 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: filter 0.6s ease;
 }
 
 .accordion-row:hover .accordion-panel {
@@ -273,5 +272,4 @@ html { scroll-behavior: smooth; }
 }
 .accordion-row .accordion-panel:hover img {
   filter: grayscale(0%) brightness(1) contrast(1.1) saturate(1.2);
-  transform: scale(1.05);
 }
