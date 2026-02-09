@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { motion } from "framer-motion";
+import { triangulate, generatePoints, type Triangle } from "@/lib/delaunay";
 
 import work1 from "@/assets/work-1.jpg";
 import work2 from "@/assets/work-2.jpg";
@@ -12,62 +13,185 @@ import work8 from "@/assets/work-8.jpg";
 import work9 from "@/assets/work-9.jpg";
 import work10 from "@/assets/work-10.jpg";
 
-const images = [work1, work2, work3, work4, work5, work6, work7, work8, work9, work10];
+const imageSrcs = [work1, work2, work3, work4, work5, work6, work7, work8, work9, work10];
 
-// Generate random polygon clip paths for Delaunay-like effect
-const generateTriangles = () => {
-  const triangles: string[] = [];
-  const cols = 4;
-  const rows = 3;
-  
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const x1 = (c / cols) * 100;
-      const y1 = (r / rows) * 100;
-      const x2 = ((c + 1) / cols) * 100;
-      const y2 = ((r + 1) / rows) * 100;
-      
-      // Add some randomness to internal points
-      const mx = x1 + (x2 - x1) * (0.3 + Math.random() * 0.4);
-      const my = y1 + (y2 - y1) * (0.3 + Math.random() * 0.4);
-      
-      // Two triangles per cell
-      triangles.push(`polygon(${x1}% ${y1}%, ${x2}% ${y1}%, ${mx}% ${my}%)`);
-      triangles.push(`polygon(${x2}% ${y1}%, ${x2}% ${y2}%, ${mx}% ${my}%)`);
-      triangles.push(`polygon(${x2}% ${y2}%, ${x1}% ${y2}%, ${mx}% ${my}%)`);
-      triangles.push(`polygon(${x1}% ${y2}%, ${x1}% ${y1}%, ${mx}% ${my}%)`);
-    }
-  }
-  return triangles;
-};
+interface AnimatedTriangle extends Triangle {
+  cx: number;
+  cy: number;
+  vx: number;
+  vy: number;
+  rotation: number;
+  rotationSpeed: number;
+  delay: number;
+}
 
 const WorksGallery = () => {
   const [current, setCurrent] = useState(0);
-  const [triangles] = useState(() => generateTriangles());
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const loadedImages = useRef<HTMLImageElement[]>([]);
+  const animFrameRef = useRef<number>(0);
 
-  const goTo = useCallback((index: number) => {
-    if (isTransitioning || index === current) return;
-    setIsTransitioning(true);
-    setCurrent(index);
-    setTimeout(() => setIsTransitioning(false), 1200);
-  }, [current, isTransitioning]);
-
-  const next = useCallback(() => {
-    goTo((current + 1) % images.length);
-  }, [current, goTo]);
-
-  const prev = useCallback(() => {
-    goTo((current - 1 + images.length) % images.length);
-  }, [current, goTo]);
-
-  // Auto-advance
+  // Preload all images
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (!isTransitioning) next();
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [next, isTransitioning]);
+    imageSrcs.forEach((src, i) => {
+      const img = new Image();
+      img.src = src;
+      loadedImages.current[i] = img;
+    });
+  }, []);
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (isAnimating) return;
+      const container = containerRef.current;
+      const canvas = canvasRef.current;
+      if (!container || !canvas) return;
+
+      const rect = container.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      const w = rect.width;
+      const h = rect.height;
+
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const currentImg = loadedImages.current[current];
+      if (!currentImg || !currentImg.complete) return;
+
+      setIsAnimating(true);
+
+      // Generate Delaunay triangles
+      const points = generatePoints(w, h, clickX, clickY, 100);
+      const tris = triangulate(points, w, h);
+
+      // Create animated triangles with velocity away from click point
+      const animTris: AnimatedTriangle[] = tris.map((tri) => {
+        const cx = (tri.p1.x + tri.p2.x + tri.p3.x) / 3;
+        const cy = (tri.p1.y + tri.p2.y + tri.p3.y) / 3;
+        const dx = cx - clickX;
+        const dy = cy - clickY;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        const speed = 3 + Math.random() * 8;
+        return {
+          ...tri,
+          cx,
+          cy,
+          vx: (dx / dist) * speed,
+          vy: (dy / dist) * speed + (Math.random() - 0.5) * 2,
+          rotation: 0,
+          rotationSpeed: (Math.random() - 0.5) * 0.15,
+          delay: (dist / Math.max(w, h)) * 300,
+        };
+      });
+
+      const nextIndex = (current + 1) % imageSrcs.length;
+      const nextImg = loadedImages.current[nextIndex];
+
+      // Draw the current image on canvas to "shatter"
+      // The next image will show behind via CSS
+      let startTime: number | null = null;
+      const duration = 1500;
+
+      const drawImageToCanvas = (
+        ctx: CanvasRenderingContext2D,
+        img: HTMLImageElement,
+        cw: number,
+        ch: number
+      ) => {
+        // object-fit: cover calculation
+        const imgRatio = img.naturalWidth / img.naturalHeight;
+        const canvasRatio = cw / ch;
+        let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
+        if (imgRatio > canvasRatio) {
+          sw = img.naturalHeight * canvasRatio;
+          sx = (img.naturalWidth - sw) / 2;
+        } else {
+          sh = img.naturalWidth / canvasRatio;
+          sy = (img.naturalHeight - sh) / 2;
+        }
+        return { sx, sy, sw, sh };
+      };
+
+      const { sx, sy, sw, sh } = drawImageToCanvas(ctx, currentImg, w, h);
+
+      const animate = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+
+        ctx.clearRect(0, 0, w, h);
+
+        let allDone = true;
+
+        for (const tri of animTris) {
+          const triElapsed = Math.max(0, elapsed - tri.delay);
+          if (triElapsed <= 0) {
+            // Draw stationary triangle
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(tri.p1.x, tri.p1.y);
+            ctx.lineTo(tri.p2.x, tri.p2.y);
+            ctx.lineTo(tri.p3.x, tri.p3.y);
+            ctx.closePath();
+            ctx.clip();
+            ctx.drawImage(currentImg, sx, sy, sw, sh, 0, 0, w, h);
+            ctx.restore();
+            allDone = false;
+            continue;
+          }
+
+          const progress = Math.min(triElapsed / (duration * 0.7), 1);
+          const eased = 1 - Math.pow(1 - progress, 3); // ease out cubic
+
+          if (progress < 1) allDone = false;
+
+          const offsetX = tri.vx * eased * 80;
+          const offsetY = tri.vy * eased * 80 + eased * eased * 150; // gravity
+          const rot = tri.rotationSpeed * eased * 20;
+          const alpha = 1 - eased;
+
+          if (alpha <= 0.01) continue;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.translate(tri.cx + offsetX, tri.cy + offsetY);
+          ctx.rotate(rot);
+          ctx.translate(-(tri.cx), -(tri.cy));
+
+          ctx.beginPath();
+          ctx.moveTo(tri.p1.x, tri.p1.y);
+          ctx.lineTo(tri.p2.x, tri.p2.y);
+          ctx.lineTo(tri.p3.x, tri.p3.y);
+          ctx.closePath();
+          ctx.clip();
+
+          ctx.drawImage(currentImg, sx, sy, sw, sh, 0, 0, w, h);
+          ctx.restore();
+        }
+
+        if (!allDone && elapsed < duration + 500) {
+          animFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          ctx.clearRect(0, 0, w, h);
+          setCurrent(nextIndex);
+          setIsAnimating(false);
+        }
+      };
+
+      animFrameRef.current = requestAnimationFrame(animate);
+    },
+    [current, isAnimating]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, []);
 
   return (
     <section className="bg-background py-20 md:py-32">
@@ -84,101 +208,48 @@ const WorksGallery = () => {
       </div>
 
       <div className="px-4 md:px-10 max-w-[1170px] mx-auto">
-        {/* Main viewer */}
-        <div 
-          className="relative w-full aspect-[16/9] overflow-hidden rounded-2xl cursor-pointer select-none"
-          style={{ boxShadow: "0 26px 70px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08)" }}
+        <div
+          ref={containerRef}
+          onClick={handleClick}
+          className="relative w-full aspect-[3/4] md:aspect-[4/3] overflow-hidden rounded-2xl cursor-pointer select-none"
+          style={{
+            boxShadow:
+              "0 26px 70px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08)",
+          }}
         >
-          {/* Base image (previous) */}
-          {images.map((src, i) => (
+          {/* Next image underneath */}
+          <img
+            src={imageSrcs[(current + 1) % imageSrcs.length]}
+            alt="Следующая работа"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+
+          {/* Current image (visible when not animating) */}
+          {!isAnimating && (
             <img
-              key={i}
-              src={src}
-              alt={`Работа ${i + 1}`}
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{
-                zIndex: i === current ? 1 : 0,
-                opacity: i === current ? 1 : 0,
-                transition: "opacity 0.1s",
-              }}
-              loading="lazy"
+              src={imageSrcs[current]}
+              alt={`Работа ${current + 1}`}
+              className="absolute inset-0 w-full h-full object-cover z-[1]"
             />
-          ))}
+          )}
 
-          {/* Delaunay triangle transition overlay */}
-          <AnimatePresence>
-            {isTransitioning && (
-              <div className="absolute inset-0 z-10">
-                {triangles.map((clipPath, i) => (
-                  <motion.div
-                    key={`tri-${current}-${i}`}
-                    className="absolute inset-0"
-                    style={{ clipPath }}
-                    initial={{ opacity: 1, scale: 1 }}
-                    animate={{ opacity: 0, scale: 1.1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{
-                      duration: 0.6 + Math.random() * 0.6,
-                      delay: Math.random() * 0.4,
-                      ease: [0.16, 1, 0.3, 1],
-                    }}
-                  >
-                    <img
-                      src={images[(current - 1 + images.length) % images.length]}
-                      alt=""
-                      className="w-full h-full object-cover"
-                      style={{ position: "absolute", inset: 0 }}
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </AnimatePresence>
+          {/* Canvas for shatter animation */}
+          <canvas
+            ref={canvasRef}
+            className="absolute inset-0 w-full h-full z-[2]"
+            style={{ pointerEvents: "none" }}
+          />
 
-          {/* Navigation arrows */}
-          <button
-            onClick={(e) => { e.stopPropagation(); prev(); }}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-background/30 backdrop-blur-sm border border-border/30 rounded-full text-foreground/70 hover:text-foreground hover:bg-background/50 transition-all duration-300"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); next(); }}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-12 h-12 flex items-center justify-center bg-background/30 backdrop-blur-sm border border-border/30 rounded-full text-foreground/70 hover:text-foreground hover:bg-background/50 transition-all duration-300"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
+          {/* Click hint */}
+          <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-10 text-xs uppercase tracking-[0.2em] text-foreground/40 font-medium pointer-events-none">
+            нажмите для перехода
+          </div>
 
           {/* Counter */}
-          <div className="absolute bottom-4 md:bottom-8 right-4 md:right-8 z-20 text-xs uppercase tracking-[0.2em] text-foreground/50 font-medium">
-            {String(current + 1).padStart(2, "0")} / {String(images.length).padStart(2, "0")}
+          <div className="absolute bottom-4 md:bottom-8 right-4 md:right-8 z-10 text-xs uppercase tracking-[0.2em] text-foreground/50 font-medium pointer-events-none">
+            {String(current + 1).padStart(2, "0")} /{" "}
+            {String(imageSrcs.length).padStart(2, "0")}
           </div>
-        </div>
-
-        {/* Thumbnail strip */}
-        <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
-          {images.map((src, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              className={`relative flex-shrink-0 w-20 h-14 md:w-24 md:h-16 rounded-lg overflow-hidden transition-all duration-500 ${
-                i === current
-                  ? "ring-1 ring-foreground/50 opacity-100"
-                  : "opacity-30 hover:opacity-60 grayscale hover:grayscale-0"
-              }`}
-            >
-              <img
-                src={src}
-                alt={`Миниатюра ${i + 1}`}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-            </button>
-          ))}
         </div>
       </div>
     </section>
