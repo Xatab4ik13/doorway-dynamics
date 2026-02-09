@@ -3,7 +3,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import heroVideo1 from "@/assets/hero-video.mp4";
 import heroVideo2 from "@/assets/hero-video-2.mp4";
 import heroVideo3 from "@/assets/hero-video-3.mp4";
-import heroImage from "@/assets/hero-video-poster.jpg";
 
 const videos = [heroVideo1, heroVideo2, heroVideo3];
 
@@ -32,7 +31,6 @@ const HeroSection = () => {
             key={currentIndex}
             ref={videoRef}
             src={videos[currentIndex]}
-            poster={heroImage}
             autoPlay
             muted
             playsInline
