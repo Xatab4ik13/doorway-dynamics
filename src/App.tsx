@@ -8,6 +8,10 @@ import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import ServicesPage from "./pages/ServicesPage";
 import InteriorDoorsPage from "./pages/InteriorDoorsPage";
+import EntranceDoorsPage from "./pages/EntranceDoorsPage";
+import LocksPage from "./pages/LocksPage";
+import AdjustmentPage from "./pages/AdjustmentPage";
+import DemolitionPage from "./pages/DemolitionPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import ContactsPage from "./pages/ContactsPage";
@@ -36,7 +40,10 @@ const AppRoutes = () => (
       <Route path="/" element={<Index />} />
       <Route path="/services" element={<ServicesPage />} />
       <Route path="/services/interior" element={<InteriorDoorsPage />} />
-      <Route path="/services/:type" element={<ServicesPage />} />
+      <Route path="/services/entrance" element={<EntranceDoorsPage />} />
+      <Route path="/services/locks" element={<LocksPage />} />
+      <Route path="/services/adjustment" element={<AdjustmentPage />} />
+      <Route path="/services/demolition" element={<DemolitionPage />} />
       <Route path="/portfolio" element={<PortfolioPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
       <Route path="/contacts" element={<ContactsPage />} />
