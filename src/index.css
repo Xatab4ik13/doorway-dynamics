@@ -262,21 +262,10 @@ html { scroll-behavior: smooth; }
   min-width: 0;
   overflow: hidden;
   cursor: pointer;
-  transition: flex 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-}
-.accordion-panel img {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  height: 100%;
-  width: auto;
-  min-width: 100%;
-  max-width: none;
-  object-fit: cover;
+  transition: flex 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+  background-size: cover;
+  background-position: center;
   filter: grayscale(100%) brightness(0.7);
-  transition: filter 0.6s ease;
 }
 
 .accordion-row:hover .accordion-panel {
@@ -284,7 +273,5 @@ html { scroll-behavior: smooth; }
 }
 .accordion-row .accordion-panel:hover {
   flex: 5;
-}
-.accordion-row .accordion-panel:hover img {
   filter: grayscale(0%) brightness(1) contrast(1.1) saturate(1.2);
 }

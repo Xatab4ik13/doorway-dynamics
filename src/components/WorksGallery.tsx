@@ -16,7 +16,6 @@ const images = [work1, work2, work3, work4, work5, work6, work7, work8, work9, w
 const WorksGallery = () => {
   return (
     <section className="bg-background py-20 md:py-32">
-      {/* Section title */}
       <div className="px-6 md:px-10 mb-12 md:mb-16 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
@@ -29,20 +28,23 @@ const WorksGallery = () => {
         </motion.h2>
       </div>
 
-      {/* Accordion gallery — two rows of 5 */}
       <div className="accordion-gallery px-4 md:px-10">
         <div className="accordion-row">
           {images.slice(0, 5).map((src, i) => (
-            <div key={i} className="accordion-panel">
-              <img src={src} alt="" loading="lazy" />
-            </div>
+            <div
+              key={i}
+              className="accordion-panel"
+              style={{ backgroundImage: `url(${src})` }}
+            />
           ))}
         </div>
         <div className="accordion-row">
           {images.slice(5, 10).map((src, i) => (
-            <div key={i + 5} className="accordion-panel">
-              <img src={src} alt="" loading="lazy" />
-            </div>
+            <div
+              key={i + 5}
+              className="accordion-panel"
+              style={{ backgroundImage: `url(${src})` }}
+            />
           ))}
         </div>
       </div>
