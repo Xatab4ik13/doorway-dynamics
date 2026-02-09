@@ -51,7 +51,10 @@ const HeroSection = () => {
         transition={{ duration: 1, delay: 0.5 }}
         className="absolute inset-0 flex items-center justify-center"
       >
-        <span className="text-lg md:text-2xl lg:text-3xl font-medium uppercase tracking-[0.3em] text-muted-foreground">
+        <span
+          className="text-2xl md:text-4xl lg:text-5xl font-bold uppercase tracking-[0.25em] text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)]"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
           установка & сервис
         </span>
       </motion.div>
