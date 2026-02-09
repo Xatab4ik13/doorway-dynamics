@@ -25,8 +25,8 @@ const Header = () => {
           <Link to="/" className="relative z-[110]">
             <img
               src={logo}
-              alt="PrimeDoor Service"
-              className="h-24 md:h-40 w-auto invert"
+              alt=""
+              className="h-24 md:h-40 w-auto invert select-none pointer-events-none"
             />
           </Link>
 
