@@ -238,6 +238,90 @@
 
 html { scroll-behavior: smooth; }
 
-/* Hide scrollbar for thumbnail strip */
-.scrollbar-hide::-webkit-scrollbar { display: none; }
-.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+/* Works gallery — accordion hover */
+.works-container {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  gap: 1em;
+  width: 800px;
+  height: 500px;
+  transition: all 400ms;
+}
+
+.works-container:hover .works-box {
+  filter: grayscale(100%) opacity(24%);
+}
+
+.works-box {
+  position: relative;
+  background: var(--img) center center;
+  background-size: cover;
+  transition: all 400ms;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.works-container .works-box:hover {
+  filter: grayscale(0%) opacity(100%);
+}
+
+.works-container:has(.works-box-1:hover) {
+  grid-template-columns: 3fr 1fr 1fr 1fr 1fr;
+}
+.works-container:has(.works-box-2:hover) {
+  grid-template-columns: 1fr 3fr 1fr 1fr 1fr;
+}
+.works-container:has(.works-box-3:hover) {
+  grid-template-columns: 1fr 1fr 3fr 1fr 1fr;
+}
+.works-container:has(.works-box-4:hover) {
+  grid-template-columns: 1fr 1fr 1fr 3fr 1fr;
+}
+.works-container:has(.works-box-5:hover) {
+  grid-template-columns: 1fr 1fr 1fr 1fr 3fr;
+}
+
+.works-box:nth-child(odd) {
+  transform: translateY(-16px);
+}
+.works-box:nth-child(even) {
+  transform: translateY(16px);
+}
+
+.works-box::after {
+  content: attr(data-text);
+  position: absolute;
+  bottom: 20px;
+  background: hsl(0 0% 0%);
+  color: hsl(0 0% 100%);
+  padding: 10px 10px 10px 14px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-family: 'Space Grotesk', sans-serif;
+  transform: translateY(60px);
+  opacity: 0;
+  transition: all 400ms;
+}
+
+.works-box:hover::after {
+  transform: translateY(0);
+  opacity: 1;
+  transition-delay: 400ms;
+}
+
+@media (max-width: 768px) {
+  .works-container {
+    width: 100%;
+    height: 350px;
+    gap: 0.5em;
+  }
+  .works-box:nth-child(odd) {
+    transform: translateY(-8px);
+  }
+  .works-box:nth-child(even) {
+    transform: translateY(8px);
+  }
+}
