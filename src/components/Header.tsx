@@ -26,7 +26,7 @@ const Header = () => {
             <img
               src={logo}
               alt="PrimeDoor Service"
-              className="h-16 md:h-24 w-auto invert"
+              className="h-20 md:h-32 w-auto invert"
             />
           </Link>
 
