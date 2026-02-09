@@ -29,25 +29,22 @@ const WorksGallery = () => {
         </motion.h2>
       </div>
 
-      {/* Gallery grid — 5 per row, grayscale → color on hover */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-1 px-1">
-        {images.map((src, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.6, delay: i * 0.05 }}
-            className="relative aspect-[3/4] overflow-hidden cursor-pointer group"
-          >
-            <img
-              src={src}
-              alt=""
-              loading="lazy"
-              className="w-full h-full object-cover transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] grayscale group-hover:grayscale-0 group-hover:contrast-[1.15] group-hover:saturate-[1.3] group-hover:scale-105"
-            />
-          </motion.div>
-        ))}
+      {/* Accordion gallery — two rows of 5 */}
+      <div className="px-4 md:px-10 flex flex-col gap-3">
+        <div className="accordion-row">
+          {images.slice(0, 5).map((src, i) => (
+            <div key={i} className="accordion-panel">
+              <img src={src} alt="" loading="lazy" />
+            </div>
+          ))}
+        </div>
+        <div className="accordion-row">
+          {images.slice(5, 10).map((src, i) => (
+            <div key={i + 5} className="accordion-panel">
+              <img src={src} alt="" loading="lazy" />
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
