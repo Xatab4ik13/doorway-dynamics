@@ -11,7 +11,8 @@ import work8 from "@/assets/work-8.jpg";
 import work9 from "@/assets/work-9.jpg";
 import work10 from "@/assets/work-10.jpg";
 
-const images = [work1, work2, work3, work4, work5, work6, work7, work8, work9, work10];
+const row1 = [work1, work2, work3, work4, work5];
+const row2 = [work6, work7, work8, work9, work10];
 
 const WorksGallery = () => {
   return (
@@ -28,23 +29,19 @@ const WorksGallery = () => {
         </motion.h2>
       </div>
 
-      <div className="accordion-gallery px-4 md:px-10">
-        <div className="accordion-row">
-          {images.slice(0, 5).map((src, i) => (
-            <div
-              key={i}
-              className="accordion-panel"
-              style={{ backgroundImage: `url(${src})` }}
-            />
+      <div className="flex flex-col gap-4 px-4 md:px-10 max-w-[1170px] mx-auto">
+        <div className="cards-row">
+          {row1.map((src, i) => (
+            <div key={i} className="card-item">
+              <img src={src} alt="" loading="lazy" />
+            </div>
           ))}
         </div>
-        <div className="accordion-row">
-          {images.slice(5, 10).map((src, i) => (
-            <div
-              key={i + 5}
-              className="accordion-panel"
-              style={{ backgroundImage: `url(${src})` }}
-            />
+        <div className="cards-row">
+          {row2.map((src, i) => (
+            <div key={i} className="card-item">
+              <img src={src} alt="" loading="lazy" />
+            </div>
           ))}
         </div>
       </div>
