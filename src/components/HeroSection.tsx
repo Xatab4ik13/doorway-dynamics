@@ -1,14 +1,19 @@
 import { motion } from "framer-motion";
+import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-video-poster.jpg";
 
 const HeroSection = () => {
   return (
     <section className="relative h-screen min-h-[600px] flex items-end overflow-hidden">
-      {/* Background image (simulating video) */}
+      {/* Background video */}
       <div className="absolute inset-0">
-        <img
-          src={heroImage}
-          alt=""
+        <video
+          src={heroVideo}
+          poster={heroImage}
+          autoPlay
+          muted
+          loop
+          playsInline
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-background/40" />
