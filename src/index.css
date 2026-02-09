@@ -239,14 +239,22 @@
 html { scroll-behavior: smooth; }
 
 /* Accordion image gallery */
+.accordion-gallery {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .accordion-row {
   display: flex;
-  height: 350px;
+  height: 400px;
   border-radius: 20px;
   overflow: hidden;
 }
 @media (min-width: 768px) {
-  .accordion-row { height: 450px; }
+  .accordion-row { height: 480px; }
 }
 
 .accordion-panel {
@@ -254,7 +262,7 @@ html { scroll-behavior: smooth; }
   min-width: 0;
   overflow: hidden;
   cursor: pointer;
-  transition: flex 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: flex 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 .accordion-panel img {
@@ -272,10 +280,10 @@ html { scroll-behavior: smooth; }
 }
 
 .accordion-row:hover .accordion-panel {
-  flex: 0.6;
+  flex: 0.2;
 }
 .accordion-row .accordion-panel:hover {
-  flex: 4;
+  flex: 5;
 }
 .accordion-row .accordion-panel:hover img {
   filter: grayscale(0%) brightness(1) contrast(1.1) saturate(1.2);

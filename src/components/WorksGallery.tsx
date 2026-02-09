@@ -30,7 +30,7 @@ const WorksGallery = () => {
       </div>
 
       {/* Accordion gallery — two rows of 5 */}
-      <div className="px-4 md:px-10 flex flex-col gap-3">
+      <div className="accordion-gallery px-4 md:px-10">
         <div className="accordion-row">
           {images.slice(0, 5).map((src, i) => (
             <div key={i} className="accordion-panel">
