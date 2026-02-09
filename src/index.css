@@ -238,7 +238,7 @@
 
 html { scroll-behavior: smooth; }
 
-/* Expandable cards gallery — based on CodePen RNRwEjr */
+/* Expandable cards gallery */
 .cards-row {
   display: flex;
   flex-wrap: nowrap;
@@ -253,30 +253,15 @@ html { scroll-behavior: smooth; }
   min-width: 0;
   height: 100%;
   cursor: pointer;
-  transition: flex 0.5s ease;
+  transition: flex 0.5s ease, filter 0.5s ease;
   overflow: hidden;
-  position: relative;
-  will-change: flex;
+  background-size: cover;
+  background-position: center;
+  filter: grayscale(100%);
 }
 
 .card-item:hover {
   flex: 3;
-}
-
-.card-item img {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: filter 0.5s ease;
-  filter: grayscale(100%);
-}
-
-.card-item:hover img {
   filter: grayscale(0%);
 }
 

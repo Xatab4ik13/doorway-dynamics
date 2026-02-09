@@ -32,16 +32,20 @@ const WorksGallery = () => {
       <div className="flex flex-col gap-4 px-4 md:px-10 max-w-[1170px] mx-auto">
         <div className="cards-row">
           {row1.map((src, i) => (
-            <div key={i} className="card-item">
-              <img src={src} alt="" loading="lazy" />
-            </div>
+            <div
+              key={i}
+              className="card-item"
+              style={{ backgroundImage: `url(${src})` }}
+            />
           ))}
         </div>
         <div className="cards-row">
           {row2.map((src, i) => (
-            <div key={i} className="card-item">
-              <img src={src} alt="" loading="lazy" />
-            </div>
+            <div
+              key={i}
+              className="card-item"
+              style={{ backgroundImage: `url(${src})` }}
+            />
           ))}
         </div>
       </div>
