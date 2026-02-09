@@ -76,7 +76,7 @@ const WorksGallery = () => {
         const dx = cx - clickX;
         const dy = cy - clickY;
         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-        const speed = 3 + Math.random() * 8;
+        const speed = 1.5 + Math.random() * 4;
         return {
           ...tri,
           cx,
@@ -85,7 +85,7 @@ const WorksGallery = () => {
           vy: (dy / dist) * speed + (Math.random() - 0.5) * 2,
           rotation: 0,
           rotationSpeed: (Math.random() - 0.5) * 0.15,
-          delay: (dist / Math.max(w, h)) * 300,
+          delay: (dist / Math.max(w, h)) * 600,
         };
       });
 
@@ -95,29 +95,19 @@ const WorksGallery = () => {
       // Draw the current image on canvas to "shatter"
       // The next image will show behind via CSS
       let startTime: number | null = null;
-      const duration = 1500;
+      const duration = 3000;
 
-      const drawImageToCanvas = (
-        ctx: CanvasRenderingContext2D,
-        img: HTMLImageElement,
-        cw: number,
-        ch: number
-      ) => {
-        // object-fit: cover calculation
-        const imgRatio = img.naturalWidth / img.naturalHeight;
-        const canvasRatio = cw / ch;
-        let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
-        if (imgRatio > canvasRatio) {
-          sw = img.naturalHeight * canvasRatio;
-          sx = (img.naturalWidth - sw) / 2;
-        } else {
-          sh = img.naturalWidth / canvasRatio;
-          sy = (img.naturalHeight - sh) / 2;
-        }
-        return { sx, sy, sw, sh };
-      };
-
-      const { sx, sy, sw, sh } = drawImageToCanvas(ctx, currentImg, w, h);
+      // object-fit: contain calculation for canvas drawing
+      const imgRatio = currentImg.naturalWidth / currentImg.naturalHeight;
+      const canvasRatio = w / h;
+      let dx = 0, dy = 0, dw = w, dh = h;
+      if (imgRatio > canvasRatio) {
+        dh = w / imgRatio;
+        dy = (h - dh) / 2;
+      } else {
+        dw = h * imgRatio;
+        dx = (w - dw) / 2;
+      }
 
       const animate = (timestamp: number) => {
         if (!startTime) startTime = timestamp;
@@ -138,7 +128,7 @@ const WorksGallery = () => {
             ctx.lineTo(tri.p3.x, tri.p3.y);
             ctx.closePath();
             ctx.clip();
-            ctx.drawImage(currentImg, sx, sy, sw, sh, 0, 0, w, h);
+            ctx.drawImage(currentImg, 0, 0, currentImg.naturalWidth, currentImg.naturalHeight, dx, dy, dw, dh);
             ctx.restore();
             allDone = false;
             continue;
@@ -149,8 +139,8 @@ const WorksGallery = () => {
 
           if (progress < 1) allDone = false;
 
-          const offsetX = tri.vx * eased * 80;
-          const offsetY = tri.vy * eased * 80 + eased * eased * 150; // gravity
+          const offsetX = tri.vx * eased * 50;
+          const offsetY = tri.vy * eased * 50 + eased * eased * 80; // gravity
           const rot = tri.rotationSpeed * eased * 20;
           const alpha = 1 - eased;
 
@@ -169,7 +159,7 @@ const WorksGallery = () => {
           ctx.closePath();
           ctx.clip();
 
-          ctx.drawImage(currentImg, sx, sy, sw, sh, 0, 0, w, h);
+          ctx.drawImage(currentImg, 0, 0, currentImg.naturalWidth, currentImg.naturalHeight, dx, dy, dw, dh);
           ctx.restore();
         }
 
@@ -211,8 +201,9 @@ const WorksGallery = () => {
         <div
           ref={containerRef}
           onClick={handleClick}
-          className="relative w-full aspect-[3/4] md:aspect-[4/3] overflow-hidden rounded-2xl cursor-pointer select-none"
+          className="relative w-full overflow-hidden rounded-2xl cursor-pointer select-none"
           style={{
+            maxHeight: "560px",
             boxShadow:
               "0 26px 70px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.08)",
           }}
@@ -221,7 +212,7 @@ const WorksGallery = () => {
           <img
             src={imageSrcs[(current + 1) % imageSrcs.length]}
             alt="Следующая работа"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-contain bg-background"
           />
 
           {/* Current image (visible when not animating) */}
@@ -229,7 +220,7 @@ const WorksGallery = () => {
             <img
               src={imageSrcs[current]}
               alt={`Работа ${current + 1}`}
-              className="absolute inset-0 w-full h-full object-cover z-[1]"
+              className="absolute inset-0 w-full h-full object-contain bg-background z-[1]"
             />
           )}
 
