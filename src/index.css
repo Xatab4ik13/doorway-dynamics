@@ -264,7 +264,11 @@ html { scroll-behavior: smooth; }
 }
 
 .card-item img {
-  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
   height: 100%;
   object-fit: cover;
   display: block;
