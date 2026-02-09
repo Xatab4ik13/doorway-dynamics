@@ -20,13 +20,13 @@ const Header = () => {
     <>
       {/* Black solid header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-background">
-        <div className="flex items-center justify-center px-6 md:px-10 h-20 relative">
+        <div className="flex items-center justify-center px-6 md:px-10 h-28 md:h-36 relative">
           {/* Logo centered & larger */}
           <Link to="/" className="relative z-[110]">
             <img
               src={logo}
               alt="PrimeDoor Service"
-              className="h-20 md:h-32 w-auto invert"
+              className="h-24 md:h-40 w-auto invert"
             />
           </Link>
 
