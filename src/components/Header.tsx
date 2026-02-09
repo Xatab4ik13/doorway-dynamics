@@ -14,7 +14,7 @@ const menuLinks = [
   { label: "Написать нам", path: "/request" },
 ];
 
-const cities = ["Москва", "Санкт-Петербург", "Казань", "Новосибирск", "Екатеринбург"];
+const cities = ["Москва", "Санкт-Петербург"];
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
