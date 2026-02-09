@@ -251,13 +251,16 @@ html { scroll-behavior: smooth; }
 
 .accordion-panel {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   cursor: pointer;
   transition: flex 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
 }
 .accordion-panel img {
-  width: 100%;
+  display: block;
+  width: calc((100vw - 5rem) / 5 * 4);
+  min-width: calc((100vw - 5rem) / 5 * 4);
   height: 100%;
   object-fit: cover;
   filter: grayscale(100%) brightness(0.7);
