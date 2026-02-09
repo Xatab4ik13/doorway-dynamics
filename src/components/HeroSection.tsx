@@ -1,21 +1,49 @@
-import { motion } from "framer-motion";
-import heroVideo from "@/assets/hero-video.mp4";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef, useCallback, useEffect } from "react";
+import heroVideo1 from "@/assets/hero-video.mp4";
+import heroVideo2 from "@/assets/hero-video-2.mp4";
+import heroVideo3 from "@/assets/hero-video-3.mp4";
 import heroImage from "@/assets/hero-video-poster.jpg";
 
+const videos = [heroVideo1, heroVideo2, heroVideo3];
+
 const HeroSection = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handleVideoEnd = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % videos.length);
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.load();
+      video.play().catch(() => {});
+    }
+  }, [currentIndex]);
+
   return (
     <section className="relative h-screen min-h-[600px] flex items-end overflow-hidden">
-      {/* Background video */}
+      {/* Background videos with crossfade */}
       <div className="absolute inset-0">
-        <video
-          src={heroVideo}
-          poster={heroImage}
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="w-full h-full object-cover"
-        />
+        <AnimatePresence mode="wait">
+          <motion.video
+            key={currentIndex}
+            ref={videoRef}
+            src={videos[currentIndex]}
+            poster={heroImage}
+            autoPlay
+            muted
+            playsInline
+            onEnded={handleVideoEnd}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.2 }}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </AnimatePresence>
         <div className="absolute inset-0 bg-background/40" />
       </div>
 
