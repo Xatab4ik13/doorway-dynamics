@@ -194,12 +194,12 @@ const InteriorDoorsPage = () => {
   };
 
   const inputClass =
-    "w-full bg-transparent border-b border-border py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
+    "w-full bg-transparent border-b border-foreground/20 py-3 text-[15px] text-foreground placeholder:text-foreground/40 focus:outline-none focus:border-foreground/60 transition-colors duration-500";
 
   return (
     <main className="pt-24 pb-24">
       <div className="px-6 md:px-10">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-7xl mx-auto text-[15px]">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -259,7 +259,7 @@ const InteriorDoorsPage = () => {
 
             <div className="space-y-1">
               {/* Header */}
-              <div className="hidden md:grid grid-cols-[1fr_180px_160px_120px] gap-4 py-3 px-4 text-xs uppercase tracking-[0.15em] text-muted-foreground border-b border-border">
+              <div className="hidden md:grid grid-cols-[1fr_180px_160px_120px] gap-4 py-3 px-4 text-xs uppercase tracking-[0.15em] text-foreground/70 border-b border-foreground/20 font-semibold">
                 <span>Услуга</span>
                 <span className="text-right">Цена</span>
                 <span className="text-center">Кол-во</span>
@@ -279,13 +279,13 @@ const InteriorDoorsPage = () => {
                     transition={{ duration: 0.3, delay: i * 0.02 }}
                     className={`grid grid-cols-1 md:grid-cols-[1fr_180px_160px_120px] gap-2 md:gap-4 py-4 px-4 rounded-lg border transition-all duration-500 ${
                       isActive
-                        ? "border-foreground/20 bg-foreground/[0.03]"
-                        : "border-transparent hover:border-border"
+                        ? "border-foreground/30 bg-foreground/[0.08]"
+                        : "border-foreground/[0.06] hover:border-foreground/15 hover:bg-foreground/[0.03]"
                     }`}
                   >
                     {/* Name + variant toggle */}
                     <div className="flex flex-col gap-1">
-                      <span className={`text-sm transition-colors duration-300 ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                      <span className={`text-[15px] transition-colors duration-300 ${isActive ? "text-foreground font-medium" : "text-foreground/70"}`}>
                         {item.name}
                       </span>
                       {item.priceAlt && item.priceLabel && item.priceLabelAlt && (
@@ -316,18 +316,18 @@ const InteriorDoorsPage = () => {
 
                     {/* Price */}
                     <div className="flex items-center md:justify-end">
-                      <span className="text-sm text-muted-foreground md:hidden mr-2">Цена:</span>
-                      <span className={`text-sm font-medium tabular-nums ${isActive ? "text-foreground" : "text-muted-foreground"}`}>
+                       <span className="text-[15px] text-foreground/50 md:hidden mr-2">Цена:</span>
+                      <span className={`text-[15px] font-semibold tabular-nums ${isActive ? "text-foreground" : "text-foreground/60"}`}>
                         {price.toLocaleString("ru-RU")} ₽
                       </span>
                     </div>
 
                     {/* Quantity controls */}
                     <div className="flex items-center justify-start md:justify-center gap-3">
-                      <span className="text-sm text-muted-foreground md:hidden mr-2">Кол-во:</span>
+                      <span className="text-[15px] text-foreground/50 md:hidden mr-2">Кол-во:</span>
                       <button
                         onClick={() => updateQuantity(item.id, -1)}
-                        className="w-8 h-8 flex items-center justify-center border border-border rounded text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all duration-300"
+                        className="w-9 h-9 flex items-center justify-center border border-foreground/20 rounded text-foreground/60 hover:text-foreground hover:border-foreground/40 hover:bg-foreground/10 transition-all duration-300 text-lg"
                       >
                         −
                       </button>
@@ -336,11 +336,11 @@ const InteriorDoorsPage = () => {
                         min={0}
                         value={item.quantity}
                         onChange={(e) => setQuantity(item.id, parseInt(e.target.value) || 0)}
-                        className="w-12 text-center bg-transparent text-sm text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-12 text-center bg-transparent text-[15px] font-semibold text-foreground focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <button
                         onClick={() => updateQuantity(item.id, 1)}
-                        className="w-8 h-8 flex items-center justify-center border border-border rounded text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all duration-300"
+                        className="w-9 h-9 flex items-center justify-center border border-foreground/20 rounded text-foreground/60 hover:text-foreground hover:border-foreground/40 hover:bg-foreground/10 transition-all duration-300 text-lg"
                       >
                         +
                       </button>
@@ -348,9 +348,9 @@ const InteriorDoorsPage = () => {
 
                     {/* Item total */}
                     <div className="flex items-center md:justify-end">
-                      <span className="text-sm text-muted-foreground md:hidden mr-2">Сумма:</span>
-                      <span className={`text-sm font-medium tabular-nums transition-all duration-300 ${
-                        isActive ? "text-foreground" : "text-muted-foreground/30"
+                      <span className="text-[15px] text-foreground/50 md:hidden mr-2">Сумма:</span>
+                      <span className={`text-[15px] font-semibold tabular-nums transition-all duration-300 ${
+                        isActive ? "text-foreground" : "text-foreground/20"
                       }`}>
                         {itemTotal.toLocaleString("ru-RU")} ₽
                       </span>
@@ -365,14 +365,14 @@ const InteriorDoorsPage = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="mt-12 pt-8 border-t border-border"
+              className="mt-12 pt-8 border-t border-foreground/20"
             >
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                 <div>
-                  <p className="section-label mb-2">Итого к оплате</p>
-                  <p className="stat-number">{total.toLocaleString("ru-RU")} ₽</p>
+                   <p className="section-label mb-2">Итого к оплате</p>
+                  <p className="stat-number text-foreground">{total.toLocaleString("ru-RU")} ₽</p>
                   {selectedItems.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-sm text-foreground/60 mt-2">
                       {selectedItems.length} {selectedItems.length === 1 ? "позиция" : selectedItems.length < 5 ? "позиции" : "позиций"} в смете
                     </p>
                   )}
