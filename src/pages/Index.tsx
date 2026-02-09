@@ -1,17 +1,19 @@
 import HeroSection from "@/components/HeroSection";
+import ProjectsGrid from "@/components/ProjectsGrid";
+import StatsSection from "@/components/StatsSection";
 import ServicesSection from "@/components/ServicesSection";
-import PortfolioSection from "@/components/PortfolioSection";
-import ReviewsSection from "@/components/ReviewsSection";
-import CTASection from "@/components/CTASection";
+import ExcursionSection from "@/components/ExcursionSection";
+import ContactForm from "@/components/ContactForm";
 
 const Index = () => {
   return (
     <main>
       <HeroSection />
+      <ProjectsGrid />
+      <StatsSection />
       <ServicesSection />
-      <PortfolioSection />
-      <ReviewsSection />
-      <CTASection />
+      <ExcursionSection />
+      <ContactForm />
     </main>
   );
 };

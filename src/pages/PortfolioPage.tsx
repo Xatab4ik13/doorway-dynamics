@@ -1,69 +1,76 @@
 import { motion } from "framer-motion";
+import project1 from "@/assets/project-1.jpg";
+import project2 from "@/assets/project-2.jpg";
+import project3 from "@/assets/project-3.jpg";
+import project4 from "@/assets/project-4.jpg";
 import portfolio1 from "@/assets/portfolio-1.jpg";
 import portfolio2 from "@/assets/portfolio-2.jpg";
 import portfolio3 from "@/assets/portfolio-3.jpg";
 import portfolio4 from "@/assets/portfolio-4.jpg";
 
 const projects = [
-  { image: portfolio1, title: "ЖК Пресня Сити", location: "Москва", count: "12 дверей", type: "Межкомнатные" },
-  { image: portfolio2, title: "ЖК Балтийская Жемчужина", location: "Санкт-Петербург", count: "8 дверей", type: "Входные" },
-  { image: portfolio3, title: "ЖК Донской Олимп", location: "Москва", count: "15 дверей", type: "Межкомнатные" },
-  { image: portfolio4, title: "ЖК Лахта Парк", location: "Санкт-Петербург", count: "6 дверей", type: "Межкомнатные + Входные" },
-  { image: portfolio1, title: "ЖК Садовые Кварталы", location: "Москва", count: "20 дверей", type: "Межкомнатные" },
-  { image: portfolio3, title: "ЖК Петровский Остров", location: "Санкт-Петербург", count: "10 дверей", type: "Межкомнатные" },
+  { image: project1, title: "ЖК Пресня Сити", location: "Москва", count: "12 дверей", year: "2024" },
+  { image: project2, title: "ЖК Лахта Парк", location: "Санкт-Петербург", count: "8 дверей", year: "2024" },
+  { image: project3, title: "ЖК Садовые Кварталы", location: "Москва", count: "15 дверей", year: "2023" },
+  { image: project4, title: "Бизнес-центр Невский", location: "Санкт-Петербург", count: "20 дверей", year: "2023" },
+  { image: portfolio1, title: "ЖК Донской Олимп", location: "Москва", count: "10 дверей", year: "2023" },
+  { image: portfolio2, title: "ЖК Балтийская Жемчужина", location: "Санкт-Петербург", count: "6 дверей", year: "2022" },
+  { image: portfolio3, title: "ЖК Крестовский Де Люкс", location: "Санкт-Петербург", count: "14 дверей", year: "2022" },
+  { image: portfolio4, title: "ЖК Триколор", location: "Москва", count: "9 дверей", year: "2022" },
 ];
 
 const PortfolioPage = () => {
   return (
-    <main className="pt-32 pb-24">
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-16"
-        >
-          <span className="text-sm font-semibold tracking-[0.3em] uppercase text-primary mb-4 block">
-            Портфолио
-          </span>
-          <h1 className="text-4xl md:text-6xl font-heading font-bold">
-            Наши <span className="text-gold-gradient">проекты</span>
-          </h1>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project, i) => (
-            <motion.div
-              key={`${project.title}-${i}`}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="group relative overflow-hidden rounded-sm cursor-pointer"
-            >
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={project.image}
-                  alt={project.title}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  loading="lazy"
-                />
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/10 to-transparent opacity-80" />
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <div className="flex items-center gap-3 text-xs text-muted-foreground uppercase tracking-widest mb-2">
-                  <span>{project.location}</span>
-                  <span className="w-1 h-1 rounded-full bg-primary" />
-                  <span>{project.count}</span>
-                </div>
-                <h3 className="text-lg font-heading font-semibold group-hover:text-primary transition-colors">
-                  {project.title}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-1">{project.type}</p>
-              </div>
-            </motion.div>
-          ))}
+    <main className="pt-24 pb-24">
+      <div className="px-6 md:px-10">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="mb-20 md:mb-32"
+          >
+            <p className="section-label mb-6">Портфолио</p>
+            <h1 className="heading-xl">Наши проекты</h1>
+          </motion.div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2">
+        {projects.map((project, i) => (
+          <motion.div
+            key={project.title}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: i * 0.05 }}
+            className="project-card aspect-[4/3]"
+          >
+            <img
+              src={project.image}
+              alt={project.title}
+              className="project-card-image"
+              loading="lazy"
+            />
+            <div className="project-card-overlay" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
+              <div className="flex items-end justify-between">
+                <div>
+                  <h3 className="text-lg md:text-xl font-heading font-bold">{project.title}</h3>
+                  <p className="text-xs tracking-[0.15em] uppercase text-foreground/60 mt-1">
+                    {project.count}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-heading">{project.year}</p>
+                  <p className="text-xs tracking-[0.15em] uppercase text-foreground/60 mt-1">
+                    {project.location}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
       </div>
     </main>
   );
