@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/assets/logo.png";
+import menuBg from "@/assets/menu-bg.jpg";
 
 const menuLinks = [
   { label: "Межкомнатные двери", path: "/services/interior" },
@@ -12,44 +13,27 @@ const menuLinks = [
   { label: "Написать нам", path: "/request" },
 ];
 
-const topNavLinks = [
-  { label: "Межкомнатные двери", path: "/services" },
-  { label: "Входные двери", path: "/services" },
-  { label: "Портфолио", path: "/portfolio" },
-  { label: "Услуги", path: "/services" },
-  { label: "Написать нам", path: "/request" },
-];
-
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const location = useLocation();
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 mix-blend-difference">
-        <div className="flex items-center justify-between px-6 md:px-10 h-20">
-          {/* Logo */}
+      {/* Black solid header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background">
+        <div className="flex items-center justify-center px-6 md:px-10 h-20 relative">
+          {/* Logo centered & larger */}
           <Link to="/" className="relative z-[110]">
             <img
               src={logo}
               alt="PrimeDoor Service"
-              className="h-8 md:h-10 w-auto invert"
+              className="h-12 md:h-16 w-auto invert"
             />
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {topNavLinks.map((item) => (
-              <Link key={item.label} to={item.path} className="nav-link">
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
-          {/* Burger */}
+          {/* Burger — absolute right */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="relative z-[110] flex flex-col items-center justify-center w-10 h-10 gap-[6px]"
+            className="absolute right-6 md:right-10 z-[110] flex flex-col items-center justify-center w-10 h-10 gap-[6px]"
             aria-label="Меню"
           >
             <motion.span
@@ -71,71 +55,86 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Full-screen overlay menu */}
+      {/* Slide-out rounded menu panel from right */}
       <AnimatePresence>
         {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="overlay-menu"
-          >
-            <motion.nav
+          <>
+            {/* Backdrop */}
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-              className="flex flex-col items-center gap-2 md:gap-4"
+              transition={{ duration: 0.4 }}
+              className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
+              onClick={() => setMenuOpen(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed top-4 right-4 bottom-4 z-[100] w-[90vw] max-w-[520px] rounded-3xl overflow-hidden"
             >
-              {menuLinks.map((item, i) => (
+              {/* Background image */}
+              <div className="absolute inset-0">
+                <img
+                  src={menuBg}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/70 backdrop-blur-[2px]" />
+              </div>
+
+              {/* Menu content */}
+              <div className="relative z-10 h-full flex flex-col justify-between p-10 md:p-14">
+                {/* Navigation links */}
+                <nav className="flex flex-col gap-1 mt-16">
+                  {menuLinks.map((item, i) => (
+                    <motion.div
+                      key={item.label}
+                      initial={{ opacity: 0, x: 40 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 20 }}
+                      transition={{ duration: 0.4, delay: 0.15 + i * 0.06 }}
+                    >
+                      <Link
+                        to={item.path}
+                        onClick={() => setMenuOpen(false)}
+                        className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
+                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                      >
+                        {item.label}
+                      </Link>
+                    </motion.div>
+                  ))}
+                </nav>
+
+                {/* Bottom info */}
                 <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.4, delay: 0.1 + i * 0.05 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="flex flex-col gap-4"
                 >
+                  <a href="tel:+74951234567" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
+                    +7 (495) 123-45-67
+                  </a>
+                  <a href="mailto:info@primedoor.ru" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
+                    info@primedoor.ru
+                  </a>
                   <Link
-                    to={item.path}
+                    to="/login"
                     onClick={() => setMenuOpen(false)}
-                    className="overlay-menu-link block"
+                    className="mt-4 inline-flex items-center gap-2 text-white/60 text-xs uppercase tracking-[0.2em] hover:text-white transition-colors"
                   >
-                    {item.label}
+                    Войти в кабинет →
                   </Link>
                 </motion.div>
-              ))}
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="mt-12 flex flex-col items-center gap-3"
-              >
-                <a href="tel:+74951234567" className="nav-link text-sm">
-                  +7 (495) 123-45-67
-                </a>
-                <a href="mailto:info@primedoor.ru" className="nav-link text-sm">
-                  info@primedoor.ru
-                </a>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6 }}
-                className="mt-6"
-              >
-                <Link
-                  to="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="nav-link text-sm"
-                >
-                  Войти в кабинет
-                </Link>
-              </motion.div>
-            </motion.nav>
-          </motion.div>
+              </div>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </>
