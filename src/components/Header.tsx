@@ -5,13 +5,12 @@ import { MapPin, ChevronDown } from "lucide-react";
 import logo from "@/assets/logo.png";
 import menuBg from "@/assets/menu-bg.jpg";
 
-const menuLinks = [
-  { label: "Межкомнатные двери", path: "/services/interior" },
-  { label: "Входные двери", path: "/services/entrance" },
-  { label: "Портфолио", path: "/portfolio" },
-  { label: "Услуги", path: "/services" },
-  { label: "Контакты", path: "/contacts" },
-  { label: "Написать нам", path: "/request" },
+const serviceLinks = [
+  { label: "Установка межкомнатных дверей", path: "/services/interior" },
+  { label: "Установка входных дверей", path: "/services/entrance" },
+  { label: "Врезка замков", path: "/services/locks" },
+  { label: "Регулировка", path: "/services/adjustment" },
+  { label: "Демонтаж", path: "/services/demolition" },
 ];
 
 const cities = ["Москва", "Санкт-Петербург"];
@@ -21,6 +20,7 @@ const Header = () => {
   const [scrolled, setScrolled] = useState(false);
   const [cityOpen, setCityOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Москва");
+  const [servicesOpen, setServicesOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -28,20 +28,22 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setServicesOpen(false);
+  };
+
   return (
     <>
       <header
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
         style={{
-          background: scrolled
-            ? "rgba(0, 0, 0, 0.65)"
-            : "hsl(0 0% 0%)",
+          background: scrolled ? "rgba(0, 0, 0, 0.65)" : "hsl(0 0% 0%)",
           backdropFilter: scrolled ? "blur(12px)" : "none",
           WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
         }}
       >
         <div className="flex items-center justify-center px-6 md:px-10 h-20 relative">
-          {/* Logo centered & larger */}
           <Link to="/" className="relative z-[110]">
             <img
               src={logo}
@@ -50,7 +52,6 @@ const Header = () => {
             />
           </Link>
 
-          {/* City selector + Burger — absolute right */}
           <div className="absolute right-6 md:right-10 z-[110] flex items-center gap-4">
             {/* City selector */}
             <div className="relative">
@@ -129,15 +130,11 @@ const Header = () => {
         </div>
       </header>
 
-      {/* Close city dropdown on outside click */}
       {cityOpen && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setCityOpen(false)}
-        />
+        <div className="fixed inset-0 z-40" onClick={() => setCityOpen(false)} />
       )}
 
-      {/* Slide-out rounded menu panel from right */}
+      {/* Slide-out menu panel */}
       <AnimatePresence>
         {menuOpen && (
           <>
@@ -145,53 +142,135 @@ const Header = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
+              transition={{ duration: 0.6 }}
               className="fixed inset-0 z-[90] bg-black/70"
-              onClick={() => setMenuOpen(false)}
+              onClick={closeMenu}
             />
 
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
               className="fixed top-4 right-4 bottom-4 z-[100] w-[90vw] max-w-[520px] rounded-3xl overflow-hidden"
             >
               <div className="absolute inset-0">
-                <img
-                  src={menuBg}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
+                <img src={menuBg} alt="" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-black/70" />
               </div>
 
-              <div className="relative z-10 h-full flex flex-col justify-between p-10 md:p-14">
+              <div className="relative z-10 h-full flex flex-col justify-between p-10 md:p-14 overflow-y-auto">
                 <nav className="flex flex-col gap-1 mt-16">
-                  {menuLinks.map((item, i) => (
-                    <motion.div
-                      key={item.label}
-                      initial={{ opacity: 0, x: 40 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      transition={{ duration: 0.4, delay: 0.15 + i * 0.06 }}
+                  {/* Главная */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    <Link
+                      to="/"
+                      onClick={closeMenu}
+                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
-                      <Link
-                        to={item.path}
-                        onClick={() => setMenuOpen(false)}
-                        className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
-                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                      Главная
+                    </Link>
+                  </motion.div>
+
+                  {/* Услуги с раскрытием */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                  >
+                    <button
+                      onClick={() => setServicesOpen(!servicesOpen)}
+                      className="flex items-center gap-3 py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50 w-full text-left"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      Услуги
+                      <motion.div
+                        animate={{ rotate: servicesOpen ? 180 : 0 }}
+                        transition={{ duration: 0.4 }}
                       >
-                        {item.label}
-                      </Link>
-                    </motion.div>
-                  ))}
+                        <ChevronDown className="w-6 h-6" />
+                      </motion.div>
+                    </button>
+
+                    <AnimatePresence>
+                      {servicesOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="pl-4 border-l border-white/15 ml-2 flex flex-col gap-0.5 pb-2">
+                            {serviceLinks.map((service, i) => (
+                              <motion.div
+                                key={service.path}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.4, delay: i * 0.06 }}
+                              >
+                                <Link
+                                  to={service.path}
+                                  onClick={closeMenu}
+                                  className="block py-2 text-white/60 text-base md:text-lg transition-colors duration-300 hover:text-white"
+                                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                                >
+                                  {service.label}
+                                </Link>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+
+                  {/* Контакты */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
+                  >
+                    <Link
+                      to="/contacts"
+                      onClick={closeMenu}
+                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      Контакты
+                    </Link>
+                  </motion.div>
+
+                  {/* Заявка на замер */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
+                  >
+                    <Link
+                      to="/request"
+                      onClick={closeMenu}
+                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      Заявка на замер
+                    </Link>
+                  </motion.div>
                 </nav>
 
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
+                  transition={{ delay: 0.9 }}
                   className="flex flex-col gap-4"
                 >
                   <a href="tel:+74951234567" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
@@ -202,7 +281,7 @@ const Header = () => {
                   </a>
                   <Link
                     to="/login"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={closeMenu}
                     className="mt-4 inline-flex items-center gap-2 text-white/60 text-xs uppercase tracking-[0.2em] hover:text-white transition-colors"
                   >
                     Войти в кабинет →
