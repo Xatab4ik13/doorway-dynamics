@@ -1,4 +1,7 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 import work1 from "@/assets/work-1.jpg";
 import work2 from "@/assets/work-2.jpg";
@@ -12,6 +15,12 @@ import work8 from "@/assets/work-8.jpg";
 const images = [work1, work2, work3, work4, work5, work6, work7, work8];
 
 const WorksGallery = () => {
+  const isMobile = useIsMobile();
+  const [current, setCurrent] = useState(0);
+
+  const prev = () => setCurrent((c) => (c === 0 ? images.length - 1 : c - 1));
+  const next = () => setCurrent((c) => (c === images.length - 1 ? 0 : c + 1));
+
   return (
     <section className="bg-background py-20 md:py-32">
       <div className="px-6 md:px-10 mb-12 md:mb-16 text-center">
@@ -26,17 +35,60 @@ const WorksGallery = () => {
         </motion.span>
       </div>
 
-      <div className="flex justify-center px-4 md:px-10">
-        <div className="works-container">
-          {images.map((src, i) => (
-            <div
-              key={i}
-              className={`works-box works-box-${i + 1}`}
-              style={{ "--img": `url(${src})` } as React.CSSProperties}
+      {isMobile ? (
+        <div className="relative px-4">
+          <div className="relative overflow-hidden rounded-xl aspect-[3/4] max-w-[85vw] mx-auto">
+            <motion.img
+              key={current}
+              src={images[current]}
+              alt={`Работа ${current + 1}`}
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="w-full h-full object-cover"
             />
-          ))}
+          </div>
+
+          <button
+            onClick={prev}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-full text-foreground/70 hover:text-foreground transition-colors"
+            aria-label="Предыдущая"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-background/60 backdrop-blur-sm rounded-full text-foreground/70 hover:text-foreground transition-colors"
+            aria-label="Следующая"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+
+          <div className="flex justify-center gap-2 mt-4">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrent(i)}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  i === current ? "bg-foreground w-6" : "bg-foreground/30"
+                }`}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex justify-center px-4 md:px-10">
+          <div className="works-container">
+            {images.map((src, i) => (
+              <div
+                key={i}
+                className={`works-box works-box-${i + 1}`}
+                style={{ "--img": `url(${src})` } as React.CSSProperties}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };

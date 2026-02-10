@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ChevronDown } from "lucide-react";
+import { MapPin, ChevronDown, X } from "lucide-react";
 import logo from "@/assets/logo.png";
 import menuBg from "@/assets/menu-bg.jpg";
 
@@ -28,9 +28,15 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Reset servicesOpen to true whenever menu opens
+  useEffect(() => {
+    if (menuOpen) {
+      setServicesOpen(true);
+    }
+  }, [menuOpen]);
+
   const closeMenu = () => {
     setMenuOpen(false);
-    setServicesOpen(false);
   };
 
   return (
@@ -43,16 +49,16 @@ const Header = () => {
           WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
         }}
       >
-        <div className="flex items-center justify-center px-6 md:px-10 h-20 relative">
+        <div className="flex items-center px-4 md:px-10 h-20 relative">
           <Link to="/" className="relative z-[110]">
             <img
               src={logo}
               alt=""
-              className="h-24 md:h-40 w-auto invert brightness-0 invert select-none pointer-events-none"
+              className="h-32 md:h-40 w-auto invert brightness-0 invert select-none pointer-events-none -ml-2"
             />
           </Link>
 
-          <div className="absolute right-6 md:right-10 z-[110] flex items-center gap-4">
+          <div className="absolute right-4 md:right-10 z-[110] flex items-center gap-3 md:gap-4">
             {/* City selector */}
             <div className="relative">
               <button
@@ -60,7 +66,7 @@ const Header = () => {
                 className="flex items-center gap-1.5 text-foreground/50 hover:text-foreground transition-colors duration-300"
               >
                 <MapPin className="w-3.5 h-3.5" />
-                <span className="text-xs uppercase tracking-[0.15em] font-medium hidden sm:inline">
+                <span className="text-xs uppercase tracking-[0.15em] font-medium">
                   {selectedCity}
                 </span>
                 <motion.div
@@ -159,7 +165,16 @@ const Header = () => {
                 <div className="absolute inset-0 bg-black/70" />
               </div>
 
-              <div className="relative z-10 h-full flex flex-col justify-between p-10 md:p-14 overflow-y-auto">
+              <div className="relative z-10 h-full flex flex-col justify-between p-8 md:p-14 overflow-y-auto">
+                {/* Close button */}
+                <button
+                  onClick={closeMenu}
+                  className="absolute top-6 right-6 z-20 w-12 h-12 flex items-center justify-center text-white/70 hover:text-white transition-colors duration-300"
+                  aria-label="Закрыть меню"
+                >
+                  <X className="w-8 h-8" strokeWidth={1.5} />
+                </button>
+
                 <nav className="flex flex-col gap-1 mt-16">
                   {/* Главная */}
                   <motion.div
