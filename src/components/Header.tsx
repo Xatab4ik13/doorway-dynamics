@@ -54,7 +54,7 @@ const Header = () => {
             <img
               src={logo}
               alt=""
-              className="h-32 md:h-40 w-auto invert brightness-0 invert select-none pointer-events-none -ml-4 sm:ml-0"
+              className="h-32 md:h-40 w-auto invert brightness-0 invert select-none pointer-events-none -ml-2"
             />
           </Link>
 
