@@ -49,7 +49,7 @@ const Header = () => {
           WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
         }}
       >
-        <div className="flex items-center px-4 md:px-10 h-20 relative">
+        <div className="flex items-center justify-start md:justify-center px-4 md:px-10 h-20 relative">
           <Link to="/" className="relative z-[110]">
             <img
               src={logo}
