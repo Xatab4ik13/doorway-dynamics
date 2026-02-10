@@ -16,8 +16,18 @@ const HeroSection = () => {
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
+      video.muted = true;
       video.load();
-      video.play().catch(() => {});
+      video.play().catch(() => {
+        // Fallback: try again on user interaction
+        const tryPlay = () => {
+          video.play().catch(() => {});
+          document.removeEventListener("touchstart", tryPlay);
+          document.removeEventListener("click", tryPlay);
+        };
+        document.addEventListener("touchstart", tryPlay, { once: true });
+        document.addEventListener("click", tryPlay, { once: true });
+      });
     }
   }, [currentIndex]);
 
@@ -33,12 +43,17 @@ const HeroSection = () => {
             autoPlay
             muted
             playsInline
+            preload="auto"
+            webkit-playsinline=""
+            x-webkit-airplay="deny"
+            disablePictureInPicture
             onEnded={handleVideoEnd}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 1.2 }}
             className="absolute inset-0 w-full h-full object-cover"
+            style={{ objectFit: 'cover' }}
           />
         </AnimatePresence>
         <div className="absolute inset-0 bg-background/40" />
