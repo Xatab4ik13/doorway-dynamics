@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
@@ -7,6 +7,10 @@ import logo from "@/assets/logo.png";
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    document.title = "Вход в кабинет — PrimeDoor Service";
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +30,7 @@ const LoginPage = () => {
       >
         <div className="text-center mb-16">
           <Link to="/">
-            <img src={logo} alt="PrimeDoor Service" className="h-10 w-auto mx-auto mb-8 invert" />
+            <img src={logo} alt="PrimeDoor Service" className="h-24 w-auto mx-auto mb-8 brightness-0 invert" />
           </Link>
           <h1 className="heading-md">Вход в кабинет</h1>
           <p className="text-xs text-muted-foreground mt-3 tracking-wide">

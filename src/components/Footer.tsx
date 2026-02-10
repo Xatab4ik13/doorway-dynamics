@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Logo & info */}
           <div className="md:col-span-1">
-            <img src={logo} alt="PrimeDoor Service" className="h-8 w-auto invert mb-6" />
+            <img src={logo} alt="PrimeDoor Service" className="h-20 w-auto brightness-0 invert mb-6" />
             <p className="text-xs text-muted-foreground leading-relaxed">
               Профессиональная установка дверей в Москве и Санкт-Петербурге
             </p>
@@ -37,10 +37,16 @@ const Footer = () => {
           <div>
             <p className="section-label mb-6">Услуги</p>
             <ul className="space-y-3">
-              {["Межкомнатные двери", "Входные двери", "Врезка замков", "Регулировка", "Демонтаж"].map((s) => (
-                <li key={s}>
-                  <Link to="/services" className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-300">
-                    {s}
+              {[
+                { label: "Межкомнатные двери", path: "/services/interior" },
+                { label: "Входные двери", path: "/services/entrance" },
+                { label: "Врезка замков", path: "/services/locks" },
+                { label: "Регулировка", path: "/services/adjustment" },
+                { label: "Демонтаж", path: "/services/demolition" },
+              ].map((s) => (
+              <li key={s.label}>
+                  <Link to={s.path} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-300">
+                    {s.label}
                   </Link>
                 </li>
               ))}

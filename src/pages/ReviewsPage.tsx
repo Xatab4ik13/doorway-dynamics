@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 
 const reviews = [
@@ -10,6 +11,10 @@ const reviews = [
 ];
 
 const ReviewsPage = () => {
+  useEffect(() => {
+    document.title = "Отзывы — PrimeDoor Service";
+  }, []);
+
   return (
     <main className="pt-24 pb-24">
       <div className="px-6 md:px-10">

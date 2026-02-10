@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import ContactFormComponent from "@/components/ContactForm";
 
@@ -17,6 +18,10 @@ const contacts = [
 ];
 
 const ContactsPage = () => {
+  useEffect(() => {
+    document.title = "Контакты — PrimeDoor Service";
+  }, []);
+
   return (
     <main className="pt-24 pb-0">
       <div className="px-6 md:px-10">
