@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import serviceInterior from "@/assets/service-interior-doors.jpg";
 import serviceEntrance from "@/assets/service-entrance-doors.jpg";
 import serviceLocks from "@/assets/service-locks.jpg";
@@ -11,34 +13,43 @@ const services = [
     description: "Профессиональная установка всех типов межкомнатных дверей: распашные, раздвижные, складные, скрытого монтажа. Работаем с любыми материалами — массив, МДФ, шпон, экошпон, стекло.",
     image: serviceInterior,
     features: ["Все типы дверей", "Установка за 1 день", "Гарантия 2 года", "Уборка после работ"],
+    path: "/services/interior",
   },
   {
     title: "Установка входных дверей",
     description: "Монтаж стальных и деревянных входных дверей с полной отделкой откосов. Установка уплотнителей, порога, глазка, цепочки. Демонтаж старой двери входит в стоимость.",
     image: serviceEntrance,
     features: ["Стальные и деревянные", "Отделка откосов", "Демонтаж старой двери", "Утепление"],
+    path: "/services/entrance",
   },
   {
     title: "Врезка замков",
     description: "Установка замков любой сложности: цилиндровые, сувальдные, электронные, кодовые. Врезка в новые и существующие двери.",
     image: serviceLocks,
     features: ["Все типы замков", "Врезка и замена", "Электронные замки", "Срочный выезд"],
+    path: "/services/locks",
   },
   {
     title: "Регулировка дверей",
     description: "Регулировка петель, замков, доводчиков. Устранение скрипов, провисаний, неплотного прилегания. Замена уплотнителей и фурнитуры.",
     image: serviceAdjustment,
     features: ["Устранение скрипов", "Регулировка петель", "Замена фурнитуры", "Гарантия"],
+    path: "/services/adjustment",
   },
   {
     title: "Демонтаж дверей",
     description: "Аккуратный демонтаж старых дверей и коробок. Подготовка проёмов к установке новых дверей. Вывоз строительного мусора.",
     image: serviceDemolition,
     features: ["Аккуратный демонтаж", "Подготовка проёмов", "Вывоз мусора", "Быстро и чисто"],
+    path: "/services/demolition",
   },
 ];
 
 const ServicesPage = () => {
+  useEffect(() => {
+    document.title = "Услуги — PrimeDoor Service";
+  }, []);
+
   return (
     <main className="pt-24 pb-24">
       <div className="px-6 md:px-10">
@@ -76,7 +87,7 @@ const ServicesPage = () => {
                 <div className={i % 2 === 1 ? "lg:order-1" : ""}>
                   <h2 className="heading-md mb-6">{service.title}</h2>
                   <p className="body-text mb-8">{service.description}</p>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 mb-8">
                     {service.features.map((f) => (
                       <div key={f} className="flex items-center gap-3 text-xs tracking-wide">
                         <span className="w-1 h-1 bg-foreground flex-shrink-0" />
@@ -84,6 +95,9 @@ const ServicesPage = () => {
                       </div>
                     ))}
                   </div>
+                  <Link to={service.path} className="btn-outline text-xs">
+                    Подробнее и калькулятор →
+                  </Link>
                 </div>
               </motion.div>
             ))}

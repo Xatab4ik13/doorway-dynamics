@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import project1 from "@/assets/project-1.jpg";
 import project2 from "@/assets/project-2.jpg";
@@ -20,6 +21,10 @@ const projects = [
 ];
 
 const PortfolioPage = () => {
+  useEffect(() => {
+    document.title = "Портфолио — PrimeDoor Service";
+  }, []);
+
   return (
     <main className="pt-24 pb-24">
       <div className="px-6 md:px-10">
