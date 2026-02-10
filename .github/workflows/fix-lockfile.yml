@@ -3,8 +3,6 @@ name: Fix package-lock.json
 on:
   push:
     branches: [main]
-    paths:
-      - 'package.json'
   workflow_dispatch:
 
 permissions:
@@ -20,8 +18,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Remove old lock file
-        run: rm -f package-lock.json
+      - name: Remove old lock files
+        run: |
+          rm -f package-lock.json
+          rm -f bun.lockb
 
       - name: Install dependencies
         run: npm install --legacy-peer-deps
@@ -31,5 +31,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package-lock.json
-          git diff --cached --quiet || git commit -m "fix: regenerate package-lock.json"
+          git add -u bun.lockb
+          git diff --cached --quiet || git commit -m "fix: regenerate package-lock.json [skip ci]"
           git push
