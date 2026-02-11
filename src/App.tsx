@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,13 +9,14 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import FloatingPhone from "@/components/FloatingPhone";
 import Index from "./pages/Index";
-import ServicesPage from "./pages/ServicesPage";
-import PortfolioPage from "./pages/PortfolioPage";
-import ReviewsPage from "./pages/ReviewsPage";
-import ContactsPage from "./pages/ContactsPage";
-import RequestPage from "./pages/RequestPage";
-import LoginPage from "./pages/LoginPage";
-import NotFound from "./pages/NotFound";
+
+const ServicesPage = lazy(() => import("./pages/ServicesPage"));
+const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
+const ReviewsPage = lazy(() => import("./pages/ReviewsPage"));
+const ContactsPage = lazy(() => import("./pages/ContactsPage"));
+const RequestPage = lazy(() => import("./pages/RequestPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -35,16 +37,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const AppRoutes = () => (
   <Layout>
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/services" element={<ServicesPage />} />
-      <Route path="/portfolio" element={<PortfolioPage />} />
-      <Route path="/reviews" element={<ReviewsPage />} />
-      <Route path="/contacts" element={<ContactsPage />} />
-      <Route path="/request" element={<RequestPage />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/services" element={<ServicesPage />} />
+        <Route path="/portfolio" element={<PortfolioPage />} />
+        <Route path="/reviews" element={<ReviewsPage />} />
+        <Route path="/contacts" element={<ContactsPage />} />
+        <Route path="/request" element={<RequestPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   </Layout>
 );
 
