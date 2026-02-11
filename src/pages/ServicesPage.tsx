@@ -327,7 +327,7 @@ const ServicesPage = () => {
 
                   const renderTable = (items: typeof prices, startIndex: number) => (
                     <div className="border border-border">
-                      <div className="grid grid-cols-[1fr_60px_100px] bg-secondary/50 border-b border-border">
+                      <div className="grid grid-cols-[1fr_50px_minmax(120px,auto)] bg-secondary/50 border-b border-border">
                         <div className="px-3 md:px-4 py-3 text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground">
                           Наименование
                         </div>
@@ -344,7 +344,7 @@ const ServicesPage = () => {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.4, delay: (startIndex + i) * 0.02 }}
-                          className="grid grid-cols-[1fr_60px_100px] border-b border-border last:border-b-0 hover:bg-secondary/30 transition-colors duration-300"
+                          className="grid grid-cols-[1fr_50px_minmax(120px,auto)] border-b border-border last:border-b-0 hover:bg-secondary/30 transition-colors duration-300"
                         >
                           <div className="px-3 md:px-4 py-3 text-sm text-foreground/80">
                             {item.name}
@@ -352,7 +352,7 @@ const ServicesPage = () => {
                           <div className="px-2 py-3 text-sm text-muted-foreground text-center">
                             {item.unit}
                           </div>
-                          <div className="px-3 md:px-4 py-3 text-sm font-medium text-foreground text-right whitespace-nowrap">
+                          <div className="px-3 md:px-4 py-3 text-sm font-medium text-foreground text-right">
                             {formatPrice(item[cityKey])}
                           </div>
                         </motion.div>
