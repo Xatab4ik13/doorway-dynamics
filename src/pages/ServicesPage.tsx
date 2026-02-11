@@ -12,7 +12,6 @@ const cities = [
 const serviceTypes = [
   { id: "interior", label: "Установка межкомнатных дверей" },
   { id: "entrance", label: "Установка входных дверей" },
-  { id: "reclamation", label: "Рекламация" },
 ];
 
 type PriceItem = {
