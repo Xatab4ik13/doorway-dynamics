@@ -8,13 +8,13 @@ const services = [
     title: "Межкомнатные двери",
     description: "Установка всех типов: распашные, раздвижные, скрытого монтажа",
     image: serviceCardInterior,
-    link: "/services/interior",
+    link: "/services?type=interior",
   },
   {
     title: "Входные двери",
     description: "Монтаж стальных и деревянных дверей с электронными замками",
     image: serviceCardEntrance,
-    link: "/services/entrance",
+    link: "/services?type=entrance",
   },
 ];
 
