@@ -16,6 +16,12 @@ const services = [
     image: serviceCardEntrance,
     link: "/services?type=entrance",
   },
+  {
+    title: "Рекламация",
+    description: "Бесплатная диагностика и устранение дефектов после установки",
+    image: serviceCardInterior,
+    link: "/reclamation",
+  },
 ];
 
 const ServicesSection = () => {

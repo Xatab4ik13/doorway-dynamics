@@ -18,6 +18,7 @@ const RequestPage = lazy(() => import("./pages/RequestPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
 const NewsPage = lazy(() => import("./pages/NewsPage"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
+const ReclamationPage = lazy(() => import("./pages/ReclamationPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const AppRoutes = () => (
         <Route path="/login" element={<LoginPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:slug" element={<ArticlePage />} />
+        <Route path="/reclamation" element={<ReclamationPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

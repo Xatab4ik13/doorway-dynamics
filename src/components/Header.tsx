@@ -8,7 +8,7 @@ import menuBg from "@/assets/menu-bg.jpg";
 const serviceLinks = [
   { label: "Установка межкомнатных дверей", path: "/services?type=interior" },
   { label: "Установка входных дверей", path: "/services?type=entrance" },
-  { label: "Рекламация", path: "/services?type=reclamation" },
+  { label: "Рекламация", path: "/reclamation" },
 ];
 
 const Header = () => {
