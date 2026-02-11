@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
-import heroVideo1 from "@/assets/hero-video.mp4";
-import heroVideo3 from "@/assets/hero-video-3.mp4";
+import heroVideo1 from "@/assets/hero-video-new-1.mp4";
+import heroVideo2 from "@/assets/hero-video-new-2.mp4";
+import heroVideo3 from "@/assets/hero-video-new-3.mp4";
 
-const videos = [heroVideo1, heroVideo3];
+const videos = [heroVideo1, heroVideo2, heroVideo3];
 
 const HeroSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
