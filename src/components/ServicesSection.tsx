@@ -1,10 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import serviceCardInterior from "@/assets/service-card-interior.jpg";
-import serviceCardEntrance from "@/assets/service-card-entrance.jpg";
-import serviceCardLocks from "@/assets/service-card-locks.jpg";
-import serviceCardAdjustment from "@/assets/service-card-adjustment.jpg";
-import serviceCardDemolition from "@/assets/service-card-demolition.jpg";
+import serviceCardEntrance from "@/assets/service-card-entrance-electronic.jpg";
 
 const services = [
   {
@@ -15,27 +12,9 @@ const services = [
   },
   {
     title: "Входные двери",
-    description: "Монтаж стальных и деревянных дверей с отделкой откосов",
+    description: "Монтаж стальных и деревянных дверей с электронными замками",
     image: serviceCardEntrance,
     link: "/services/entrance",
-  },
-  {
-    title: "Врезка замков",
-    description: "Установка замков любой сложности, от цилиндровых до электронных",
-    image: serviceCardLocks,
-    link: "/services/locks",
-  },
-  {
-    title: "Регулировка",
-    description: "Регулировка петель, замков, доводчиков и устранение скрипов",
-    image: serviceCardAdjustment,
-    link: "/services/adjustment",
-  },
-  {
-    title: "Демонтаж",
-    description: "Аккуратный демонтаж старых дверей и подготовка проёмов",
-    image: serviceCardDemolition,
-    link: "/services/demolition",
   },
 ];
 
@@ -55,17 +34,9 @@ const ServicesSection = () => {
           </span>
         </motion.div>
 
-        {/* Top row: 3 cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          {services.slice(0, 3).map((service, i) => (
-            <ServiceCard key={service.title} service={service} index={i} />
-          ))}
-        </div>
-
-        {/* Bottom row: 2 cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {services.slice(3).map((service, i) => (
-            <ServiceCard key={service.title} service={service} index={i + 3} />
+          {services.map((service, i) => (
+            <ServiceCard key={service.title} service={service} index={i} />
           ))}
         </div>
       </div>

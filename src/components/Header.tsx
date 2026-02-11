@@ -1,25 +1,19 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, ChevronDown, X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import logo from "@/assets/logo.png";
 import menuBg from "@/assets/menu-bg.jpg";
 
 const serviceLinks = [
   { label: "Установка межкомнатных дверей", path: "/services/interior" },
   { label: "Установка входных дверей", path: "/services/entrance" },
-  { label: "Врезка замков", path: "/services/locks" },
-  { label: "Регулировка", path: "/services/adjustment" },
-  { label: "Демонтаж", path: "/services/demolition" },
+  { label: "Рекламация", path: "/services/reclamation" },
 ];
-
-const cities = ["Москва", "Санкт-Петербург"];
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [cityOpen, setCityOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState("Москва");
   const [servicesOpen, setServicesOpen] = useState(true);
 
   useEffect(() => {
@@ -59,56 +53,13 @@ const Header = () => {
           </Link>
 
           <div className="absolute right-4 md:right-10 z-[110] flex items-center gap-3 md:gap-4">
-            {/* City selector */}
-            <div className="relative">
-              <button
-                onClick={() => setCityOpen(!cityOpen)}
-                className="flex items-center gap-1.5 text-foreground/50 hover:text-foreground transition-colors duration-300"
-              >
-                <MapPin className="w-3.5 h-3.5" />
-                <span className="text-xs uppercase tracking-[0.15em] font-medium">
-                  {selectedCity}
-                </span>
-                <motion.div
-                  animate={{ rotate: cityOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <ChevronDown className="w-3 h-3" />
-                </motion.div>
-              </button>
-
-              <AnimatePresence>
-                {cityOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                    className="absolute top-full right-0 mt-3 bg-card border border-border rounded-lg overflow-hidden min-w-[180px] z-50 shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
-                  >
-                    {cities.map((city, i) => (
-                      <motion.button
-                        key={city}
-                        initial={{ opacity: 0, x: 10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.04 }}
-                        onClick={() => {
-                          setSelectedCity(city);
-                          setCityOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2.5 text-xs uppercase tracking-[0.15em] transition-colors duration-300 ${
-                          selectedCity === city
-                            ? "text-foreground bg-secondary"
-                            : "text-foreground/50 hover:text-foreground hover:bg-secondary/50"
-                        }`}
-                      >
-                        {city}
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Заявка button */}
+            <Link
+              to="/request"
+              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 bg-foreground text-background hover:bg-foreground/80 transition-colors duration-300"
+            >
+              Заявка
+            </Link>
 
             {/* Burger */}
             <button
@@ -135,10 +86,6 @@ const Header = () => {
           </div>
         </div>
       </header>
-
-      {cityOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setCityOpen(false)} />
-      )}
 
       {/* Slide-out menu panel */}
       <AnimatePresence>
