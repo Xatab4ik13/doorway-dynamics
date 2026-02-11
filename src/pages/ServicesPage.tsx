@@ -359,39 +359,39 @@ const ServicesPage = () => {
                           className="group"
                         >
                           <div className="flex items-start gap-4">
-                            <div className="flex-shrink-0 w-10 h-10 border border-border flex items-center justify-center group-hover:border-foreground/50 transition-colors duration-500">
-                              <Icon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-500" strokeWidth={1.5} />
+                            <div className="flex-shrink-0 w-12 h-12 border border-border flex items-center justify-center group-hover:border-foreground/50 transition-colors duration-500">
+                              <Icon className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors duration-500" strokeWidth={1.5} />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-[0.05em]">
+                              <h3 className="text-base font-semibold text-foreground mb-3 uppercase tracking-[0.05em]">
                                 {item.title}
                               </h3>
 
                               {item.subtitle && (
-                                <p className="text-xs font-medium text-foreground/70 mb-2 uppercase tracking-[0.05em]">
+                                <p className="text-sm font-medium text-foreground/70 mb-2 uppercase tracking-[0.05em]">
                                   {item.subtitle}
                                 </p>
                               )}
 
-                              <ul className="space-y-2">
+                              <ul className="space-y-2.5">
                                 {item.points.map((point, j) => (
                                   <li key={j} className="flex items-start gap-2">
-                                    <span className="w-1 h-1 rounded-full bg-muted-foreground mt-2 flex-shrink-0" />
-                                    <span className="text-xs text-muted-foreground leading-relaxed">{point}</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0" />
+                                    <span className="text-sm text-muted-foreground leading-relaxed">{point}</span>
                                   </li>
                                 ))}
                               </ul>
 
                               {item.subtitle2 && (
                                 <>
-                                  <p className="text-xs font-medium text-foreground/70 mb-2 mt-4 uppercase tracking-[0.05em]">
+                                  <p className="text-sm font-medium text-foreground/70 mb-2 mt-4 uppercase tracking-[0.05em]">
                                     {item.subtitle2}
                                   </p>
-                                  <ul className="space-y-2">
+                                  <ul className="space-y-2.5">
                                     {item.points2?.map((point, j) => (
                                       <li key={j} className="flex items-start gap-2">
-                                        <span className="w-1 h-1 rounded-full bg-muted-foreground mt-2 flex-shrink-0" />
-                                        <span className="text-xs text-muted-foreground leading-relaxed">{point}</span>
+                                        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground mt-2 flex-shrink-0" />
+                                        <span className="text-sm text-muted-foreground leading-relaxed">{point}</span>
                                       </li>
                                     ))}
                                   </ul>
