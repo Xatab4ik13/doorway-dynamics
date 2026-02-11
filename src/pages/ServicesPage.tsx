@@ -241,6 +241,7 @@ const ServicesPage = () => {
     document.title = "Услуги — PrimeDoor Service";
   }, []);
 
+  const isUnavailable = selectedCity === "spb" && selectedService === "entrance";
   const prices = selectedService ? priceData[selectedService] : [];
   const cityKey = selectedCity as "moscow" | "spb";
 
@@ -310,7 +311,7 @@ const ServicesPage = () => {
 
           {/* Price list */}
           <AnimatePresence>
-            {selectedService && prices.length > 0 && (
+            {selectedService && !isUnavailable && prices.length > 0 && (
               <motion.div
                 key={selectedService + selectedCity}
                 initial={{ opacity: 0, y: 30 }}
@@ -387,6 +388,27 @@ const ServicesPage = () => {
                     <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform duration-300" />
                   </button>
                 </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Unavailable service message */}
+          <AnimatePresence>
+            {isUnavailable && (
+              <motion.div
+                key="unavailable"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.6 }}
+                className="mb-16 border border-border p-10 md:p-16 text-center"
+              >
+                <p className="text-lg md:text-xl font-heading font-semibold text-foreground mb-4">
+                  Услуга временно недоступна в Санкт-Петербурге
+                </p>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                  В настоящее время установка входных дверей выполняется только в Москве. Мы работаем над расширением команды — следите за обновлениями.
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
