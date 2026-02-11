@@ -6,9 +6,9 @@ import logo from "@/assets/logo.png";
 import menuBg from "@/assets/menu-bg.jpg";
 
 const serviceLinks = [
-  { label: "Установка межкомнатных дверей", path: "/services/interior" },
-  { label: "Установка входных дверей", path: "/services/entrance" },
-  { label: "Рекламация", path: "/services/reclamation" },
+  { label: "Установка межкомнатных дверей", path: "/services?type=interior" },
+  { label: "Установка входных дверей", path: "/services?type=entrance" },
+  { label: "Рекламация", path: "/services?type=reclamation" },
 ];
 
 const Header = () => {

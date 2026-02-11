@@ -38,9 +38,9 @@ const Footer = () => {
             <p className="section-label mb-6">Услуги</p>
             <ul className="space-y-3">
               {[
-                { label: "Межкомнатные двери", path: "/services/interior" },
-                { label: "Входные двери", path: "/services/entrance" },
-                { label: "Рекламация", path: "/services/reclamation" },
+                { label: "Межкомнатные двери", path: "/services?type=interior" },
+                { label: "Входные двери", path: "/services?type=entrance" },
+                { label: "Рекламация", path: "/services?type=reclamation" },
               ].map((s) => (
               <li key={s.label}>
                   <Link to={s.path} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-300">

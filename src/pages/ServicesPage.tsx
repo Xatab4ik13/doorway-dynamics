@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import ContactForm from "@/components/ContactForm";
 
@@ -69,8 +70,19 @@ const formatPrice = (price: number) => {
 };
 
 const ServicesPage = () => {
+  const [searchParams] = useSearchParams();
+  const typeFromUrl = searchParams.get("type");
+
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<string | null>(
+    typeFromUrl && ["interior", "entrance", "reclamation"].includes(typeFromUrl) ? typeFromUrl : null
+  );
+
+  useEffect(() => {
+    if (typeFromUrl && ["interior", "entrance", "reclamation"].includes(typeFromUrl)) {
+      setSelectedService(typeFromUrl);
+    }
+  }, [typeFromUrl]);
 
   useEffect(() => {
     document.title = "Услуги — PrimeDoor Service";
@@ -103,13 +115,12 @@ const ServicesPage = () => {
             <p className="section-label mb-4">Выберите город</p>
             <div className="flex flex-wrap gap-3">
               {cities.map((city) => (
-                <button
-                  key={city.id}
-                  onClick={() => {
-                    setSelectedCity(city.id);
-                    setSelectedService(null);
-                  }}
-                  className={`px-6 py-3 text-sm font-medium uppercase tracking-[0.15em] transition-all duration-500 border ${
+                  <button
+                    key={city.id}
+                    onClick={() => {
+                      setSelectedCity(city.id);
+                    }}
+                    className={`px-6 py-3 text-sm font-medium uppercase tracking-[0.15em] transition-all duration-500 border ${
                     selectedCity === city.id
                       ? "bg-foreground text-background border-foreground"
                       : "bg-transparent text-foreground/60 border-border hover:text-foreground hover:border-foreground/50"

@@ -8,9 +8,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Index from "./pages/Index";
 import ServicesPage from "./pages/ServicesPage";
-import InteriorDoorsPage from "./pages/InteriorDoorsPage";
-import EntranceDoorsPage from "./pages/EntranceDoorsPage";
-import ReclamationPage from "./pages/ReclamationPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import ReviewsPage from "./pages/ReviewsPage";
 import ContactsPage from "./pages/ContactsPage";
@@ -39,9 +36,6 @@ const AppRoutes = () => (
     <Routes>
       <Route path="/" element={<Index />} />
       <Route path="/services" element={<ServicesPage />} />
-      <Route path="/services/interior" element={<InteriorDoorsPage />} />
-      <Route path="/services/entrance" element={<EntranceDoorsPage />} />
-      <Route path="/services/reclamation" element={<ReclamationPage />} />
       <Route path="/portfolio" element={<PortfolioPage />} />
       <Route path="/reviews" element={<ReviewsPage />} />
       <Route path="/contacts" element={<ContactsPage />} />
