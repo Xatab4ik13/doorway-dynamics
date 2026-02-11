@@ -40,9 +40,7 @@ const Footer = () => {
               {[
                 { label: "Межкомнатные двери", path: "/services/interior" },
                 { label: "Входные двери", path: "/services/entrance" },
-                { label: "Врезка замков", path: "/services/locks" },
-                { label: "Регулировка", path: "/services/adjustment" },
-                { label: "Демонтаж", path: "/services/demolition" },
+                { label: "Рекламация", path: "/services/reclamation" },
               ].map((s) => (
               <li key={s.label}>
                   <Link to={s.path} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-300">
