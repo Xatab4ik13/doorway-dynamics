@@ -341,7 +341,7 @@ const ServicesPage = () => {
                     <h2 className="heading-lg mb-6">
                       Требования к объекту
                     </h2>
-                    <p className="text-sm text-muted-foreground max-w-2xl mb-16 leading-relaxed">
+                    <p className="text-base md:text-lg text-muted-foreground max-w-3xl mb-16 leading-relaxed">
                       Чтобы установка дверей прошла в назначенный день без задержек и дополнительных расходов, объект должен быть полностью подготовлен. Пожалуйста, убедитесь в следующем:
                     </p>
                   </motion.div>
