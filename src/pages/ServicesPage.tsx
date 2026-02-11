@@ -247,7 +247,7 @@ const ServicesPage = () => {
   return (
     <main className="pt-24 pb-0">
       <div className="px-6 md:px-10">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -319,41 +319,60 @@ const ServicesPage = () => {
                 transition={{ duration: 0.6 }}
                 className="mb-16"
               >
-                <div className="border border-border">
-                  {/* Table header */}
-                  <div className="grid grid-cols-[1fr_80px_120px] md:grid-cols-[1fr_100px_140px] bg-secondary/50 border-b border-border">
-                    <div className="px-4 md:px-6 py-4 text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground">
-                      Наименование
-                    </div>
-                    <div className="px-4 py-4 text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground text-center">
-                      Ед.
-                    </div>
-                    <div className="px-4 md:px-6 py-4 text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground text-right">
-                      Цена
-                    </div>
-                  </div>
+                {(() => {
+                  const isLargeList = selectedService !== "reclamation" && prices.length > 10;
+                  const midpoint = Math.ceil(prices.length / 2);
+                  const leftCol = isLargeList ? prices.slice(0, midpoint) : prices;
+                  const rightCol = isLargeList ? prices.slice(midpoint) : [];
 
-                  {/* Rows */}
-                  {prices.map((item, i) => (
-                    <motion.div
-                      key={item.name}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: i * 0.03 }}
-                      className="grid grid-cols-[1fr_80px_120px] md:grid-cols-[1fr_100px_140px] border-b border-border last:border-b-0 hover:bg-secondary/30 transition-colors duration-300"
-                    >
-                      <div className="px-4 md:px-6 py-4 text-sm text-foreground/80">
-                        {item.name}
+                  const renderTable = (items: typeof prices, startIndex: number) => (
+                    <div className="border border-border">
+                      <div className="grid grid-cols-[1fr_60px_100px] bg-secondary/50 border-b border-border">
+                        <div className="px-3 md:px-4 py-3 text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground">
+                          Наименование
+                        </div>
+                        <div className="px-2 py-3 text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground text-center">
+                          Ед.
+                        </div>
+                        <div className="px-3 md:px-4 py-3 text-xs uppercase tracking-[0.15em] font-medium text-muted-foreground text-right">
+                          Цена
+                        </div>
                       </div>
-                      <div className="px-4 py-4 text-sm text-muted-foreground text-center">
-                        {item.unit}
-                      </div>
-                      <div className="px-4 md:px-6 py-4 text-sm font-medium text-foreground text-right">
-                        {formatPrice(item[cityKey])}
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                      {items.map((item, i) => (
+                        <motion.div
+                          key={item.name}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.4, delay: (startIndex + i) * 0.02 }}
+                          className="grid grid-cols-[1fr_60px_100px] border-b border-border last:border-b-0 hover:bg-secondary/30 transition-colors duration-300"
+                        >
+                          <div className="px-3 md:px-4 py-3 text-sm text-foreground/80">
+                            {item.name}
+                          </div>
+                          <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                            {item.unit}
+                          </div>
+                          <div className="px-3 md:px-4 py-3 text-sm font-medium text-foreground text-right whitespace-nowrap">
+                            {formatPrice(item[cityKey])}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  );
+
+                  return (
+                    <>
+                      {isLargeList ? (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {renderTable(leftCol, 0)}
+                          {renderTable(rightCol, midpoint)}
+                        </div>
+                      ) : (
+                        renderTable(leftCol, 0)
+                      )}
+                    </>
+                  );
+                })()}
 
                 <p className="mt-4 text-xs text-muted-foreground">
                   * Указаны ориентировочные цены. Точная стоимость определяется после осмотра объекта.
