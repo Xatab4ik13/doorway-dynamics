@@ -2,6 +2,18 @@ import { useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
+const formatPhone = (value: string): string => {
+  const digits = value.replace(/\D/g, "");
+  // Ensure starts with 7
+  const d = digits.startsWith("7") ? digits : digits.startsWith("8") ? "7" + digits.slice(1) : "7" + digits;
+  let result = "+7";
+  if (d.length > 1) result += " " + d.slice(1, 4);
+  if (d.length > 4) result += " " + d.slice(4, 7);
+  if (d.length > 7) result += " " + d.slice(7, 9);
+  if (d.length > 9) result += " " + d.slice(9, 11);
+  return result;
+};
+
 const cities = [
   { id: "moscow", label: "Москва" },
   { id: "spb", label: "Санкт-Петербург" },
@@ -154,11 +166,12 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
             />
             <input
               type="tel"
-              placeholder="Номер телефона"
+              placeholder="+7 ___ ___ __ __"
               required
               disabled={!filtersSelected}
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onFocus={(e) => { if (!e.target.value) setForm({ ...form, phone: "+7" }); }}
+              onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })}
               className={filtersSelected ? inputClass : disabledInputClass}
             />
 
@@ -178,10 +191,11 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
             />
             <input
               type="tel"
-              placeholder="Номер доп. контакта"
+              placeholder="+7 ___ ___ __ __"
               disabled={!filtersSelected}
               value={form.extraPhone}
-              onChange={(e) => setForm({ ...form, extraPhone: e.target.value })}
+              onFocus={(e) => { if (!e.target.value) setForm({ ...form, extraPhone: "+7" }); }}
+              onChange={(e) => setForm({ ...form, extraPhone: formatPhone(e.target.value) })}
               className={filtersSelected ? inputClass : disabledInputClass}
             />
 
