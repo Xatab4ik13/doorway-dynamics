@@ -16,6 +16,8 @@ const ReviewsPage = lazy(() => import("./pages/ReviewsPage"));
 const ContactsPage = lazy(() => import("./pages/ContactsPage"));
 const RequestPage = lazy(() => import("./pages/RequestPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
+const NewsPage = lazy(() => import("./pages/NewsPage"));
+const ArticlePage = lazy(() => import("./pages/ArticlePage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -46,6 +48,8 @@ const AppRoutes = () => (
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/request" element={<RequestPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/news" element={<NewsPage />} />
+        <Route path="/news/:slug" element={<ArticlePage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>

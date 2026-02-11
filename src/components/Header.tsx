@@ -194,12 +194,29 @@ const Header = () => {
                     </AnimatePresence>
                   </motion.div>
 
-                  {/* Контакты */}
+                  {/* Новости */}
                   <motion.div
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
+                  >
+                    <Link
+                      to="/news"
+                      onClick={closeMenu}
+                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      Новости
+                    </Link>
+                  </motion.div>
+
+                  {/* Контакты */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.6, delay: 0.55 }}
                   >
                     <Link
                       to="/contacts"
