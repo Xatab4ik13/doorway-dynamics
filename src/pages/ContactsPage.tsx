@@ -1,19 +1,30 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
+import { Phone } from "lucide-react";
 import ContactFormComponent from "@/components/ContactForm";
 
 const contacts = [
   {
     city: "Москва",
-    phone: "+7 (495) 123-45-67",
-    email: "moscow@primedoor.ru",
-    address: "г. Москва, ул. Примерная, д. 1",
+    departments: [
+      {
+        name: "Отдел по межкомнатным дверям",
+        phones: ["+7 926 166 30 62", "+7 926 166 35 02"],
+      },
+      {
+        name: "Отдел по входным дверям",
+        phones: ["+7 925 570 06 09"],
+      },
+    ],
   },
   {
     city: "Санкт-Петербург",
-    phone: "+7 (812) 123-45-67",
-    email: "spb@primedoor.ru",
-    address: "г. Санкт-Петербург, ул. Примерная, д. 2",
+    departments: [
+      {
+        name: "Отдел по межкомнатным дверям",
+        phones: ["+7 993 266 35 04"],
+      },
+    ],
   },
 ];
 
@@ -46,15 +57,25 @@ const ContactsPage = () => {
                 transition={{ delay: i * 0.1 }}
                 className={`py-12 md:py-16 ${i === 0 ? "md:border-r md:border-border md:pr-16" : "md:pl-16"}`}
               >
-                <h3 className="text-xl font-heading font-bold mb-8">{c.city}</h3>
-                <div className="space-y-4 text-sm text-muted-foreground">
-                  <a href={`tel:${c.phone.replace(/\D/g, "")}`} className="block hover:text-foreground transition-colors">
-                    {c.phone}
-                  </a>
-                  <a href={`mailto:${c.email}`} className="block hover:text-foreground transition-colors">
-                    {c.email}
-                  </a>
-                  <p>{c.address}</p>
+                <h3 className="text-xl font-heading font-bold mb-10">{c.city}</h3>
+                <div className="space-y-8">
+                  {c.departments.map((dept) => (
+                    <div key={dept.name}>
+                      <p className="section-label mb-4">{dept.name}</p>
+                      <div className="space-y-3">
+                        {dept.phones.map((phone) => (
+                          <a
+                            key={phone}
+                            href={`tel:${phone.replace(/\s/g, "")}`}
+                            className="flex items-center gap-3 text-sm text-muted-foreground hover:text-foreground transition-colors duration-300 group"
+                          >
+                            <Phone className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors duration-300" strokeWidth={1.5} />
+                            {phone}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             ))}
