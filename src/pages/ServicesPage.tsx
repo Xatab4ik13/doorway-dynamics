@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import ContactForm from "@/components/ContactForm";
-
+import { ArrowDown } from "lucide-react";
+import ContactForm, { ContactFormRef } from "@/components/ContactForm";
 const cities = [
   { id: "moscow", label: "Москва" },
   { id: "spb", label: "Санкт-Петербург" },
@@ -72,6 +72,7 @@ const formatPrice = (price: number) => {
 const ServicesPage = () => {
   const [searchParams] = useSearchParams();
   const typeFromUrl = searchParams.get("type");
+  const formRef = useRef<ContactFormRef>(null);
 
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<string | null>(
@@ -211,6 +212,16 @@ const ServicesPage = () => {
                 <p className="mt-4 text-xs text-muted-foreground">
                   * Указаны ориентировочные цены. Точная стоимость определяется после осмотра объекта.
                 </p>
+
+                <div className="mt-8 flex justify-center">
+                  <button
+                    onClick={() => formRef.current?.scrollToForm()}
+                    className="group flex items-center gap-3 px-8 py-4 border border-foreground/20 hover:border-foreground text-foreground/70 hover:text-foreground transition-all duration-500 text-sm uppercase tracking-[0.15em] font-medium"
+                  >
+                    Оставить заявку
+                    <ArrowDown className="w-4 h-4 group-hover:translate-y-1 transition-transform duration-300" />
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -218,7 +229,7 @@ const ServicesPage = () => {
       </div>
 
       {/* Contact form */}
-      <ContactForm />
+      <ContactForm ref={formRef} />
     </main>
   );
 };

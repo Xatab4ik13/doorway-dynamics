@@ -224,7 +224,7 @@ const Header = () => {
                       className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
-                      Заявка на замер
+                      Заявка
                     </Link>
                   </motion.div>
                 </nav>
