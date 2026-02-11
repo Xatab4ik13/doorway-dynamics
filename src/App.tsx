@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import FloatingPhone from "@/components/FloatingPhone";
 import Index from "./pages/Index";
 import ServicesPage from "./pages/ServicesPage";
 import PortfolioPage from "./pages/PortfolioPage";
@@ -27,6 +28,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {!isLoginPage && <Header />}
       {children}
       {!isLoginPage && <Footer />}
+      {!isLoginPage && <FloatingPhone />}
     </>
   );
 };
