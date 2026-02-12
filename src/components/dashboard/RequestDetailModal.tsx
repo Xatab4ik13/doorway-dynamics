@@ -1,26 +1,46 @@
 import { useState } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Upload, FileText, Briefcase } from "lucide-react";
-import { type ServiceRequest, statusLabels, statusColors, requestTypeLabels, sourceLabels, type RequestStatus } from "@/data/mockDashboard";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Upload, FileText, Briefcase, Loader2 } from "lucide-react";
+import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
+import { useUsers, type ApiRequest } from "@/hooks/useRequests";
+import { toast } from "sonner";
 
 interface RequestDetailModalProps {
-  request: ServiceRequest;
+  request: ApiRequest;
   onClose: () => void;
+  onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const mockAssignees = {
-  measurer: ["Сидоров К.В.", "Морозов А.И."],
-  installer: ["Бригада №1", "Бригада №2", "Бригада №3"],
-};
+const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: RequestDetailModalProps) => {
+  const { getByRole } = useUsers();
+  const [status, setStatus] = useState<string>(request.status);
+  const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
+  const [installerId, setInstallerId] = useState(request.installer_id || "");
+  const [notes, setNotes] = useState(request.notes || "");
+  const [agreedDate, setAgreedDate] = useState(request.agreed_date?.split("T")[0] || "");
+  const [saving, setSaving] = useState(false);
 
-const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestDetailModalProps) => {
-  const [status, setStatus] = useState<RequestStatus>(request.status);
-  const [assignedTo, setAssignedTo] = useState(request.assignedTo || "");
-  const [comment, setComment] = useState(request.comment || "");
-  const [agreedDate, setAgreedDate] = useState(request.agreedDate || "");
+  const measurers = getByRole("measurer");
+  const installers = getByRole("installer");
 
   const allStatuses = Object.entries(statusLabels);
-  const canViewFiles = viewerRole === "admin" || viewerRole === "manager";
+  const canEdit = viewerRole === "admin" || viewerRole === "manager";
+
+  const handleSave = async () => {
+    if (!onSave) { onClose(); return; }
+    setSaving(true);
+    try {
+      const updates: any = { status, notes };
+      if (measurerId) updates.measurer_id = measurerId;
+      if (installerId) updates.installer_id = installerId;
+      if (agreedDate) updates.agreed_date = agreedDate;
+      await onSave(request.id, updates);
+      toast.success("Заявка обновлена");
+    } catch {
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -30,10 +50,10 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
             <div className="flex items-center gap-2">
-              <p className="font-mono text-xs text-muted-foreground">{request.id}</p>
-              {request.source === "partner" && (
+              <p className="font-mono text-xs text-muted-foreground">{request.number}</p>
+              {request.partner_id && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">
-                  <Briefcase size={10} /> {request.partnerName || "Партнёр"}
+                  <Briefcase size={10} /> Партнёр
                 </span>
               )}
               {request.type === "reclamation" && (
@@ -42,7 +62,7 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
                 </span>
               )}
             </div>
-            <h2 className="text-xl font-heading font-bold mt-1">{request.clientName}</h2>
+            <h2 className="text-xl font-heading font-bold mt-1">{request.client_name}</h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground">
             <X size={20} />
@@ -56,26 +76,25 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
               <Phone size={16} className="text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-xs text-muted-foreground">Телефон</p>
-                <p className="text-sm font-medium">{request.clientPhone}</p>
+                <p className="text-sm font-medium">{request.client_phone}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <MapPin size={16} className="text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-xs text-muted-foreground">Адрес</p>
-                <p className="text-sm font-medium">{request.address}</p>
-                <p className="text-xs text-muted-foreground">{request.city}</p>
+                <p className="text-sm font-medium">{request.client_address}</p>
+                {request.city && <p className="text-xs text-muted-foreground">{request.city}</p>}
               </div>
             </div>
 
-            {/* Extra contact */}
-            {request.extraName && (
+            {request.extra_name && (
               <div className="flex items-start gap-3">
                 <User size={16} className="text-muted-foreground mt-0.5" />
                 <div>
                   <p className="text-xs text-muted-foreground">Доп. контакт</p>
-                  <p className="text-sm font-medium">{request.extraName}</p>
-                  {request.extraPhone && <p className="text-xs text-muted-foreground">{request.extraPhone}</p>}
+                  <p className="text-sm font-medium">{request.extra_name}</p>
+                  {request.extra_phone && <p className="text-xs text-muted-foreground">{request.extra_phone}</p>}
                 </div>
               </div>
             )}
@@ -84,21 +103,21 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
               <Calendar size={16} className="text-muted-foreground mt-0.5" />
               <div>
                 <p className="text-xs text-muted-foreground">Дата создания</p>
-                <p className="text-sm font-medium">{request.date}</p>
+                <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
               </div>
             </div>
             <div>
               <p className="text-xs text-muted-foreground mb-1">Тип заявки</p>
               <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-accent text-foreground">
-                {requestTypeLabels[request.type]}
+                {requestTypeLabels[request.type] || request.type}
               </span>
             </div>
-            {/* Agreed date - editable for admin/manager */}
+            {/* Agreed date */}
             <div className="flex items-start gap-3">
               <Calendar size={16} className="text-primary mt-0.5" />
               <div className="flex-1">
                 <p className="text-xs text-muted-foreground mb-1">Согласованная дата</p>
-                {(viewerRole === "admin" || viewerRole === "manager") ? (
+                {canEdit ? (
                   <input
                     type="date"
                     value={agreedDate}
@@ -113,102 +132,78 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
           </div>
 
           {/* Work description */}
-          {request.workDescription && (
+          {request.work_description && (
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
                 <MessageSquare size={14} /> Описание работ
               </label>
-              <p className="text-sm bg-accent/50 rounded-lg px-4 py-3">{request.workDescription}</p>
+              <p className="text-sm bg-accent/50 rounded-lg px-4 py-3">{request.work_description}</p>
             </div>
           )}
 
           {/* Status change */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block">Статус</label>
-            <div className="flex flex-wrap gap-2">
-              {allStatuses.map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => setStatus(key as RequestStatus)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                    status === key
-                      ? statusColors[key as RequestStatus]
-                      : "bg-accent text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Assignment */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-              <User size={14} /> Назначить исполнителя
-            </label>
-            <select
-              value={assignedTo}
-              onChange={(e) => setAssignedTo(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="">Не назначен</option>
-              <optgroup label="Замерщики">
-                {mockAssignees.measurer.map((n) => <option key={n} value={n}>{n}</option>)}
-              </optgroup>
-              <optgroup label="Монтажники">
-                {mockAssignees.installer.map((n) => <option key={n} value={n}>{n}</option>)}
-              </optgroup>
-            </select>
-          </div>
-
-          {/* Comment */}
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-              <MessageSquare size={14} /> Комментарий
-            </label>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              rows={3}
-              placeholder="Добавьте комментарий к заявке..."
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-            />
-          </div>
-
-          {/* Executor files (visible to admin/manager) */}
-          {canViewFiles && request.executorFiles && request.executorFiles.length > 0 && (
+          {canEdit && (
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-                <FileText size={14} /> Файлы исполнителя
-              </label>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Статус</label>
               <div className="flex flex-wrap gap-2">
-                {request.executorFiles.map((f, i) => (
-                  <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
-                    📎 {f}
-                  </span>
+                {allStatuses.map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setStatus(key)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      status === key
+                        ? statusColors[key as RequestStatus]
+                        : "bg-accent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Files */}
+          {/* Assignment */}
+          {canEdit && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">Замерщик</label>
+                <select
+                  value={measurerId}
+                  onChange={(e) => setMeasurerId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Не назначен</option>
+                  {measurers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">Монтажник</label>
+                <select
+                  value={installerId}
+                  onChange={(e) => setInstallerId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Не назначен</option>
+                  {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-              <Upload size={14} /> Файлы заявки
+              <MessageSquare size={14} /> Заметки
             </label>
-            {request.files && request.files.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {request.files.map((f, i) => (
-                  <span key={i} className="px-3 py-1.5 bg-accent rounded-lg text-xs">{f}</span>
-                ))}
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                <Upload size={24} className="mx-auto text-muted-foreground mb-2" />
-                <p className="text-xs text-muted-foreground">Перетащите файлы или нажмите для загрузки</p>
-              </div>
-            )}
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              placeholder="Добавьте заметку к заявке..."
+              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              readOnly={!canEdit}
+            />
           </div>
         </div>
 
@@ -220,12 +215,15 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
           >
             Отмена
           </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            Сохранить
-          </button>
+          {canEdit && (
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {saving ? <Loader2 size={16} className="animate-spin" /> : "Сохранить"}
+            </button>
+          )}
         </div>
       </div>
     </div>

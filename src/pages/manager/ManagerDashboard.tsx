@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockRequests, statusLabels, statusColors, requestTypeLabels, type ServiceRequest, type RequestStatus } from "@/data/mockDashboard";
-import { Search, ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase } from "lucide-react";
+import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
+import { Search, ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase, Loader2 } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
+import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
+import { useAuth } from "@/contexts/AuthContext";
 
 const quickFilters = [
   { label: "Все", value: "all", icon: <ClipboardList size={14} /> },
@@ -13,36 +15,54 @@ const quickFilters = [
 ];
 
 const ManagerDashboard = () => {
+  const { user } = useAuth();
+  const { requests, loading, updateRequest } = useRequests();
+  const { getUserName } = useUsers();
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [quickFilter, setQuickFilter] = useState("all");
-  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
 
   useEffect(() => { document.title = "Заявки — Менеджер"; }, []);
 
-  const filtered = mockRequests.filter((r) => {
-    const matchSearch = r.clientName.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase()) || r.address.toLowerCase().includes(search.toLowerCase());
+  const filtered = requests.filter((r) => {
+    const matchSearch = r.client_name.toLowerCase().includes(search.toLowerCase()) ||
+      r.number.toLowerCase().includes(search.toLowerCase()) ||
+      (r.client_address || "").toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "all" || r.status === filterStatus;
     const matchType = filterType === "all" || r.type === filterType;
 
     let matchQuick = true;
     if (quickFilter === "new") matchQuick = r.status === "new";
-    else if (quickFilter === "in_progress") matchQuick = !["new", "closed"].includes(r.status);
+    else if (quickFilter === "in_progress") matchQuick = !["new", "closed", "cancelled"].includes(r.status);
     else if (quickFilter === "reclamation") matchQuick = r.type === "reclamation";
 
     return matchSearch && matchStatus && matchType && matchQuick;
   });
 
   const counts = {
-    all: mockRequests.length,
-    new: mockRequests.filter((r) => r.status === "new").length,
-    in_progress: mockRequests.filter((r) => !["new", "closed"].includes(r.status)).length,
-    reclamation: mockRequests.filter((r) => r.type === "reclamation").length,
+    all: requests.length,
+    new: requests.filter((r) => r.status === "new").length,
+    in_progress: requests.filter((r) => !["new", "closed", "cancelled"].includes(r.status)).length,
+    reclamation: requests.filter((r) => r.type === "reclamation").length,
+  };
+
+  const getAssignedName = (r: ApiRequest) => {
+    return getUserName(r.measurer_id) || getUserName(r.installer_id) || "—";
+  };
+
+  const getPartnerName = (r: ApiRequest) => {
+    return getUserName(r.partner_id) || "Партнёр";
+  };
+
+  const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
+    await updateRequest(id, updates);
+    setSelectedRequest(null);
   };
 
   return (
-    <DashboardLayout role="manager" userName="Смирнова Е.П.">
+    <DashboardLayout role="manager" userName={user?.name || "Менеджер"}>
       <div className="space-y-6">
         <h1 className="text-2xl font-heading font-bold">Все заявки</h1>
 
@@ -104,66 +124,77 @@ const ManagerDashboard = () => {
               </select>
             </div>
 
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                    <th className="pb-3 pr-4">№</th>
-                    <th className="pb-3 pr-4">Клиент</th>
-                    <th className="pb-3 pr-4">Город</th>
-                    <th className="pb-3 pr-4">Тип</th>
-                    <th className="pb-3 pr-4">Статус</th>
-                    <th className="pb-3 pr-4">Источник</th>
-                    <th className="pb-3 pr-4">Исполнитель</th>
-                    <th className="pb-3">Дата</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((r) => (
-                    <tr
-                      key={r.id}
-                      onClick={() => setSelectedRequest(r)}
-                      className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer"
-                    >
-                      <td className="py-3 pr-4 font-mono text-xs">{r.id}</td>
-                      <td className="py-3 pr-4 font-medium">{r.clientName}</td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">{r.city}</td>
-                      <td className="py-3 pr-4 text-xs">
-                        {requestTypeLabels[r.type]}
-                        {r.type === "reclamation" && (
-                          <span className="ml-1 text-[10px] text-green-600">Бесплатно</span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
-                          {statusLabels[r.status]}
-                        </span>
-                      </td>
-                      <td className="py-3 pr-4 text-xs">
-                        {r.source === "partner" ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
-                            <Briefcase size={10} /> {r.partnerName || "Партнёр"}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">Сайт</span>
-                        )}
-                      </td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">{r.assignedTo || "—"}</td>
-                      <td className="py-3 text-xs text-muted-foreground">{r.date}</td>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="animate-spin text-muted-foreground" size={32} />
+              </div>
+            ) : (
+              <div className="overflow-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                      <th className="pb-3 pr-4">№</th>
+                      <th className="pb-3 pr-4">Клиент</th>
+                      <th className="pb-3 pr-4">Город</th>
+                      <th className="pb-3 pr-4">Тип</th>
+                      <th className="pb-3 pr-4">Статус</th>
+                      <th className="pb-3 pr-4">Источник</th>
+                      <th className="pb-3 pr-4">Исполнитель</th>
+                      <th className="pb-3">Дата</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filtered.length === 0 && (
-                <p className="text-center text-muted-foreground py-8 text-sm">Заявки не найдены</p>
-              )}
-            </div>
+                  </thead>
+                  <tbody>
+                    {filtered.map((r) => (
+                      <tr
+                        key={r.id}
+                        onClick={() => setSelectedRequest(r)}
+                        className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer"
+                      >
+                        <td className="py-3 pr-4 font-mono text-xs">{r.number}</td>
+                        <td className="py-3 pr-4 font-medium">{r.client_name}</td>
+                        <td className="py-3 pr-4 text-xs text-muted-foreground">{r.city || "—"}</td>
+                        <td className="py-3 pr-4 text-xs">
+                          {requestTypeLabels[r.type] || r.type}
+                          {r.type === "reclamation" && (
+                            <span className="ml-1 text-[10px] text-green-600">Бесплатно</span>
+                          )}
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                            {statusLabels[r.status as RequestStatus] || r.status}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4 text-xs">
+                          {r.partner_id ? (
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
+                              <Briefcase size={10} /> {getPartnerName(r)}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">Сайт</span>
+                          )}
+                        </td>
+                        <td className="py-3 pr-4 text-xs text-muted-foreground">{getAssignedName(r)}</td>
+                        <td className="py-3 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filtered.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8 text-sm">Заявки не найдены</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {selectedRequest && (
-        <RequestDetailModal request={selectedRequest} onClose={() => setSelectedRequest(null)} viewerRole="manager" />
+        <RequestDetailModal
+          request={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+          onSave={handleSave}
+          viewerRole="manager"
+        />
       )}
     </DashboardLayout>
   );
