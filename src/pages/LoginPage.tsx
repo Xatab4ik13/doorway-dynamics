@@ -9,7 +9,7 @@ import api from "@/lib/api";
 
 type LoginMode = "telegram" | "admin";
 
-const telegramBotUrl = "https://t.me/PrimeDoorBot"; // placeholder
+const telegramBotUrl = "https://t.me/primedoor_bot";
 
 const LoginPage = () => {
   const [mode, setMode] = useState<LoginMode>("telegram");
