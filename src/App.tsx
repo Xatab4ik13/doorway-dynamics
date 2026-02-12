@@ -19,6 +19,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const NewsPage = lazy(() => import("./pages/NewsPage"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
 const ReclamationPage = lazy(() => import("./pages/ReclamationPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const AppRoutes = () => (
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:slug" element={<ArticlePage />} />
         <Route path="/reclamation" element={<ReclamationPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
