@@ -7,6 +7,7 @@ import CreateAccountModal from "@/components/dashboard/CreateAccountModal";
 import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserAccount {
   id: string;
@@ -27,6 +28,7 @@ const roleColorMap: Record<UserRole, string> = {
 };
 
 const AdminAccounts = () => {
+  const { user: authUser } = useAuth();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -85,7 +87,7 @@ const AdminAccounts = () => {
   };
 
   return (
-    <DashboardLayout role="admin" userName="Корженевский М.А.">
+    <DashboardLayout role="admin" userName={authUser?.name || "Админ"}>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-2xl font-heading font-bold">Аккаунты</h1>
