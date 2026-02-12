@@ -102,6 +102,8 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const discountAmount = subtotal * (discount / 100);
   const total = subtotal - discountAmount;
 
+  const [isSaved, setIsSaved] = useState(false);
+
   const handleSave = () => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
     if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
@@ -109,7 +111,56 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       { id: `EST-${String(prev.length + 1).padStart(3, "0")}`, client: clientName, total, date: new Date().toISOString().split("T")[0] },
       ...prev,
     ]);
+    setIsSaved(true);
     toast.success("Смета сохранена");
+  };
+
+  const handleDownloadPdf = () => {
+    if (!isSaved) { toast.error("Сначала сохраните смету"); return; }
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) { toast.error("Разрешите всплывающие окна"); return; }
+    printWindow.document.write(`
+      <!DOCTYPE html><html><head><meta charset="utf-8"><title>Смета — ${clientName}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #1a1a1a; max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 20px; margin-bottom: 4px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1d4ed8; padding-bottom: 16px; margin-bottom: 24px; }
+        .header img { height: 40px; }
+        .meta { font-size: 12px; color: #666; text-align: right; }
+        .client { margin-bottom: 20px; }
+        .client p { margin: 2px 0; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th { text-align: left; padding: 8px; font-size: 12px; color: #666; border-bottom: 2px solid #e5e7eb; }
+        td { padding: 8px; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
+        .total-row td { font-weight: bold; font-size: 16px; border-top: 2px solid #1d4ed8; }
+        .footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #999; }
+        @media print { body { padding: 20px; } }
+      </style></head><body>
+      <div class="header">
+        <div><h1>PrimeDoor Service</h1><p style="font-size:12px;color:#666;">Смета</p></div>
+        <div class="meta"><p>${new Date().toLocaleDateString("ru-RU")}</p></div>
+      </div>
+      <div class="client">
+        <p><strong>${clientName}</strong></p>
+        ${clientAddress ? `<p>${clientAddress}</p>` : ""}
+      </div>
+      <table>
+        <thead><tr><th>№</th><th>Позиция</th><th>Кол.</th><th>Ед.</th><th>Цена</th><th style="text-align:right">Сумма</th></tr></thead>
+        <tbody>
+          ${items.map((it, idx) => `<tr><td>${idx + 1}</td><td>${it.name || "—"}</td><td>${it.quantity}</td><td>${it.unit}</td><td>${it.price.toLocaleString("ru")} ₽</td><td style="text-align:right">${(it.price * it.quantity).toLocaleString("ru")} ₽</td></tr>`).join("")}
+          ${discount > 0 ? `<tr><td colspan="5">Скидка ${discount}%</td><td style="text-align:right">−${discountAmount.toLocaleString("ru")} ₽</td></tr>` : ""}
+          <tr class="total-row"><td colspan="5">Итого</td><td style="text-align:right">${total.toLocaleString("ru")} ₽</td></tr>
+        </tbody>
+      </table>
+      <div class="footer">
+        <p>ИП Корженевский М.А. · ИНН 971502093793</p>
+        <p>+7 (495) 000-00-00 · info@primedoor.ru</p>
+      </div>
+      </body></html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => printWindow.print(), 300);
   };
 
   const inputClass = "w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
@@ -320,7 +371,13 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               <button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
                 Сохранить
               </button>
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-accent text-foreground rounded-lg text-sm font-medium hover:bg-accent/80 transition-colors">
+              <button
+                onClick={handleDownloadPdf}
+                disabled={!isSaved}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isSaved ? "bg-accent text-foreground hover:bg-accent/80" : "bg-accent/50 text-muted-foreground cursor-not-allowed"
+                }`}
+              >
                 <Download size={16} /> PDF
               </button>
             </div>

@@ -17,6 +17,7 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
   const [status, setStatus] = useState<RequestStatus>(request.status);
   const [assignedTo, setAssignedTo] = useState(request.assignedTo || "");
   const [comment, setComment] = useState(request.comment || "");
+  const [agreedDate, setAgreedDate] = useState(request.agreedDate || "");
 
   const allStatuses = Object.entries(statusLabels);
   const canViewFiles = viewerRole === "admin" || viewerRole === "manager";
@@ -79,15 +80,23 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
                 {requestTypeLabels[request.type]}
               </span>
             </div>
-            {request.agreedDate && (
-              <div className="flex items-start gap-3">
-                <Calendar size={16} className="text-primary mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Согласованная дата</p>
-                  <p className="text-sm font-medium text-primary">{request.agreedDate}</p>
-                </div>
+            {/* Agreed date - editable for admin/manager */}
+            <div className="flex items-start gap-3">
+              <Calendar size={16} className="text-primary mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground mb-1">Согласованная дата</p>
+                {(viewerRole === "admin" || viewerRole === "manager") ? (
+                  <input
+                    type="date"
+                    value={agreedDate}
+                    onChange={(e) => setAgreedDate(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  />
+                ) : (
+                  <p className="text-sm font-medium text-primary">{agreedDate || "Не назначена"}</p>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Status change */}

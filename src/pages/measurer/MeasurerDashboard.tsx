@@ -50,9 +50,9 @@ const MeasurerDashboard = () => {
     if (!agreedDate || !selected) return;
     setDateConfirmed(true);
     setRequests((prev) =>
-      prev.map((r) => r.id === selected.id ? { ...r, agreedDate: agreedDate } : r)
+      prev.map((r) => r.id === selected.id ? { ...r, agreedDate: agreedDate, status: "date_agreed" as RequestStatus } : r)
     );
-    setSelected({ ...selected, agreedDate });
+    setSelected({ ...selected, agreedDate, status: "date_agreed" as RequestStatus });
   };
 
   const canComplete = dateConfirmed && roomCount.trim() !== "" && doorSizes.trim() !== "" && wallMaterial.trim() !== "" && uploadedFiles.length > 0;
