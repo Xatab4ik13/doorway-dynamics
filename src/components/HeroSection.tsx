@@ -1,9 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
-const CACHE_BUST = "v11";
+const CACHE_BUST = "v12";
 const videos = [
   `/videos/hero-video-new-1.mp4?${CACHE_BUST}`,
   `/videos/hero-video-2.mp4?${CACHE_BUST}`,
+  `/videos/hero-video-3.mp4?${CACHE_BUST}`,
 ];
 
 const HeroSection = () => {
