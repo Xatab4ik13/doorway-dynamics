@@ -53,12 +53,18 @@ const Header = () => {
           </Link>
 
           <div className="absolute right-4 md:right-10 z-[110] flex items-center gap-3 md:gap-4">
-            {/* Заявка button */}
+            {/* Заявка buttons */}
             <Link
               to="/request"
-              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 bg-foreground text-background hover:bg-foreground/80 transition-colors duration-300"
+              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 bg-foreground text-background hover:bg-foreground/80 transition-colors duration-300 hidden md:inline-block"
             >
               Заявка
+            </Link>
+            <Link
+              to="/reclamation"
+              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 border border-foreground/30 text-foreground hover:bg-foreground hover:text-background transition-colors duration-300 hidden md:inline-block"
+            >
+              Рекламация
             </Link>
 
             {/* Burger */}
@@ -242,6 +248,23 @@ const Header = () => {
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
                       Заявка
+                    </Link>
+                  </motion.div>
+
+                  {/* Заявка на рекламацию */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.6, delay: 0.65 }}
+                  >
+                    <Link
+                      to="/reclamation"
+                      onClick={closeMenu}
+                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      Заявка на рекламацию
                     </Link>
                   </motion.div>
                 </nav>
