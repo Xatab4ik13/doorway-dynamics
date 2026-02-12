@@ -1,23 +1,123 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockStats, mockChartData, mockFunnelData, mockTopEmployees, mockRequests, statusLabels, statusColors } from "@/data/mockDashboard";
-import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
+import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp, Loader2 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
+import { useAuth } from "@/contexts/AuthContext";
+import { format, subDays, parseISO, startOfDay } from "date-fns";
+import { ru } from "date-fns/locale";
 
-const statCards = [
-  { label: "Всего заявок", value: mockStats.totalRequests, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50" },
-  { label: "Новые", value: mockStats.newRequests, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50" },
-  { label: "В работе", value: mockStats.inProgress, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50" },
-  { label: "Выполнено", value: mockStats.completed, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50" },
-  { label: "Рекламации", value: mockStats.reclamations, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50" },
+const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
+  { status: "new", fill: "hsl(217, 91%, 50%)" },
+  { status: "assigned", fill: "hsl(38, 92%, 50%)" },
+  { status: "date_agreed", fill: "hsl(190, 80%, 45%)" },
+  { status: "measurement_done", fill: "hsl(280, 65%, 50%)" },
+  { status: "installation_scheduled", fill: "hsl(25, 95%, 53%)" },
+  { status: "installation_done", fill: "hsl(142, 71%, 45%)" },
+  { status: "closed", fill: "hsl(220, 10%, 50%)" },
 ];
 
+const IN_PROGRESS_STATUSES: RequestStatus[] = ["assigned", "date_agreed", "measurement_done", "installation_scheduled"];
+const DONE_STATUSES: RequestStatus[] = ["installation_done", "closed"];
+const DAY_NAMES = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+
+function computeStats(requests: ApiRequest[]) {
+  const total = requests.length;
+  const newCount = requests.filter(r => r.status === "new").length;
+  const inProgress = requests.filter(r => IN_PROGRESS_STATUSES.includes(r.status as RequestStatus)).length;
+  const completed = requests.filter(r => DONE_STATUSES.includes(r.status as RequestStatus)).length;
+  const reclamations = requests.filter(r => r.type === "reclamation").length;
+  return { total, newCount, inProgress, completed, reclamations };
+}
+
+function computeWeeklyChart(requests: ApiRequest[]) {
+  const today = startOfDay(new Date());
+  const days: { name: string; заявки: number; выполнено: number }[] = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const day = subDays(today, i);
+    const dayStr = format(day, "yyyy-MM-dd");
+    const dayName = DAY_NAMES[day.getDay()];
+    const created = requests.filter(r => r.created_at?.startsWith(dayStr)).length;
+    const done = requests.filter(r =>
+      DONE_STATUSES.includes(r.status as RequestStatus) &&
+      r.updated_at?.startsWith(dayStr)
+    ).length;
+    days.push({ name: dayName, заявки: created, выполнено: done });
+  }
+  return days;
+}
+
+function computeFunnel(requests: ApiRequest[]) {
+  // Cumulative funnel: each stage shows requests that reached at least that stage
+  const statusOrder: RequestStatus[] = FUNNEL_STAGES.map(s => s.status);
+
+  return FUNNEL_STAGES.map((stage, idx) => {
+    const reachedStatuses = statusOrder.slice(idx);
+    const value = requests.filter(r => reachedStatuses.includes(r.status as RequestStatus)).length;
+    // For cumulative: count all requests for first stage, then progressively fewer
+    const cumulativeValue = idx === 0 ? requests.length : requests.filter(r => {
+      const rIdx = statusOrder.indexOf(r.status as RequestStatus);
+      return rIdx >= idx;
+    }).length;
+    return { stage: statusLabels[stage.status], value: cumulativeValue, fill: stage.fill };
+  });
+}
+
+function computeTopEmployees(requests: ApiRequest[], getUserName: (id?: string) => string | undefined) {
+  const counts: Record<string, { name: string; role: string; completed: number }> = {};
+
+  requests.forEach(r => {
+    if (!DONE_STATUSES.includes(r.status as RequestStatus)) return;
+    
+    const checkUser = (id?: string, role?: string) => {
+      if (!id) return;
+      const name = getUserName(id) || id;
+      if (!counts[id]) counts[id] = { name, role: role || "", completed: 0 };
+      counts[id].completed++;
+    };
+
+    checkUser(r.measurer_id, "Замерщик");
+    checkUser(r.installer_id, "Монтажник");
+  });
+
+  return Object.values(counts).sort((a, b) => b.completed - a.completed).slice(0, 5);
+}
+
 const AdminDashboard = () => {
+  const { user } = useAuth();
+  const { requests, loading } = useRequests();
+  const { getUserName } = useUsers();
+
   useEffect(() => { document.title = "Админ-панель — PrimeDoor Service"; }, []);
 
+  const stats = useMemo(() => computeStats(requests), [requests]);
+  const chartData = useMemo(() => computeWeeklyChart(requests), [requests]);
+  const funnelData = useMemo(() => computeFunnel(requests), [requests]);
+  const topEmployees = useMemo(() => computeTopEmployees(requests, getUserName), [requests, getUserName]);
+
+  const statCards = [
+    { label: "Всего заявок", value: stats.total, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50" },
+    { label: "Новые", value: stats.newCount, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50" },
+    { label: "В работе", value: stats.inProgress, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50" },
+    { label: "Выполнено", value: stats.completed, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50" },
+    { label: "Рекламации", value: stats.reclamations, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50" },
+  ];
+
+  if (loading) {
+    return (
+      <DashboardLayout role="admin" userName={user?.name || "Админ"}>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="animate-spin text-muted-foreground" size={32} />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
-    <DashboardLayout role="admin" userName="Корженевский М.А.">
+    <DashboardLayout role="admin" userName={user?.name || "Админ"}>
       <div className="space-y-6">
         <h1 className="text-2xl font-heading font-bold">Дашборд</h1>
 
@@ -44,7 +144,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={mockChartData}>
+                <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 13%, 91%)" />
                   <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                   <YAxis tick={{ fontSize: 12 }} />
@@ -63,7 +163,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockFunnelData.map((item, i) => (
+                {funnelData.map((item) => (
                   <div key={item.stage}>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-muted-foreground">{item.stage}</span>
@@ -73,7 +173,7 @@ const AdminDashboard = () => {
                       <div
                         className="h-full rounded transition-all duration-700"
                         style={{
-                          width: `${(item.value / mockFunnelData[0].value) * 100}%`,
+                          width: `${funnelData[0].value > 0 ? (item.value / funnelData[0].value) * 100 : 0}%`,
                           backgroundColor: item.fill,
                         }}
                       />
@@ -92,20 +192,24 @@ const AdminDashboard = () => {
               <CardTitle className="text-base">Топ сотрудников</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {mockTopEmployees.map((emp, i) => (
-                  <div key={emp.name} className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
-                      {i + 1}
+              {topEmployees.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Нет данных</p>
+              ) : (
+                <div className="space-y-3">
+                  {topEmployees.map((emp, i) => (
+                    <div key={emp.name} className="flex items-center gap-3">
+                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{emp.name}</p>
+                        <p className="text-xs text-muted-foreground">{emp.role}</p>
+                      </div>
+                      <span className="text-sm font-bold">{emp.completed}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{emp.name}</p>
-                      <p className="text-xs text-muted-foreground">{emp.role}</p>
-                    </div>
-                    <span className="text-sm font-bold">{emp.completed}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -127,19 +231,21 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockRequests.slice(0, 6).map((r) => (
+                    {requests.slice(0, 6).map((r) => (
                       <tr key={r.id} className="border-b border-border last:border-0">
-                        <td className="py-2.5 pr-4 font-mono text-xs">{r.id}</td>
-                        <td className="py-2.5 pr-4">{r.clientName}</td>
+                        <td className="py-2.5 pr-4 font-mono text-xs">{r.number}</td>
+                        <td className="py-2.5 pr-4">{r.client_name}</td>
                         <td className="py-2.5 pr-4 capitalize text-xs">
                           {r.type === "measurement" ? "Замер" : r.type === "installation" ? "Монтаж" : "Рекламация"}
                         </td>
                         <td className="py-2.5 pr-4">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
-                            {statusLabels[r.status]}
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                            {statusLabels[r.status as RequestStatus] || r.status}
                           </span>
                         </td>
-                        <td className="py-2.5 text-xs text-muted-foreground">{r.date}</td>
+                        <td className="py-2.5 text-xs text-muted-foreground">
+                          {r.created_at ? format(parseISO(r.created_at), "dd.MM.yyyy") : "—"}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
