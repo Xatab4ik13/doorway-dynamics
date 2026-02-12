@@ -63,9 +63,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+const SuspenseFallback = () => {
+  const location = useLocation();
+  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner"].some(
+    (p) => location.pathname.startsWith(p)
+  );
+  return <div className={`min-h-screen ${isDashboard ? "dashboard-theme bg-[hsl(220,20%,97%)]" : ""}`} />;
+};
+
 const AppRoutes = () => (
   <Layout>
-    <Suspense fallback={<div className="min-h-screen" />}>
+    <Suspense fallback={<SuspenseFallback />}>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/services" element={<ServicesPage />} />
