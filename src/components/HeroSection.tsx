@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
-const CACHE_BUST = "v3";
+const CACHE_BUST = "v4";
 const videos = [
   `/videos/hero-video-new-1.mp4?${CACHE_BUST}`,
   `/videos/hero-video-new-2.mp4?${CACHE_BUST}`,
