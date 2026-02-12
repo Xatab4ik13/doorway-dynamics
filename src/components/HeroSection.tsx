@@ -1,10 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
-const CACHE_BUST = "v18";
+
+const CACHE_BUST = "v19";
 const videos = [
   `/videos/hero-video-new-1.mp4?${CACHE_BUST}`,
   `/videos/hero-video-2.mp4?${CACHE_BUST}`,
-  `/videos/hero-video-3.mp4?${CACHE_BUST}`,
 ];
 
 const HeroSection = () => {
@@ -15,13 +15,25 @@ const HeroSection = () => {
     setCurrentIndex((prev) => (prev + 1) % videos.length);
   }, []);
 
+  // Preload next video
+  useEffect(() => {
+    const nextIndex = (currentIndex + 1) % videos.length;
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.href = videos[nextIndex];
+    link.as = "video";
+    document.head.appendChild(link);
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, [currentIndex]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (video) {
       video.muted = true;
       video.load();
       video.play().catch(() => {
-        // Fallback: try again on user interaction
         const tryPlay = () => {
           video.play().catch(() => {});
           document.removeEventListener("touchstart", tryPlay);
@@ -35,7 +47,6 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-screen min-h-[600px] flex items-end overflow-hidden">
-      {/* Background videos with crossfade */}
       <div className="absolute inset-0">
         <AnimatePresence mode="wait">
           <motion.video
@@ -45,7 +56,7 @@ const HeroSection = () => {
             autoPlay
             muted
             playsInline
-            preload="metadata"
+            preload="auto"
             webkit-playsinline=""
             x-webkit-airplay="deny"
             disablePictureInPicture
@@ -61,7 +72,6 @@ const HeroSection = () => {
         <div className="absolute inset-0 bg-background/40" />
       </div>
 
-      {/* Centered subtitle */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
