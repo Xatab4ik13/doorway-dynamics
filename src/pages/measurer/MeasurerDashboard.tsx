@@ -1,80 +1,93 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockRequests, statusLabels, statusColors, type ServiceRequest, type RequestStatus } from "@/data/mockDashboard";
-import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle } from "lucide-react";
-
-const MEASURER_NAME = "Сидоров К.В.";
+import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
+import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
+import { useRequests, type ApiRequest } from "@/hooks/useRequests";
+import { useAuth } from "@/contexts/AuthContext";
+import { uploadFile } from "@/lib/api";
+import { toast } from "sonner";
 
 const MeasurerDashboard = () => {
-  const [requests, setRequests] = useState<ServiceRequest[]>(
-    mockRequests.filter((r) => r.assignedTo === MEASURER_NAME && r.status !== "closed")
-  );
-  const [selected, setSelected] = useState<ServiceRequest | null>(null);
+  const { user } = useAuth();
+  const { requests, loading, updateRequest } = useRequests();
+  const [selected, setSelected] = useState<ApiRequest | null>(null);
 
-  // Form state for measurement report
   const [roomCount, setRoomCount] = useState("");
   const [doorSizes, setDoorSizes] = useState("");
   const [wallMaterial, setWallMaterial] = useState("");
   const [notes, setNotes] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
-
-  // Agreed date state
   const [agreedDate, setAgreedDate] = useState("");
   const [dateConfirmed, setDateConfirmed] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
-  const handleSelectRequest = (r: ServiceRequest) => {
+  const handleSelectRequest = (r: ApiRequest) => {
     setSelected(r);
     setRoomCount("");
     setDoorSizes("");
     setWallMaterial("");
-    setNotes("");
+    setNotes(r.notes || "");
     setUploadedFiles([]);
-    setAgreedDate(r.agreedDate || "");
-    setDateConfirmed(!!r.agreedDate);
+    setAgreedDate(r.agreed_date?.split("T")[0] || "");
+    setDateConfirmed(!!r.agreed_date);
   };
 
-  const handleMockUpload = () => {
-    const mockFiles = ["photo_проём_1.jpg", "photo_проём_2.jpg", "замер_схема.pdf"];
-    const newFile = mockFiles[uploadedFiles.length % mockFiles.length];
-    setUploadedFiles((prev) => [...prev, `${newFile}`]);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { url } = await uploadFile(file, "measurements");
+      setUploadedFiles(prev => [...prev, url]);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка загрузки файла");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleRemoveFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleConfirmDate = () => {
+  const handleConfirmDate = async () => {
     if (!agreedDate || !selected) return;
-    setDateConfirmed(true);
-    setRequests((prev) =>
-      prev.map((r) => r.id === selected.id ? { ...r, agreedDate: agreedDate, status: "date_agreed" as RequestStatus } : r)
-    );
-    setSelected({ ...selected, agreedDate, status: "date_agreed" as RequestStatus });
+    try {
+      const updated = await updateRequest(selected.id, { agreed_date: agreedDate, status: "date_agreed" as any });
+      setDateConfirmed(true);
+      setSelected(updated);
+      toast.success("Дата согласована");
+    } catch {}
   };
 
-  const canComplete = dateConfirmed && roomCount.trim() !== "" && doorSizes.trim() !== "" && wallMaterial.trim() !== "" && uploadedFiles.length > 0;
+  const canComplete = dateConfirmed && roomCount.trim() && doorSizes.trim() && wallMaterial.trim() && uploadedFiles.length > 0;
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (!selected || !canComplete) return;
-    setRequests((prev) =>
-      prev.map((r) => r.id === selected.id ? { ...r, status: "measurement_done" as RequestStatus, executorFiles: uploadedFiles } : r)
-    );
-    setSelected(null);
+    try {
+      await updateRequest(selected.id, {
+        status: "measurement_done" as any,
+        notes: `Проёмов: ${roomCount}, Размеры: ${doorSizes}, Стены: ${wallMaterial}. ${notes}`,
+      });
+      setSelected(null);
+      toast.success("Замер завершён");
+    } catch {}
   };
 
-  const activeRequests = requests.filter((r) => r.status !== "measurement_done");
+  const activeRequests = requests.filter((r) => !["measurement_done", "closed", "cancelled", "installation_scheduled", "installation_done"].includes(r.status));
   const doneRequests = requests.filter((r) => r.status === "measurement_done");
 
   return (
-    <DashboardLayout role="measurer" userName={MEASURER_NAME}>
+    <DashboardLayout role="measurer" userName={user?.name || "Замерщик"}>
       <div className="space-y-6">
         <h1 className="text-2xl font-heading font-bold">Мои заявки</h1>
 
-        {/* Active requests */}
-        {activeRequests.length === 0 && doneRequests.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-muted-foreground" size={32} /></div>
+        ) : activeRequests.length === 0 && doneRequests.length === 0 ? (
           <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">Нет активных заявок</CardContent></Card>
         ) : (
           <div className="grid gap-4">
@@ -90,32 +103,27 @@ const MeasurerDashboard = () => {
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-mono text-xs text-muted-foreground">{r.id}</p>
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
-                          {statusLabels[r.status]}
+                        <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
+                          {statusLabels[r.status as RequestStatus] || r.status}
                         </span>
-                        {r.source === "partner" && (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
-                            Партнёр
-                          </span>
-                        )}
                       </div>
-                      <p className="font-semibold">{r.clientName}</p>
+                      <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin size={12} /> {r.address}
+                        <MapPin size={12} /> {r.client_address}
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone size={12} /> {r.clientPhone}
+                        <Phone size={12} /> {r.client_phone}
                       </div>
-                      {r.agreedDate && (
+                      {r.agreed_date && (
                         <div className="flex items-center gap-1 text-xs text-primary font-medium">
-                          <Calendar size={12} /> Согласовано: {r.agreedDate}
+                          <Calendar size={12} /> Согласовано: {r.agreed_date.split("T")[0]}
                         </div>
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Calendar size={14} />
-                      <span className="text-xs">{r.date}</span>
+                      <span className="text-xs">{r.created_at?.split("T")[0]}</span>
                       <ChevronRight size={16} />
                     </div>
                   </div>
@@ -123,7 +131,6 @@ const MeasurerDashboard = () => {
               </Card>
             ))}
 
-            {/* Done today */}
             {doneRequests.length > 0 && (
               <>
                 <h2 className="text-sm font-medium text-muted-foreground mt-4 flex items-center gap-2">
@@ -131,16 +138,14 @@ const MeasurerDashboard = () => {
                 </h2>
                 {doneRequests.map((r) => (
                   <Card key={r.id} className="border-l-4 border-l-green-400 opacity-70">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-mono text-xs text-muted-foreground">{r.id}</p>
-                          <p className="font-medium text-sm">{r.clientName}</p>
-                        </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
-                          {statusLabels[r.status]}
-                        </span>
+                    <CardContent className="p-4 flex items-center justify-between">
+                      <div>
+                        <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
+                        <p className="font-medium text-sm">{r.client_name}</p>
                       </div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
+                        {statusLabels[r.status as RequestStatus] || r.status}
+                      </span>
                     </CardContent>
                   </Card>
                 ))}
@@ -149,45 +154,34 @@ const MeasurerDashboard = () => {
           </div>
         )}
 
-        {/* Detail panel */}
         {selected && (
           <Card className="border-t-4 border-t-primary">
             <CardContent className="p-6 space-y-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-mono text-xs text-muted-foreground">{selected.id}</p>
-                  <h2 className="text-lg font-heading font-bold mt-1">{selected.clientName}</h2>
-                  <p className="text-sm text-muted-foreground">{selected.address}</p>
-                  <p className="text-sm text-muted-foreground">{selected.clientPhone}</p>
+                  <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+                  <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
+                  <p className="text-sm text-muted-foreground">{selected.client_address}</p>
+                  <p className="text-sm text-muted-foreground">{selected.client_phone}</p>
                 </div>
-                <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded">
-                  <X size={18} />
-                </button>
+                <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
 
-              {/* Mandatory date selection */}
               {!dateConfirmed && (
                 <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
                   <div className="flex items-start gap-2">
                     <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-sm font-medium text-amber-800">Выберите дату замера</p>
-                      <p className="text-xs text-amber-700">Укажите дату, которую согласовали с клиентом. Это обязательно.</p>
+                      <p className="text-xs text-amber-700">Укажите дату, которую согласовали с клиентом.</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <input
-                      type="date"
-                      value={agreedDate}
-                      onChange={(e) => setAgreedDate(e.target.value)}
+                    <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
                       min={new Date().toISOString().split("T")[0]}
-                      className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <button
-                      onClick={handleConfirmDate}
-                      disabled={!agreedDate}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    >
+                      className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <button onClick={handleConfirmDate} disabled={!agreedDate}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40">
                       Подтвердить
                     </button>
                   </div>
@@ -195,54 +189,29 @@ const MeasurerDashboard = () => {
               )}
 
               {dateConfirmed && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
-                  <Calendar size={14} className="text-primary" />
-                  <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
-                </div>
-              )}
-
-              {/* Measurement form (only after date confirmed) */}
-              {dateConfirmed && (
                 <>
-                  <div className="border-t border-border pt-4">
-                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      <FileText size={16} /> Данные замера
-                    </h3>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                    <Calendar size={14} className="text-primary" />
+                    <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
+                  </div>
 
+                  <div className="border-t border-border pt-4">
+                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText size={16} /> Данные замера</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                          Количество проёмов <span className="text-destructive">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          value={roomCount}
-                          onChange={(e) => setRoomCount(e.target.value)}
-                          placeholder="Напр. 3"
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Количество проёмов <span className="text-destructive">*</span></label>
+                        <input type="number" value={roomCount} onChange={(e) => setRoomCount(e.target.value)} placeholder="3"
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                          Размеры проёмов <span className="text-destructive">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={doorSizes}
-                          onChange={(e) => setDoorSizes(e.target.value)}
-                          placeholder="800x2000, 900x2100..."
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Размеры проёмов <span className="text-destructive">*</span></label>
+                        <input type="text" value={doorSizes} onChange={(e) => setDoorSizes(e.target.value)} placeholder="800x2000, 900x2100..."
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                       </div>
                       <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                          Материал стен <span className="text-destructive">*</span>
-                        </label>
-                        <select
-                          value={wallMaterial}
-                          onChange={(e) => setWallMaterial(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        >
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Материал стен <span className="text-destructive">*</span></label>
+                        <select value={wallMaterial} onChange={(e) => setWallMaterial(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
                           <option value="">Выберите</option>
                           <option value="brick">Кирпич</option>
                           <option value="concrete">Бетон</option>
@@ -253,64 +222,43 @@ const MeasurerDashboard = () => {
                       </div>
                       <div>
                         <label className="text-xs font-medium text-muted-foreground mb-1 block">Примечания</label>
-                        <input
-                          type="text"
-                          value={notes}
-                          onChange={(e) => setNotes(e.target.value)}
-                          placeholder="Особенности объекта..."
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
+                        <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Особенности объекта..."
+                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                       </div>
                     </div>
                   </div>
 
-                  {/* File upload */}
                   <div className="border-t border-border pt-4">
                     <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                       <Camera size={16} /> Фото проёмов <span className="text-destructive text-xs">*</span>
                     </h3>
-
                     {uploadedFiles.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
                         {uploadedFiles.map((f, i) => (
                           <span key={i} className="flex items-center gap-1 px-3 py-1.5 bg-accent rounded-lg text-xs">
-                            {f}
-                            <button onClick={() => handleRemoveFile(i)} className="text-muted-foreground hover:text-destructive">
-                              <X size={12} />
-                            </button>
+                            📎 {f.split("/").pop()}
+                            <button onClick={() => handleRemoveFile(i)} className="text-muted-foreground hover:text-destructive"><X size={12} /></button>
                           </span>
                         ))}
                       </div>
                     )}
-
-                    <button
-                      onClick={handleMockUpload}
-                      className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-                    >
-                      <Upload size={16} /> Загрузить файл
-                    </button>
+                    <label className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                      {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                      {uploading ? "Загрузка..." : "Загрузить файл"}
+                      <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*,.pdf" />
+                    </label>
                   </div>
 
-                  {/* Validation message */}
                   {!canComplete && (
                     <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                      ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото для завершения замера
+                      ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото
                     </p>
                   )}
 
-                  {/* Actions */}
                   <div className="flex justify-end gap-3 pt-2">
-                    <button
-                      onClick={() => setSelected(null)}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
-                    >
-                      Отмена
-                    </button>
-                    <button
-                      onClick={handleComplete}
-                      disabled={!canComplete}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
+                    <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
+                    <button onClick={handleComplete} disabled={!canComplete}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center gap-2">
                       <CheckCircle2 size={16} /> Замер выполнен
                     </button>
                   </div>
