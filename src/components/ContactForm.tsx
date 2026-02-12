@@ -258,7 +258,8 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
 
             <div className="pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <p className={`text-xs max-w-sm ${filtersSelected ? "text-muted-foreground" : "text-muted-foreground/30"}`}>
-                Нажимая на кнопку, вы даете согласие на обработку персональных данных
+                Нажимая на кнопку, вы даете согласие на обработку{" "}
+                <a href="/privacy" target="_blank" className="underline hover:text-foreground transition-colors">персональных данных</a>
               </p>
               <button
                 type="submit"

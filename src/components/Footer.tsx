@@ -74,9 +74,14 @@ const Footer = () => {
 
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">© 2025 PrimeDoor Service</p>
-          <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-            Войти в кабинет
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link to="/privacy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              Политика конфиденциальности
+            </Link>
+            <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              Войти в кабинет
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
