@@ -67,6 +67,19 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
                 <p className="text-xs text-muted-foreground">{request.city}</p>
               </div>
             </div>
+
+            {/* Extra contact */}
+            {request.extraName && (
+              <div className="flex items-start gap-3">
+                <User size={16} className="text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Доп. контакт</p>
+                  <p className="text-sm font-medium">{request.extraName}</p>
+                  {request.extraPhone && <p className="text-xs text-muted-foreground">{request.extraPhone}</p>}
+                </div>
+              </div>
+            )}
+
             <div className="flex items-start gap-3">
               <Calendar size={16} className="text-muted-foreground mt-0.5" />
               <div>
@@ -98,6 +111,16 @@ const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestD
               </div>
             </div>
           </div>
+
+          {/* Work description */}
+          {request.workDescription && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                <MessageSquare size={14} /> Описание работ
+              </label>
+              <p className="text-sm bg-accent/50 rounded-lg px-4 py-3">{request.workDescription}</p>
+            </div>
+          )}
 
           {/* Status change */}
           <div>

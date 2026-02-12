@@ -50,8 +50,11 @@ export interface ServiceRequest {
   status: RequestStatus;
   clientName: string;
   clientPhone: string;
+  extraName?: string;
+  extraPhone?: string;
   address: string;
   city: string;
+  workDescription?: string;
   date: string;
   agreedDate?: string;
   assignedTo?: string;
@@ -64,16 +67,16 @@ export interface ServiceRequest {
 }
 
 export const mockRequests: ServiceRequest[] = [
-  { id: "REQ-001", type: "measurement", status: "new", clientName: "Иванов И.И.", clientPhone: "+7 900 111-22-33", address: "ул. Ленина, 15, кв. 42", city: "Москва", date: "2026-02-10", source: "site" },
-  { id: "REQ-002", type: "measurement", status: "assigned", clientName: "Петрова А.С.", clientPhone: "+7 900 222-33-44", address: "пр. Мира, 88, кв. 7", city: "Москва", date: "2026-02-09", assignedTo: "Сидоров К.В.", assignedRole: "measurer", agreedDate: "2026-02-14", source: "partner", partnerName: "ООО РемонтПро" },
-  { id: "REQ-003", type: "installation", status: "measurement_done", clientName: "Козлов Д.М.", clientPhone: "+7 900 333-44-55", address: "ул. Гагарина, 3, кв. 101", city: "Санкт-Петербург", date: "2026-02-08", assignedTo: "Сидоров К.В.", assignedRole: "measurer", executorFiles: ["замер_схема.pdf", "photo_проём_1.jpg"], source: "site" },
-  { id: "REQ-004", type: "installation", status: "installation_scheduled", clientName: "Михайлова Е.В.", clientPhone: "+7 900 444-55-66", address: "ул. Пушкина, 22, кв. 5", city: "Москва", date: "2026-02-07", assignedTo: "Бригада №3", assignedRole: "installer", agreedDate: "2026-02-15", source: "partner", partnerName: "ИП Строев" },
-  { id: "REQ-005", type: "installation", status: "installation_done", clientName: "Новиков А.А.", clientPhone: "+7 900 555-66-77", address: "пр. Победы, 10, кв. 33", city: "Москва", date: "2026-02-05", assignedTo: "Бригада №1", assignedRole: "installer", executorFiles: ["до_монтажа_1.jpg", "после_монтажа_1.jpg", "после_монтажа_2.jpg"], source: "site" },
-  { id: "REQ-006", type: "reclamation", status: "new", clientName: "Волкова М.И.", clientPhone: "+7 900 666-77-88", address: "ул. Советская, 44, кв. 12", city: "Санкт-Петербург", date: "2026-02-11", source: "site" },
-  { id: "REQ-007", type: "measurement", status: "closed", clientName: "Кузнецов П.П.", clientPhone: "+7 900 777-88-99", address: "ул. Лесная, 7, кв. 2", city: "Москва", date: "2026-01-28", assignedTo: "Сидоров К.В.", assignedRole: "measurer", source: "site" },
-  { id: "REQ-008", type: "installation", status: "closed", clientName: "Соколова Н.Р.", clientPhone: "+7 900 888-99-00", address: "ул. Парковая, 19, кв. 8", city: "Москва", date: "2026-01-25", assignedTo: "Бригада №2", assignedRole: "installer", executorFiles: ["результат_1.jpg", "результат_2.jpg"], source: "partner", partnerName: "ООО РемонтПро" },
-  { id: "REQ-009", type: "measurement", status: "assigned", clientName: "Лебедев В.Г.", clientPhone: "+7 900 999-00-11", address: "пр. Космонавтов, 55, кв. 17", city: "Санкт-Петербург", date: "2026-02-12", assignedTo: "Морозов А.И.", assignedRole: "measurer", source: "site" },
-  { id: "REQ-010", type: "installation", status: "new", clientName: "Егорова Т.Л.", clientPhone: "+7 900 000-11-22", address: "ул. Центральная, 1, кв. 99", city: "Москва", date: "2026-02-12", source: "partner", partnerName: "ООО РемонтПро" },
+  { id: "REQ-001", type: "measurement", status: "new", clientName: "Иванов Иван Иванович", clientPhone: "+7 900 111 22 33", extraName: "Иванова Мария Петровна", extraPhone: "+7 900 111 22 34", address: "ул. Ленина, 15, кв. 42", city: "Москва", workDescription: "Замер межкомнатных дверей, 3 проёма", date: "2026-02-10", source: "site" },
+  { id: "REQ-002", type: "measurement", status: "assigned", clientName: "Петрова Анна Сергеевна", clientPhone: "+7 900 222 33 44", extraName: "Петров Дмитрий Олегович", extraPhone: "+7 900 222 33 45", address: "пр. Мира, 88, кв. 7", city: "Москва", workDescription: "Замер входной двери, нестандартный проём", date: "2026-02-09", assignedTo: "Сидоров К.В.", assignedRole: "measurer", agreedDate: "2026-02-14", source: "partner", partnerName: "ООО РемонтПро" },
+  { id: "REQ-003", type: "installation", status: "measurement_done", clientName: "Козлов Дмитрий Михайлович", clientPhone: "+7 900 333 44 55", address: "ул. Гагарина, 3, кв. 101", city: "Санкт-Петербург", workDescription: "Монтаж 2 межкомнатных дверей, демонтаж старых", date: "2026-02-08", assignedTo: "Сидоров К.В.", assignedRole: "measurer", executorFiles: ["замер_схема.pdf", "photo_проём_1.jpg"], source: "site" },
+  { id: "REQ-004", type: "installation", status: "installation_scheduled", clientName: "Михайлова Елена Владимировна", clientPhone: "+7 900 444 55 66", extraName: "Михайлов Сергей Анатольевич", extraPhone: "+7 900 444 55 67", address: "ул. Пушкина, 22, кв. 5", city: "Москва", workDescription: "Монтаж входной двери с электрозамком", date: "2026-02-07", assignedTo: "Бригада №3", assignedRole: "installer", agreedDate: "2026-02-15", source: "partner", partnerName: "ИП Строев" },
+  { id: "REQ-005", type: "installation", status: "installation_done", clientName: "Новиков Алексей Александрович", clientPhone: "+7 900 555 66 77", address: "пр. Победы, 10, кв. 33", city: "Москва", workDescription: "Монтаж 4 межкомнатных дверей", date: "2026-02-05", assignedTo: "Бригада №1", assignedRole: "installer", executorFiles: ["до_монтажа_1.jpg", "после_монтажа_1.jpg", "после_монтажа_2.jpg"], source: "site" },
+  { id: "REQ-006", type: "reclamation", status: "new", clientName: "Волкова Марина Игоревна", clientPhone: "+7 900 666 77 88", address: "ул. Советская, 44, кв. 12", city: "Санкт-Петербург", workDescription: "Скрипит дверь после монтажа, не закрывается плотно", date: "2026-02-11", source: "site" },
+  { id: "REQ-007", type: "measurement", status: "closed", clientName: "Кузнецов Павел Петрович", clientPhone: "+7 900 777 88 99", extraName: "Кузнецова Ольга Николаевна", extraPhone: "+7 900 777 89 00", address: "ул. Лесная, 7, кв. 2", city: "Москва", workDescription: "Замер для 5 межкомнатных дверей в новостройке", date: "2026-01-28", assignedTo: "Сидоров К.В.", assignedRole: "measurer", source: "site" },
+  { id: "REQ-008", type: "installation", status: "closed", clientName: "Соколова Наталья Романовна", clientPhone: "+7 900 888 99 00", address: "ул. Парковая, 19, кв. 8", city: "Москва", workDescription: "Монтаж 2 дверей с фрамугой", date: "2026-01-25", assignedTo: "Бригада №2", assignedRole: "installer", executorFiles: ["результат_1.jpg", "результат_2.jpg"], source: "partner", partnerName: "ООО РемонтПро" },
+  { id: "REQ-009", type: "measurement", status: "assigned", clientName: "Лебедев Виктор Геннадьевич", clientPhone: "+7 900 999 00 11", address: "пр. Космонавтов, 55, кв. 17", city: "Санкт-Петербург", workDescription: "Замер входной и 2 межкомнатных дверей", date: "2026-02-12", assignedTo: "Морозов А.И.", assignedRole: "measurer", source: "site" },
+  { id: "REQ-010", type: "installation", status: "new", clientName: "Егорова Татьяна Леонидовна", clientPhone: "+7 900 000 11 22", extraName: "Егоров Андрей Викторович", extraPhone: "+7 900 000 11 23", address: "ул. Центральная, 1, кв. 99", city: "Москва", workDescription: "Монтаж 3 межкомнатных дверей, подготовка проёмов", date: "2026-02-12", source: "partner", partnerName: "ООО РемонтПро" },
 ];
 
 export interface DashboardStats {
