@@ -25,12 +25,12 @@ const AdminAccounts = () => {
   useEffect(() => { document.title = "Аккаунты — Админ-панель"; }, []);
 
   const filtered = users.filter((u) => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || (u.telegramId || "").includes(search);
     const matchRole = filterRole === "all" || u.role === filterRole;
     return matchSearch && matchRole;
   });
 
-  const handleCreate = (data: { name: string; email: string; role: UserRole }) => {
+  const handleCreate = (data: { name: string; role: UserRole; telegramId: string }) => {
     const newUser: UserAccount = {
       id: `U-${String(users.length + 1).padStart(3, "0")}`,
       ...data,
@@ -69,7 +69,7 @@ const AdminAccounts = () => {
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Поиск по имени или email..."
+                  placeholder="Поиск по имени или Telegram ID..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -93,7 +93,7 @@ const AdminAccounts = () => {
                   <tr className="border-b border-border text-left text-xs text-muted-foreground">
                     <th className="pb-3 pr-4">ID</th>
                     <th className="pb-3 pr-4">Имя</th>
-                    <th className="pb-3 pr-4">Email</th>
+                    <th className="pb-3 pr-4">Telegram ID</th>
                     <th className="pb-3 pr-4">Роль</th>
                     <th className="pb-3 pr-4">Статус</th>
                     <th className="pb-3 pr-4">Создан</th>
@@ -105,7 +105,7 @@ const AdminAccounts = () => {
                     <tr key={u.id} className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors">
                       <td className="py-3 pr-4 font-mono text-xs">{u.id}</td>
                       <td className="py-3 pr-4 font-medium">{u.name}</td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">{u.email}</td>
+                      <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.telegramId || "—"}</td>
                       <td className="py-3 pr-4">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleColorMap[u.role]}`}>
                           {roleLabels[u.role]}

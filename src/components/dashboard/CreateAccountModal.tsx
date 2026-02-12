@@ -4,20 +4,19 @@ import { type UserRole, roleLabels } from "@/data/mockDashboard";
 
 interface CreateAccountModalProps {
   onClose: () => void;
-  onSave: (data: { name: string; email: string; role: UserRole; telegramId: string }) => void;
+  onSave: (data: { name: string; role: UserRole; telegramId: string }) => void;
 }
 
 const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
 
 const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("measurer");
   const [telegramId, setTelegramId] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ name, email, role, telegramId });
+    onSave({ name, role, telegramId });
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
@@ -37,10 +36,6 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">ФИО / Название</label>
             <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className={inputClass} placeholder="Иванов И.И. или Бригада №4" />
-          </div>
-          <div>
-            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="user@primedoor.ru" />
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block flex items-center gap-1">

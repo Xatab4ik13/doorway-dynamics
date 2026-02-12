@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { mockRequests, statusLabels, statusColors, requestTypeLabels, type ServiceRequest } from "@/data/mockDashboard";
-import { Search, Download, Trash2 } from "lucide-react";
+import { Search, Download, Trash2, Briefcase } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 
 const AdminRequests = () => {
@@ -77,9 +77,10 @@ const AdminRequests = () => {
                     <th className="pb-3 pr-4">№</th>
                     <th className="pb-3 pr-4">Клиент</th>
                     <th className="pb-3 pr-4">Телефон</th>
-                    <th className="pb-3 pr-4">Адрес</th>
+                    <th className="pb-3 pr-4">Город</th>
                     <th className="pb-3 pr-4">Тип</th>
                     <th className="pb-3 pr-4">Статус</th>
+                    <th className="pb-3 pr-4">Источник</th>
                     <th className="pb-3 pr-4">Исполнитель</th>
                     <th className="pb-3">Дата</th>
                   </tr>
@@ -94,12 +95,26 @@ const AdminRequests = () => {
                       <td className="py-3 pr-4 font-mono text-xs">{r.id}</td>
                       <td className="py-3 pr-4 font-medium">{r.clientName}</td>
                       <td className="py-3 pr-4 text-xs text-muted-foreground">{r.clientPhone}</td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground max-w-[200px] truncate">{r.address}</td>
-                      <td className="py-3 pr-4 text-xs">{requestTypeLabels[r.type]}</td>
+                      <td className="py-3 pr-4 text-xs text-muted-foreground">{r.city}</td>
+                      <td className="py-3 pr-4 text-xs">
+                        {requestTypeLabels[r.type]}
+                        {r.type === "reclamation" && (
+                          <span className="ml-1 text-[10px] text-green-600">Бесплатно</span>
+                        )}
+                      </td>
                       <td className="py-3 pr-4">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
                           {statusLabels[r.status]}
                         </span>
+                      </td>
+                      <td className="py-3 pr-4 text-xs">
+                        {r.source === "partner" ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
+                            <Briefcase size={10} /> {r.partnerName || "Партнёр"}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Сайт</span>
+                        )}
                       </td>
                       <td className="py-3 pr-4 text-xs text-muted-foreground">{r.assignedTo || "—"}</td>
                       <td className="py-3 text-xs text-muted-foreground">{r.date}</td>
@@ -116,7 +131,7 @@ const AdminRequests = () => {
       </div>
 
       {selectedRequest && (
-        <RequestDetailModal request={selectedRequest} onClose={() => setSelectedRequest(null)} />
+        <RequestDetailModal request={selectedRequest} onClose={() => setSelectedRequest(null)} viewerRole="admin" />
       )}
     </DashboardLayout>
   );

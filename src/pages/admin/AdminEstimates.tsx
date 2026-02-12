@@ -14,6 +14,9 @@ interface EstimateItem {
   price: number;
 }
 
+const hasVariants = (priceStr: string): boolean => priceStr.includes("/") && !priceStr.startsWith("+");
+const parseVariants = (priceStr: string): string[] => priceStr.split("/").map((s) => s.trim());
+
 const AdminEstimates = () => {
   const [clientName, setClientName] = useState("");
   const [clientAddress, setClientAddress] = useState("");
@@ -24,6 +27,7 @@ const AdminEstimates = () => {
   const [activeCategory, setActiveCategory] = useState<string>("interior");
   const [savedEstimates, setSavedEstimates] = useState<{ id: string; client: string; total: number; date: string }[]>([]);
   const [editingPrice, setEditingPrice] = useState(false);
+  const [variantModal, setVariantModal] = useState<{ item: PriceItem; variants: string[] } | null>(null);
 
   useEffect(() => { document.title = "Сметы — Админ-панель"; }, []);
 
@@ -33,7 +37,12 @@ const AdminEstimates = () => {
   );
 
   const addFromPrice = (item: PriceItem) => {
-    const priceValue = parsePrice(item[city]);
+    const priceStr = item[city];
+    if (hasVariants(priceStr)) {
+      setVariantModal({ item, variants: parseVariants(priceStr) });
+      return;
+    }
+    const priceValue = parsePrice(priceStr);
     setItems((prev) => [...prev, {
       id: String(Date.now()) + Math.random(),
       name: item.name,
@@ -41,6 +50,18 @@ const AdminEstimates = () => {
       unit: item.unit,
       price: priceValue,
     }]);
+  };
+
+  const addWithVariant = (item: PriceItem, variant: string) => {
+    const priceValue = parsePrice(variant);
+    setItems((prev) => [...prev, {
+      id: String(Date.now()) + Math.random(),
+      name: `${item.name} (${variant.trim()}${priceValue > 0 ? " ₽" : ""})`,
+      quantity: 1,
+      unit: item.unit,
+      price: priceValue,
+    }]);
+    setVariantModal(null);
   };
 
   const addEmpty = () => {
@@ -91,7 +112,7 @@ const AdminEstimates = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex gap-2">
-                  {[{ value: "moscow" as const, label: "Москва" }, { value: "spb" as const, label: "СПб" }].map((c) => (
+                  {[{ value: "moscow" as const, label: "Москва" }, { value: "spb" as const, label: "Санкт-Петербург" }].map((c) => (
                     <button key={c.value} onClick={() => setCity(c.value)}
                       className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${city === c.value ? "bg-primary text-primary-foreground" : "bg-accent text-muted-foreground"}`}
                     >{c.label}</button>
@@ -109,15 +130,30 @@ const AdminEstimates = () => {
                   <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск..."
                     className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
+                {activeCategory === "reclamation" && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-green-700 font-medium">Рекламация — бесплатная услуга</p>
+                  </div>
+                )}
                 <div className="max-h-[400px] overflow-auto space-y-1">
                   {filteredPriceList.map((item, i) => {
                     const price = item[city];
+                    const isReclamation = activeCategory === "reclamation";
                     return (
-                      <button key={i} onClick={() => addFromPrice(item)} className="w-full text-left p-2 rounded-lg hover:bg-accent transition-colors">
+                      <button key={i} onClick={() => {
+                        if (isReclamation) {
+                          setItems((prev) => [...prev, { id: String(Date.now()) + Math.random(), name: item.name, quantity: 1, unit: item.unit, price: 0 }]);
+                        } else {
+                          addFromPrice(item);
+                        }
+                      }} className="w-full text-left p-2 rounded-lg hover:bg-accent transition-colors">
                         <p className="text-xs leading-tight">{item.name}</p>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-[10px] text-muted-foreground">{item.unit}</span>
-                          <span className="text-xs font-medium text-primary">{price}{parsePrice(price) > 0 ? " ₽" : ""}</span>
+                          <span className={`text-xs font-medium ${isReclamation ? "text-green-600" : "text-primary"}`}>
+                            {isReclamation ? "Бесплатно" : price}{!isReclamation && parsePrice(price) > 0 && !price.startsWith("+") ? " ₽" : ""}
+                            {hasVariants(price) && !isReclamation && <span className="ml-1 text-[10px] text-muted-foreground">▾</span>}
+                          </span>
                         </div>
                       </button>
                     );
@@ -152,12 +188,16 @@ const AdminEstimates = () => {
                   <div className="space-y-2">
                     {items.map((item) => (
                       <div key={item.id} className="p-2 rounded-lg border border-border space-y-1.5">
-                        <input type="text" value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                        <input type="text" value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)} placeholder="Название позиции"
                           className="w-full px-2 py-1 rounded border border-border bg-background text-xs focus:outline-none focus:ring-1 focus:ring-ring" />
                         <div className="flex items-center gap-2">
                           <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
-                            className="w-14 px-2 py-1 rounded border border-border bg-background text-xs text-center focus:outline-none" />
+                            className="w-14 px-2 py-1 rounded border border-border bg-background text-xs text-center focus:outline-none" title="Количество" />
                           <span className="text-[10px] text-muted-foreground">{item.unit}</span>
+                          <span className="text-[10px] text-muted-foreground">×</span>
+                          <input type="number" min={0} value={item.price} onChange={(e) => updateItem(item.id, "price", Number(e.target.value))}
+                            className="w-20 px-2 py-1 rounded border border-border bg-background text-xs text-center focus:outline-none" title="Цена за единицу" />
+                          <span className="text-[10px] text-muted-foreground">₽</span>
                           <span className="text-xs font-medium ml-auto">{(item.price * item.quantity).toLocaleString("ru")} ₽</span>
                           <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive"><Trash2 size={12} /></button>
                         </div>
@@ -234,6 +274,31 @@ const AdminEstimates = () => {
           </div>
         </div>
       </div>
+
+      {/* Variant modal */}
+      {variantModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setVariantModal(null)} />
+          <div className="relative bg-card rounded-xl shadow-2xl w-full max-w-sm">
+            <div className="p-5 space-y-4">
+              <h3 className="text-sm font-heading font-bold">Выберите вариант</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{variantModal.item.name}</p>
+              <div className="space-y-2">
+                {variantModal.variants.map((v, i) => (
+                  <button key={i} onClick={() => addWithVariant(variantModal.item, v)}
+                    className="w-full text-left p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">Вариант {i + 1}</span>
+                      <span className="text-sm font-medium text-primary">{parsePrice(v) > 0 ? `${v.trim()} ₽` : v.trim()}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setVariantModal(null)} className="w-full px-4 py-2 rounded-lg text-xs font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
