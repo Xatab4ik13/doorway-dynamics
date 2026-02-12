@@ -39,6 +39,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
   partner: [
     { label: "Мои заявки", href: "/partner", icon: <Eye size={20} /> },
     { label: "Новая заявка", href: "/partner/new", icon: <PlusCircle size={20} /> },
+    { label: "История", href: "/partner/history", icon: <History size={20} /> },
   ],
 };
 

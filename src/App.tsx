@@ -37,6 +37,7 @@ const InstallerDashboard = lazy(() => import("./pages/installer/InstallerDashboa
 const InstallerHistory = lazy(() => import("./pages/installer/InstallerHistory"));
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
 const PartnerNewRequest = lazy(() => import("./pages/partner/PartnerNewRequest"));
+const PartnerHistory = lazy(() => import("./pages/partner/PartnerHistory"));
 
 const queryClient = new QueryClient();
 
@@ -91,6 +92,7 @@ const AppRoutes = () => (
         {/* Partner */}
         <Route path="/partner" element={<PartnerDashboard />} />
         <Route path="/partner/new" element={<PartnerNewRequest />} />
+        <Route path="/partner/history" element={<PartnerHistory />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
