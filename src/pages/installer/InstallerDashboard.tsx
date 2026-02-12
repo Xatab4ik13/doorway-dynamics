@@ -75,9 +75,15 @@ const InstallerDashboard = () => {
     if (!isComplete) { setValidationShown(true); return; }
     if (!selected) return;
     try {
+      const allPhotos = [
+        ...photosBefore.map(url => ({ url, type: "image", stage: "before_installation", uploaded_at: new Date().toISOString() })),
+        ...photosAfter.map(url => ({ url, type: "image", stage: "after_installation", uploaded_at: new Date().toISOString() })),
+      ];
+      const existingPhotos = selected.photos || [];
       await updateRequest(selected.id, {
         status: "installation_done" as any,
         notes: `Двери: ${doorsInstalled}, Фурнитура: ${hardwareInstalled}. ${defects ? `Дефекты: ${defects}` : ""}`,
+        photos: [...existingPhotos, ...allPhotos] as any,
       });
       setSelected(null);
       toast.success("Монтаж завершён");
