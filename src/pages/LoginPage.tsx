@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
 import { Send, Shield, Lock, ArrowRight, Loader2 } from "lucide-react";
@@ -17,11 +17,33 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     document.title = "Вход в кабинет — PrimeDoor Service";
-  }, []);
+
+    // Handle token from Telegram bot URL
+    const tokenFromUrl = searchParams.get("token");
+    if (tokenFromUrl) {
+      try {
+        const payload = JSON.parse(atob(tokenFromUrl.split(".")[1]));
+        const userData = { id: payload.id, name: payload.name, role: payload.role };
+        login(tokenFromUrl, userData);
+        const roleRoutes: Record<string, string> = {
+          admin: "/admin",
+          manager: "/manager",
+          measurer: "/measurer",
+          installer: "/installer",
+          partner: "/partner",
+        };
+        toast.success(`Добро пожаловать, ${payload.name}!`);
+        navigate(roleRoutes[payload.role] || "/", { replace: true });
+      } catch {
+        toast.error("Невалидный токен. Попробуйте снова через бота.");
+      }
+    }
+  }, [searchParams]);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -169,21 +191,7 @@ const LoginPage = () => {
           </form>
         )}
 
-        {/* Demo access */}
-        <div className="mt-12 pt-8 border-t border-border/30">
-          <p className="text-xs text-muted-foreground text-center mb-4">Демо-вход (без авторизации)</p>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {demoRoles.map((r) => (
-              <button
-                key={r.path}
-                onClick={() => navigate(r.path)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${r.color}`}
-              >
-                {r.label} <ArrowRight size={12} />
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Demo access removed — routes are now protected */}
 
         <p className="text-center text-xs text-muted-foreground mt-10">
           <Link to="/" className="hover:text-foreground transition-colors">
