@@ -8,6 +8,7 @@ import {
 import logo from "@/assets/logo.png";
 import type { UserRole } from "@/data/mockDashboard";
 import { roleLabels } from "@/data/mockDashboard";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface NavItem {
   label: string;
@@ -57,7 +58,14 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout, user } = useAuth();
   const items = navByRole[role];
+  const displayName = user?.name || userName;
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   const isActive = (href: string) => {
     if (href === `/${role}` || href === "/admin") {
@@ -103,10 +111,10 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
       {/* User / Logout */}
       <div className="p-4 border-t border-border">
         {sidebarOpen && (
-          <p className="text-xs text-muted-foreground mb-2 truncate">{userName}</p>
+          <p className="text-xs text-muted-foreground mb-2 truncate">{displayName}</p>
         )}
         <button
-          onClick={() => navigate("/login")}
+          onClick={handleLogout}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
         >
           <LogOut size={18} />
@@ -159,7 +167,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
             <ChevronLeft size={20} className={`transition-transform ${!sidebarOpen ? "rotate-180" : ""}`} />
           </button>
           <div className="flex-1" />
-          <span className="text-xs text-muted-foreground">{userName}</span>
+          <span className="text-xs text-muted-foreground">{displayName}</span>
         </header>
 
         {/* Page content */}
