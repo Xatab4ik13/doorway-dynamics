@@ -1,19 +1,23 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockRequests, statusLabels, statusColors, requestTypeLabels } from "@/data/mockDashboard";
+import { Card, CardContent } from "@/components/ui/card";
+import { mockRequests, statusLabels, statusColors, requestTypeLabels, type ServiceRequest } from "@/data/mockDashboard";
 import { Search, Download, Trash2 } from "lucide-react";
+import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 
 const AdminRequests = () => {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
 
   useEffect(() => { document.title = "Заявки — Админ-панель"; }, []);
 
   const filtered = mockRequests.filter((r) => {
     const matchSearch = r.clientName.toLowerCase().includes(search.toLowerCase()) || r.id.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "all" || r.status === filterStatus;
-    return matchSearch && matchStatus;
+    const matchType = filterType === "all" || r.type === filterType;
+    return matchSearch && matchStatus && matchType;
   });
 
   return (
@@ -45,6 +49,16 @@ const AdminRequests = () => {
                 />
               </div>
               <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">Все типы</option>
+                {Object.entries(requestTypeLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+              <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
@@ -72,7 +86,11 @@ const AdminRequests = () => {
                 </thead>
                 <tbody>
                   {filtered.map((r) => (
-                    <tr key={r.id} className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer">
+                    <tr
+                      key={r.id}
+                      onClick={() => setSelectedRequest(r)}
+                      className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer"
+                    >
                       <td className="py-3 pr-4 font-mono text-xs">{r.id}</td>
                       <td className="py-3 pr-4 font-medium">{r.clientName}</td>
                       <td className="py-3 pr-4 text-xs text-muted-foreground">{r.clientPhone}</td>
@@ -96,6 +114,10 @@ const AdminRequests = () => {
           </CardContent>
         </Card>
       </div>
+
+      {selectedRequest && (
+        <RequestDetailModal request={selectedRequest} onClose={() => setSelectedRequest(null)} />
+      )}
     </DashboardLayout>
   );
 };
