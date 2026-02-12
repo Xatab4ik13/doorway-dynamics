@@ -51,6 +51,7 @@ const AdminAccounts = () => {
   };
 
   const filtered = users.filter((u) => {
+    if (u.role === "admin") return false;
     const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || (u.telegram_id || "").includes(search);
     const matchRole = filterRole === "all" || u.role === filterRole;
     return matchSearch && matchRole;
