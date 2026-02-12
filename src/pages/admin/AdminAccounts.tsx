@@ -1,24 +1,92 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockUsers, roleLabels } from "@/data/mockDashboard";
-import { UserPlus, Trash2 } from "lucide-react";
+import { mockUsers, roleLabels, type UserAccount, type UserRole } from "@/data/mockDashboard";
+import { UserPlus, Trash2, Search } from "lucide-react";
+import CreateAccountModal from "@/components/dashboard/CreateAccountModal";
+import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
+import { toast } from "sonner";
+
+const roleColorMap: Record<UserRole, string> = {
+  admin: "bg-red-50 text-red-700",
+  manager: "bg-blue-50 text-blue-700",
+  measurer: "bg-purple-50 text-purple-700",
+  installer: "bg-orange-50 text-orange-700",
+  partner: "bg-green-50 text-green-700",
+};
 
 const AdminAccounts = () => {
+  const [users, setUsers] = useState<UserAccount[]>(mockUsers);
+  const [search, setSearch] = useState("");
+  const [filterRole, setFilterRole] = useState<string>("all");
+  const [showCreate, setShowCreate] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserAccount | null>(null);
+
   useEffect(() => { document.title = "Аккаунты — Админ-панель"; }, []);
+
+  const filtered = users.filter((u) => {
+    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase());
+    const matchRole = filterRole === "all" || u.role === filterRole;
+    return matchSearch && matchRole;
+  });
+
+  const handleCreate = (data: { name: string; email: string; role: UserRole }) => {
+    const newUser: UserAccount = {
+      id: `U-${String(users.length + 1).padStart(3, "0")}`,
+      ...data,
+      active: true,
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+    setUsers([...users, newUser]);
+    setShowCreate(false);
+    toast.success(`Аккаунт "${data.name}" создан`);
+  };
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    setUsers(users.filter((u) => u.id !== deleteTarget.id));
+    toast.success(`Аккаунт "${deleteTarget.name}" удалён`);
+    setDeleteTarget(null);
+  };
 
   return (
     <DashboardLayout role="admin" userName="Корженевский М.А.">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <h1 className="text-2xl font-heading font-bold">Аккаунты</h1>
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
             <UserPlus size={16} /> Создать
           </button>
         </div>
 
         <Card>
           <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Поиск по имени или email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="all">Все роли</option>
+                {Object.entries(roleLabels).map(([k, v]) => (
+                  <option key={k} value={k}>{v}</option>
+                ))}
+              </select>
+            </div>
+
             <div className="overflow-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -33,13 +101,13 @@ const AdminAccounts = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockUsers.map((u) => (
+                  {filtered.map((u) => (
                     <tr key={u.id} className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors">
                       <td className="py-3 pr-4 font-mono text-xs">{u.id}</td>
                       <td className="py-3 pr-4 font-medium">{u.name}</td>
                       <td className="py-3 pr-4 text-xs text-muted-foreground">{u.email}</td>
                       <td className="py-3 pr-4">
-                        <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleColorMap[u.role]}`}>
                           {roleLabels[u.role]}
                         </span>
                       </td>
@@ -49,7 +117,10 @@ const AdminAccounts = () => {
                       </td>
                       <td className="py-3 pr-4 text-xs text-muted-foreground">{u.createdAt}</td>
                       <td className="py-3">
-                        <button className="text-muted-foreground hover:text-destructive transition-colors">
+                        <button
+                          onClick={() => setDeleteTarget(u)}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </td>
@@ -57,10 +128,23 @@ const AdminAccounts = () => {
                   ))}
                 </tbody>
               </table>
+              {filtered.length === 0 && (
+                <p className="text-center text-muted-foreground py-8 text-sm">Аккаунты не найдены</p>
+              )}
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {showCreate && <CreateAccountModal onClose={() => setShowCreate(false)} onSave={handleCreate} />}
+      {deleteTarget && (
+        <DeleteConfirmModal
+          title="Удалить аккаунт?"
+          description={`Аккаунт "${deleteTarget.name}" будет удалён без возможности восстановления.`}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleDelete}
+        />
+      )}
     </DashboardLayout>
   );
 };
