@@ -1,21 +1,42 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
+import { Send, Shield, Lock, ArrowRight } from "lucide-react";
+
+type LoginMode = "telegram" | "admin";
+
+const telegramBotUrl = "https://t.me/PrimeDoorBot"; // placeholder
 
 const LoginPage = () => {
+  const [mode, setMode] = useState<LoginMode>("telegram");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.title = "Вход в кабинет — PrimeDoor Service";
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     toast.info("Авторизация будет доступна после подключения бэкенда");
   };
+
+  const handleTelegramLogin = () => {
+    window.open(telegramBotUrl, "_blank");
+    toast.info("Откройте бота в Telegram и нажмите /start. После проверки вашего ID вы получите доступ.");
+  };
+
+  // Demo quick-access buttons
+  const demoRoles = [
+    { label: "Менеджер", path: "/manager", color: "bg-blue-50 text-blue-700 hover:bg-blue-100" },
+    { label: "Замерщик", path: "/measurer", color: "bg-purple-50 text-purple-700 hover:bg-purple-100" },
+    { label: "Монтажник", path: "/installer", color: "bg-orange-50 text-orange-700 hover:bg-orange-100" },
+    { label: "Партнёр", path: "/partner", color: "bg-green-50 text-green-700 hover:bg-green-100" },
+    { label: "Админ", path: "/admin", color: "bg-red-50 text-red-700 hover:bg-red-100" },
+  ];
 
   const inputClass =
     "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
@@ -28,39 +49,110 @@ const LoginPage = () => {
         transition={{ duration: 0.8 }}
         className="w-full max-w-md"
       >
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <Link to="/">
             <img src={logo} alt="PrimeDoor Service" className="h-24 w-auto mx-auto mb-8 brightness-0 invert" />
           </Link>
           <h1 className="heading-md">Вход в кабинет</h1>
-          <p className="text-xs text-muted-foreground mt-3 tracking-wide">
-            Для партнёров, замерщиков и бригад
-          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-0">
-          <input
-            type="email"
-            placeholder="Email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={inputClass}
-          />
-          <input
-            type="password"
-            placeholder="Пароль"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-          />
-          <div className="pt-10">
-            <button type="submit" className="btn-primary w-full">
-              Войти
+        {/* Mode tabs */}
+        <div className="flex gap-2 mb-8">
+          <button
+            onClick={() => setMode("telegram")}
+            className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              mode === "telegram"
+                ? "bg-[#229ED9] text-white"
+                : "bg-accent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Send size={16} /> Через Telegram
+          </button>
+          <button
+            onClick={() => setMode("admin")}
+            className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+              mode === "admin"
+                ? "bg-foreground text-background"
+                : "bg-accent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Shield size={16} /> Администратор
+          </button>
+        </div>
+
+        {mode === "telegram" ? (
+          <div className="space-y-6">
+            <div className="text-center space-y-3">
+              <div className="w-16 h-16 rounded-full bg-[#229ED9]/10 flex items-center justify-center mx-auto">
+                <Send size={28} className="text-[#229ED9]" />
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Нажмите кнопку ниже — вас перенаправит в Telegram-бот.
+                Бот считает ваш ID и, если администратор добавил вас в систему,
+                вы получите доступ к своему кабинету.
+              </p>
+            </div>
+
+            <button
+              onClick={handleTelegramLogin}
+              className="w-full py-4 rounded-lg text-sm font-medium bg-[#229ED9] text-white hover:bg-[#1a8abf] transition-colors flex items-center justify-center gap-2"
+            >
+              <Send size={18} /> Войти через Telegram
             </button>
+
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">
+                Нет доступа? Обратитесь к администратору для добавления вашего Telegram ID.
+              </p>
+            </div>
           </div>
-        </form>
+        ) : (
+          <form onSubmit={handleAdminLogin} className="space-y-0">
+            <div className="flex items-center gap-2 mb-4 px-1">
+              <Lock size={14} className="text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">
+                Вход по email и паролю — только для администраторов
+              </p>
+            </div>
+            <input
+              type="email"
+              placeholder="Email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={inputClass}
+            />
+            <input
+              type="password"
+              placeholder="Пароль"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={inputClass}
+            />
+            <div className="pt-10">
+              <button type="submit" className="btn-primary w-full">
+                Войти
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Demo access */}
+        <div className="mt-12 pt-8 border-t border-border/30">
+          <p className="text-xs text-muted-foreground text-center mb-4">Демо-вход (без авторизации)</p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {demoRoles.map((r) => (
+              <button
+                key={r.path}
+                onClick={() => navigate(r.path)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${r.color}`}
+              >
+                {r.label} <ArrowRight size={12} />
+              </button>
+            ))}
+          </div>
+        </div>
 
         <p className="text-center text-xs text-muted-foreground mt-10">
           <Link to="/" className="hover:text-foreground transition-colors">

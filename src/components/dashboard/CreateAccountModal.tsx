@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { X, Send } from "lucide-react";
 import { type UserRole, roleLabels } from "@/data/mockDashboard";
 
 interface CreateAccountModalProps {
   onClose: () => void;
-  onSave: (data: { name: string; email: string; role: UserRole }) => void;
+  onSave: (data: { name: string; email: string; role: UserRole; telegramId: string }) => void;
 }
 
 const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
@@ -13,10 +13,11 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("measurer");
+  const [telegramId, setTelegramId] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ name, email, role });
+    onSave({ name, email, role, telegramId });
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
@@ -40,6 +41,22 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email</label>
             <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="user@primedoor.ru" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block flex items-center gap-1">
+              <Send size={14} /> Telegram ID <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={telegramId}
+              onChange={(e) => setTelegramId(e.target.value)}
+              className={inputClass}
+              placeholder="123456789"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Числовой ID пользователя в Telegram. Используется для авторизации через бот.
+            </p>
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Роль</label>
