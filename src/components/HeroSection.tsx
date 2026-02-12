@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
-const CACHE_BUST = "v9";
+const CACHE_BUST = "v10";
 const videos = [
   `/videos/hero-video-new-1.mp4?${CACHE_BUST}`,
 ];
@@ -42,6 +42,7 @@ const HeroSection = () => {
             src={videos[currentIndex]}
             autoPlay
             muted
+            loop
             playsInline
             preload="metadata"
             webkit-playsinline=""
