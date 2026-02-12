@@ -2,10 +2,10 @@ import { motion, useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 
 const stats = [
-  { end: 10, suffix: "+", label: "лет опыта", sublabel: "Основано в 2015 году" },
+  { end: 19, suffix: "", label: "лет опыта", sublabel: "Работаем с 2007 года" },
   { end: 35, suffix: "", label: "бригад", sublabel: "Команда профессионалов" },
-  { end: 5000, suffix: "+", label: "установок", sublabel: "Реализовано проектов" },
-  { end: 57, suffix: "", label: "активных проектов", sublabel: "Ведем прямо сейчас" },
+  { end: 8, suffix: "", label: "замерщиков", sublabel: "Точные замеры" },
+  { end: 182400, suffix: "+", label: "установленных дверей", sublabel: "Реализовано проектов" },
 ];
 
 const AnimatedNumber = ({ end, suffix, delay }: { end: number; suffix: string; delay: number }) => {
