@@ -42,6 +42,7 @@ export function useRequests() {
     try {
       setLoading(true);
       const data = await api<ApiRequest[]>("/api/requests", { auth: true });
+      console.log("[useRequests] fetched requests, sample photos:", data.slice(0, 3).map(r => ({ id: r.number, photos: r.photos })));
       setRequests(data);
     } catch (err: any) {
       toast.error(err.message || "Ошибка загрузки заявок");
