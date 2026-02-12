@@ -22,19 +22,37 @@ const ReclamationPage = lazy(() => import("./pages/ReclamationPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
+// Dashboard pages
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminRequests = lazy(() => import("./pages/admin/AdminRequests"));
+const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
+const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
+const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
+const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
+const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
+const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
+const MeasurerDashboard = lazy(() => import("./pages/measurer/MeasurerDashboard"));
+const MeasurerHistory = lazy(() => import("./pages/measurer/MeasurerHistory"));
+const InstallerDashboard = lazy(() => import("./pages/installer/InstallerDashboard"));
+const InstallerHistory = lazy(() => import("./pages/installer/InstallerHistory"));
+const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
+const PartnerNewRequest = lazy(() => import("./pages/partner/PartnerNewRequest"));
+
 const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isLoginPage = location.pathname === "/login";
+  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner", "/login"].some(
+    (p) => location.pathname.startsWith(p)
+  );
   
   return (
     <>
       <ScrollToTop />
-      {!isLoginPage && <Header />}
+      {!isDashboard && <Header />}
       {children}
-      {!isLoginPage && <Footer />}
-      {!isLoginPage && <FloatingPhone />}
+      {!isDashboard && <Footer />}
+      {!isDashboard && <FloatingPhone />}
     </>
   );
 };
@@ -54,6 +72,25 @@ const AppRoutes = () => (
         <Route path="/news/:slug" element={<ArticlePage />} />
         <Route path="/reclamation" element={<ReclamationPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        {/* Admin */}
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/requests" element={<AdminRequests />} />
+        <Route path="/admin/accounts" element={<AdminAccounts />} />
+        <Route path="/admin/news" element={<AdminNews />} />
+        <Route path="/admin/estimates" element={<AdminEstimates />} />
+        {/* Manager */}
+        <Route path="/manager" element={<ManagerDashboard />} />
+        <Route path="/manager/assign" element={<ManagerAssign />} />
+        <Route path="/manager/files" element={<ManagerFiles />} />
+        {/* Measurer */}
+        <Route path="/measurer" element={<MeasurerDashboard />} />
+        <Route path="/measurer/history" element={<MeasurerHistory />} />
+        {/* Installer */}
+        <Route path="/installer" element={<InstallerDashboard />} />
+        <Route path="/installer/history" element={<InstallerHistory />} />
+        {/* Partner */}
+        <Route path="/partner" element={<PartnerDashboard />} />
+        <Route path="/partner/new" element={<PartnerNewRequest />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
