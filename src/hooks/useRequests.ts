@@ -15,6 +15,7 @@ export interface ApiRequest {
   extra_phone?: string;
   work_description?: string;
   notes?: string;
+  photos?: { url: string; type: string; stage: string; uploaded_at: string }[];
   source: "site" | "partner";
   partner_id?: string;
   measurer_id?: string;
