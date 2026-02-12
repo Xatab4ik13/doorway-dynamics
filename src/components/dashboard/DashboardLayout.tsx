@@ -71,11 +71,11 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
       {/* Logo */}
       <div className="p-4 border-b border-border flex items-center gap-3">
         <Link to="/">
-          <img src={logo} alt="PrimeDoor" className="h-8 w-auto" />
+          <img src={logo} alt="PrimeDoor" className="h-12 w-auto" />
         </Link>
         {sidebarOpen && (
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-foreground truncate">PrimeDoor</p>
+            <p className="text-sm font-bold text-foreground truncate">PrimeDoor</p>
             <p className="text-[10px] text-muted-foreground truncate">{roleLabels[role]}</p>
           </div>
         )}

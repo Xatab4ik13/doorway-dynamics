@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Upload, ChevronDown } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { type ServiceRequest, statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Upload, FileText, Briefcase } from "lucide-react";
+import { type ServiceRequest, statusLabels, statusColors, requestTypeLabels, sourceLabels, type RequestStatus } from "@/data/mockDashboard";
 
 interface RequestDetailModalProps {
   request: ServiceRequest;
   onClose: () => void;
+  viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
 const mockAssignees = {
@@ -13,12 +13,13 @@ const mockAssignees = {
   installer: ["Бригада №1", "Бригада №2", "Бригада №3"],
 };
 
-const RequestDetailModal = ({ request, onClose }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, viewerRole = "admin" }: RequestDetailModalProps) => {
   const [status, setStatus] = useState<RequestStatus>(request.status);
   const [assignedTo, setAssignedTo] = useState(request.assignedTo || "");
   const [comment, setComment] = useState(request.comment || "");
 
   const allStatuses = Object.entries(statusLabels);
+  const canViewFiles = viewerRole === "admin" || viewerRole === "manager";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -27,7 +28,19 @@ const RequestDetailModal = ({ request, onClose }: RequestDetailModalProps) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
           <div>
-            <p className="font-mono text-xs text-muted-foreground">{request.id}</p>
+            <div className="flex items-center gap-2">
+              <p className="font-mono text-xs text-muted-foreground">{request.id}</p>
+              {request.source === "partner" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">
+                  <Briefcase size={10} /> {request.partnerName || "Партнёр"}
+                </span>
+              )}
+              {request.type === "reclamation" && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                  Бесплатно
+                </span>
+              )}
+            </div>
             <h2 className="text-xl font-heading font-bold mt-1">{request.clientName}</h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground">
@@ -50,6 +63,7 @@ const RequestDetailModal = ({ request, onClose }: RequestDetailModalProps) => {
               <div>
                 <p className="text-xs text-muted-foreground">Адрес</p>
                 <p className="text-sm font-medium">{request.address}</p>
+                <p className="text-xs text-muted-foreground">{request.city}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -65,6 +79,15 @@ const RequestDetailModal = ({ request, onClose }: RequestDetailModalProps) => {
                 {requestTypeLabels[request.type]}
               </span>
             </div>
+            {request.agreedDate && (
+              <div className="flex items-start gap-3">
+                <Calendar size={16} className="text-primary mt-0.5" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Согласованная дата</p>
+                  <p className="text-sm font-medium text-primary">{request.agreedDate}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Status change */}
@@ -121,10 +144,26 @@ const RequestDetailModal = ({ request, onClose }: RequestDetailModalProps) => {
             />
           </div>
 
+          {/* Executor files (visible to admin/manager) */}
+          {canViewFiles && request.executorFiles && request.executorFiles.length > 0 && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                <FileText size={14} /> Файлы исполнителя
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {request.executorFiles.map((f, i) => (
+                  <span key={i} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium">
+                    📎 {f}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Files */}
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-              <Upload size={14} /> Файлы
+              <Upload size={14} /> Файлы заявки
             </label>
             {request.files && request.files.length > 0 ? (
               <div className="flex flex-wrap gap-2">

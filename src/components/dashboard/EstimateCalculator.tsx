@@ -20,6 +20,16 @@ interface EstimateCalculatorProps {
   userName: string;
 }
 
+/** Check if a price string has slash-separated variants like "2 000 / 2 750" */
+const hasVariants = (priceStr: string): boolean => {
+  return priceStr.includes("/") && !priceStr.startsWith("+");
+};
+
+/** Parse slash-separated price variants */
+const parseVariants = (priceStr: string): string[] => {
+  return priceStr.split("/").map((s) => s.trim());
+};
+
 const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [clientName, setClientName] = useState("");
   const [clientAddress, setClientAddress] = useState("");
@@ -29,6 +39,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("interior");
   const [savedEstimates, setSavedEstimates] = useState<{ id: string; client: string; total: number; date: string }[]>([]);
+  const [variantModal, setVariantModal] = useState<{ item: PriceItem; variants: string[] } | null>(null);
 
   useEffect(() => { document.title = "Калькулятор смет"; }, []);
 
@@ -38,7 +49,16 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   );
 
   const addFromPrice = (item: PriceItem) => {
-    const priceValue = parsePrice(item[city]);
+    const priceStr = item[city];
+    
+    // Check for slash-separated variants
+    if (hasVariants(priceStr)) {
+      const variants = parseVariants(priceStr);
+      setVariantModal({ item, variants });
+      return;
+    }
+    
+    const priceValue = parsePrice(priceStr);
     setItems((prev) => [...prev, {
       id: String(Date.now()) + Math.random(),
       name: item.name,
@@ -46,6 +66,20 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       unit: item.unit,
       price: priceValue,
     }]);
+  };
+
+  const addWithVariant = (item: PriceItem, variant: string) => {
+    const priceValue = parsePrice(variant);
+    // Add variant label to name for clarity
+    const variantLabel = variant.trim();
+    setItems((prev) => [...prev, {
+      id: String(Date.now()) + Math.random(),
+      name: `${item.name} (${variantLabel}${priceValue > 0 ? " ₽" : ""})`,
+      quantity: 1,
+      unit: item.unit,
+      price: priceValue,
+    }]);
+    setVariantModal(null);
   };
 
   const addEmpty = () => {
@@ -95,7 +129,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               <CardContent className="space-y-3">
                 {/* City */}
                 <div className="flex gap-2">
-                  {[{ value: "moscow" as const, label: "Москва" }, { value: "spb" as const, label: "СПб" }].map((c) => (
+                  {[{ value: "moscow" as const, label: "Москва" }, { value: "spb" as const, label: "Санкт-Петербург" }].map((c) => (
                     <button
                       key={c.value}
                       onClick={() => setCity(c.value)}
@@ -135,21 +169,47 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                   />
                 </div>
 
+                {/* Reclamation notice */}
+                {activeCategory === "reclamation" && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                    <p className="text-xs text-green-700 font-medium">Рекламация — бесплатная услуга</p>
+                  </div>
+                )}
+
                 {/* Price items */}
                 <div className="max-h-[400px] overflow-auto space-y-1">
                   {filteredPriceList.map((item, i) => {
                     const price = item[city];
-                    const isNumeric = parsePrice(price) > 0 || price === "Бесплатно";
+                    const isReclamation = activeCategory === "reclamation";
+                    const showPrice = isReclamation ? "Бесплатно" : price;
                     return (
                       <button
                         key={i}
-                        onClick={() => addFromPrice(item)}
+                        onClick={() => {
+                          if (isReclamation) {
+                            // Add as free item
+                            setItems((prev) => [...prev, {
+                              id: String(Date.now()) + Math.random(),
+                              name: item.name,
+                              quantity: 1,
+                              unit: item.unit,
+                              price: 0,
+                            }]);
+                          } else {
+                            addFromPrice(item);
+                          }
+                        }}
                         className="w-full text-left p-2 rounded-lg hover:bg-accent transition-colors group"
                       >
                         <p className="text-xs leading-tight">{item.name}</p>
                         <div className="flex items-center justify-between mt-1">
                           <span className="text-[10px] text-muted-foreground">{item.unit}</span>
-                          <span className="text-xs font-medium text-primary">{price}{isNumeric && price !== "Бесплатно" ? " ₽" : ""}</span>
+                          <span className={`text-xs font-medium ${isReclamation ? "text-green-600" : "text-primary"}`}>
+                            {showPrice}{!isReclamation && parsePrice(price) > 0 && !price.startsWith("+") ? " ₽" : ""}
+                            {hasVariants(price) && !isReclamation && (
+                              <span className="ml-1 text-[10px] text-muted-foreground">▾</span>
+                            )}
+                          </span>
                         </div>
                       </button>
                     );
@@ -196,6 +256,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                           type="text"
                           value={item.name}
                           onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                          placeholder="Название позиции"
                           className="w-full px-2 py-1 rounded border border-border bg-background text-xs focus:outline-none focus:ring-1 focus:ring-ring"
                         />
                         <div className="flex items-center gap-2">
@@ -205,8 +266,19 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                             value={item.quantity}
                             onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
                             className="w-14 px-2 py-1 rounded border border-border bg-background text-xs text-center focus:outline-none"
+                            title="Количество"
                           />
                           <span className="text-[10px] text-muted-foreground">{item.unit}</span>
+                          <span className="text-[10px] text-muted-foreground">×</span>
+                          <input
+                            type="number"
+                            min={0}
+                            value={item.price}
+                            onChange={(e) => updateItem(item.id, "price", Number(e.target.value))}
+                            className="w-20 px-2 py-1 rounded border border-border bg-background text-xs text-center focus:outline-none"
+                            title="Цена за единицу"
+                          />
+                          <span className="text-[10px] text-muted-foreground">₽</span>
                           <span className="text-xs font-medium ml-auto">{(item.price * item.quantity).toLocaleString("ru")} ₽</span>
                           <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive">
                             <Trash2 size={12} />
@@ -339,6 +411,44 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
           </div>
         </div>
       </div>
+
+      {/* Variant selection modal */}
+      {variantModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setVariantModal(null)} />
+          <div className="relative bg-card rounded-xl shadow-2xl w-full max-w-sm">
+            <div className="p-5 space-y-4">
+              <h3 className="text-sm font-heading font-bold">Выберите вариант</h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">{variantModal.item.name}</p>
+              <div className="space-y-2">
+                {variantModal.variants.map((v, i) => {
+                  const price = parsePrice(v);
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => addWithVariant(variantModal.item, v)}
+                      className="w-full text-left p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">Вариант {i + 1}</span>
+                        <span className="text-sm font-medium text-primary">
+                          {price > 0 ? `${v.trim()} ₽` : v.trim()}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => setVariantModal(null)}
+                className="w-full px-4 py-2 rounded-lg text-xs font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };

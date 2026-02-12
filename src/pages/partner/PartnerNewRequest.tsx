@@ -7,10 +7,10 @@ import { Send, MapPin, FileText, Upload, X, CheckCircle2 } from "lucide-react";
 const requestTypes = [
   { value: "measurement", label: "Замер", desc: "Выезд специалиста для замера проёмов" },
   { value: "installation", label: "Монтаж", desc: "Установка дверей на объекте" },
-  { value: "reclamation", label: "Рекламация", desc: "Гарантийное обслуживание" },
+  { value: "reclamation", label: "Рекламация", desc: "Гарантийное обслуживание (бесплатно)" },
 ];
 
-const cities = ["Москва", "Санкт-Петербург", "Казань", "Екатеринбург", "Новосибирск", "Краснодар"];
+const cities = ["Москва", "Санкт-Петербург"];
 
 const PartnerNewRequest = () => {
   const [type, setType] = useState("measurement");

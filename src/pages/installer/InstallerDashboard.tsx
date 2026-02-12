@@ -21,6 +21,10 @@ const InstallerDashboard = () => {
   const [photosAfter, setPhotosAfter] = useState<string[]>([]);
   const [validationShown, setValidationShown] = useState(false);
 
+  // Agreed date state
+  const [agreedDate, setAgreedDate] = useState("");
+  const [dateConfirmed, setDateConfirmed] = useState(false);
+
   useEffect(() => { document.title = "Мои заявки — Монтажник"; }, []);
 
   const handleSelectRequest = (r: ServiceRequest) => {
@@ -32,6 +36,8 @@ const InstallerDashboard = () => {
     setPhotosBefore([]);
     setPhotosAfter([]);
     setValidationShown(false);
+    setAgreedDate(r.agreedDate || "");
+    setDateConfirmed(!!r.agreedDate);
   };
 
   const addMockPhoto = (type: "before" | "after") => {
@@ -49,7 +55,17 @@ const InstallerDashboard = () => {
     setter((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleConfirmDate = () => {
+    if (!agreedDate || !selected) return;
+    setDateConfirmed(true);
+    setRequests((prev) =>
+      prev.map((r) => r.id === selected.id ? { ...r, agreedDate: agreedDate } : r)
+    );
+    setSelected({ ...selected, agreedDate });
+  };
+
   const isComplete =
+    dateConfirmed &&
     doorsInstalled.trim() !== "" &&
     hardwareInstalled.trim() !== "" &&
     clientAccepted &&
@@ -63,13 +79,13 @@ const InstallerDashboard = () => {
     }
     if (!selected) return;
     setRequests((prev) =>
-      prev.map((r) => r.id === selected.id ? { ...r, status: "installation_done" as RequestStatus } : r)
+      prev.map((r) => r.id === selected.id ? { ...r, status: "installation_done" as RequestStatus, executorFiles: [...photosBefore, ...photosAfter] } : r)
     );
     setSelected(null);
   };
 
   const handleStartInstallation = () => {
-    if (!selected) return;
+    if (!selected || !dateConfirmed) return;
     setRequests((prev) =>
       prev.map((r) => r.id === selected.id ? { ...r, status: "installation_scheduled" as RequestStatus } : r)
     );
@@ -81,6 +97,7 @@ const InstallerDashboard = () => {
 
   const missingFields: string[] = [];
   if (validationShown && !isComplete) {
+    if (!dateConfirmed) missingFields.push("Согласованная дата");
     if (!doorsInstalled.trim()) missingFields.push("Установленные двери");
     if (!hardwareInstalled.trim()) missingFields.push("Фурнитура");
     if (!clientAccepted) missingFields.push("Подтверждение клиента");
@@ -113,11 +130,21 @@ const InstallerDashboard = () => {
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status]}`}>
                           {statusLabels[r.status]}
                         </span>
+                        {r.source === "partner" && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
+                            Партнёр
+                          </span>
+                        )}
                       </div>
                       <p className="font-semibold">{r.clientName}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <MapPin size={12} /> {r.address}
                       </div>
+                      {r.agreedDate && (
+                        <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                          <Calendar size={12} /> Согласовано: {r.agreedDate}
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Calendar size={14} />
@@ -172,8 +199,44 @@ const InstallerDashboard = () => {
                 </button>
               </div>
 
+              {/* Mandatory date selection */}
+              {!dateConfirmed && (
+                <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">Выберите дату монтажа</p>
+                      <p className="text-xs text-amber-700">Укажите дату, которую согласовали с клиентом. Это обязательно.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="date"
+                      value={agreedDate}
+                      onChange={(e) => setAgreedDate(e.target.value)}
+                      min={new Date().toISOString().split("T")[0]}
+                      className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      onClick={handleConfirmDate}
+                      disabled={!agreedDate}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Подтвердить
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {dateConfirmed && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                  <Calendar size={14} className="text-primary" />
+                  <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
+                </div>
+              )}
+
               {/* Status action for measurement_done → installation_scheduled */}
-              {selected.status === "measurement_done" && (
+              {dateConfirmed && selected.status === "measurement_done" && (
                 <button
                   onClick={handleStartInstallation}
                   className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-primary rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors"
@@ -183,7 +246,7 @@ const InstallerDashboard = () => {
               )}
 
               {/* Report form (visible for installation_scheduled) */}
-              {(selected.status === "installation_scheduled" || selected.status === "installation_done") && (
+              {dateConfirmed && (selected.status === "installation_scheduled" || selected.status === "installation_done") && (
                 <div className="border-t border-border pt-4 space-y-4">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <ClipboardCheck size={16} /> Отчёт о монтаже
