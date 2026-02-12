@@ -1,11 +1,22 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockUsers, roleLabels, type UserAccount, type UserRole } from "@/data/mockDashboard";
-import { UserPlus, Trash2, Search } from "lucide-react";
+import { roleLabels, type UserRole } from "@/data/mockDashboard";
+import { UserPlus, Trash2, Search, Loader2 } from "lucide-react";
 import CreateAccountModal from "@/components/dashboard/CreateAccountModal";
 import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
 import { toast } from "sonner";
+import api from "@/lib/api";
+
+interface UserAccount {
+  id: string;
+  name: string;
+  role: UserRole;
+  telegram_id?: string;
+  email?: string;
+  active: boolean;
+  created_at: string;
+}
 
 const roleColorMap: Record<UserRole, string> = {
   admin: "bg-red-50 text-red-700",
@@ -16,37 +27,60 @@ const roleColorMap: Record<UserRole, string> = {
 };
 
 const AdminAccounts = () => {
-  const [users, setUsers] = useState<UserAccount[]>(mockUsers);
+  const [users, setUsers] = useState<UserAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserAccount | null>(null);
 
-  useEffect(() => { document.title = "Аккаунты — Админ-панель"; }, []);
+  useEffect(() => {
+    document.title = "Аккаунты — Админ-панель";
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const data = await api<UserAccount[]>("/api/users", { auth: true });
+      setUsers(data);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка загрузки");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = users.filter((u) => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || (u.telegramId || "").includes(search);
+    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) || (u.telegram_id || "").includes(search);
     const matchRole = filterRole === "all" || u.role === filterRole;
     return matchSearch && matchRole;
   });
 
-  const handleCreate = (data: { name: string; role: UserRole; telegramId: string }) => {
-    const newUser: UserAccount = {
-      id: `U-${String(users.length + 1).padStart(3, "0")}`,
-      ...data,
-      active: true,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    setUsers([...users, newUser]);
-    setShowCreate(false);
-    toast.success(`Аккаунт "${data.name}" создан`);
+  const handleCreate = async (data: { name: string; role: UserRole; telegramId: string }) => {
+    try {
+      const newUser = await api<UserAccount>("/api/users", {
+        method: "POST",
+        body: data,
+        auth: true,
+      });
+      setUsers([newUser, ...users]);
+      setShowCreate(false);
+      toast.success(`Аккаунт "${data.name}" создан`);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка создания");
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!deleteTarget) return;
-    setUsers(users.filter((u) => u.id !== deleteTarget.id));
-    toast.success(`Аккаунт "${deleteTarget.name}" удалён`);
-    setDeleteTarget(null);
+    try {
+      await api(`/api/users/${deleteTarget.id}`, { method: "DELETE", auth: true });
+      setUsers(users.filter((u) => u.id !== deleteTarget.id));
+      toast.success(`Аккаунт "${deleteTarget.name}" удалён`);
+      setDeleteTarget(null);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка удаления");
+    }
   };
 
   return (
@@ -105,7 +139,7 @@ const AdminAccounts = () => {
                     <tr key={u.id} className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors">
                       <td className="py-3 pr-4 font-mono text-xs">{u.id}</td>
                       <td className="py-3 pr-4 font-medium">{u.name}</td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.telegramId || "—"}</td>
+                      <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.telegram_id || "—"}</td>
                       <td className="py-3 pr-4">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleColorMap[u.role]}`}>
                           {roleLabels[u.role]}
@@ -115,7 +149,7 @@ const AdminAccounts = () => {
                         <span className={`inline-block w-2 h-2 rounded-full ${u.active ? "bg-green-500" : "bg-gray-300"}`} />
                         <span className="ml-2 text-xs">{u.active ? "Активен" : "Неактивен"}</span>
                       </td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">{u.createdAt}</td>
+                      <td className="py-3 pr-4 text-xs text-muted-foreground">{u.created_at?.split("T")[0]}</td>
                       <td className="py-3">
                         <button
                           onClick={() => setDeleteTarget(u)}
