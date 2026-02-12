@@ -44,7 +44,7 @@ const HeroSection = () => {
             autoPlay
             muted
             playsInline
-            preload="auto"
+            preload="metadata"
             webkit-playsinline=""
             x-webkit-airplay="deny"
             disablePictureInPicture
