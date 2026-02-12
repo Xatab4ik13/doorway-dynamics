@@ -79,28 +79,28 @@ const AppRoutes = () => (
         <Route path="/reclamation" element={<ReclamationPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         {/* Admin */}
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/requests" element={<AdminRequests />} />
-        <Route path="/admin/accounts" element={<AdminAccounts />} />
-        <Route path="/admin/news" element={<AdminNews />} />
-        <Route path="/admin/estimates" element={<AdminEstimates />} />
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRequests /></ProtectedRoute>} />
+        <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccounts /></ProtectedRoute>} />
+        <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNews /></ProtectedRoute>} />
+        <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEstimates /></ProtectedRoute>} />
         {/* Manager */}
-        <Route path="/manager" element={<ManagerDashboard />} />
-        <Route path="/manager/assign" element={<ManagerAssign />} />
-        <Route path="/manager/files" element={<ManagerFiles />} />
-        <Route path="/manager/estimates" element={<ManagerEstimates />} />
+        <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerDashboard /></ProtectedRoute>} />
+        <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerAssign /></ProtectedRoute>} />
+        <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerFiles /></ProtectedRoute>} />
+        <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerEstimates /></ProtectedRoute>} />
         {/* Measurer */}
-        <Route path="/measurer" element={<MeasurerDashboard />} />
-        <Route path="/measurer/history" element={<MeasurerHistory />} />
-        <Route path="/measurer/estimates" element={<MeasurerEstimates />} />
+        <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerDashboard /></ProtectedRoute>} />
+        <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerHistory /></ProtectedRoute>} />
+        <Route path="/measurer/estimates" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerEstimates /></ProtectedRoute>} />
         {/* Installer */}
-        <Route path="/installer" element={<InstallerDashboard />} />
-        <Route path="/installer/history" element={<InstallerHistory />} />
-        <Route path="/installer/estimates" element={<InstallerEstimates />} />
+        <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerDashboard /></ProtectedRoute>} />
+        <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerHistory /></ProtectedRoute>} />
+        <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerEstimates /></ProtectedRoute>} />
         {/* Partner */}
-        <Route path="/partner" element={<PartnerDashboard />} />
-        <Route path="/partner/new" element={<PartnerNewRequest />} />
-        <Route path="/partner/history" element={<PartnerHistory />} />
+        <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerDashboard /></ProtectedRoute>} />
+        <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerNewRequest /></ProtectedRoute>} />
+        <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerHistory /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
