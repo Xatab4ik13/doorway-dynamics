@@ -60,12 +60,6 @@ const Header = () => {
             >
               Заявка
             </Link>
-            <Link
-              to="/reclamation"
-              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 border border-foreground/30 text-foreground hover:bg-foreground hover:text-background transition-colors duration-300 hidden md:inline-block"
-            >
-              Рекламация
-            </Link>
 
             {/* Burger */}
             <button
@@ -251,22 +245,6 @@ const Header = () => {
                     </Link>
                   </motion.div>
 
-                  {/* Заявка на рекламацию */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.65 }}
-                  >
-                    <Link
-                      to="/reclamation"
-                      onClick={closeMenu}
-                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      Заявка на рекламацию
-                    </Link>
-                  </motion.div>
                 </nav>
 
                 <motion.div

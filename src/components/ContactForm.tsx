@@ -22,6 +22,7 @@ const cities = [
 const requestTypes = [
   { id: "measurement", label: "Заявка на замер" },
   { id: "installation", label: "Заявка на монтаж" },
+  { id: "reclamation", label: "Рекламация" },
 ];
 
 export interface ContactFormRef {
@@ -92,7 +93,8 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
   const disabledInputClass =
     "w-full bg-transparent border-b border-border/50 py-4 text-sm text-muted-foreground/40 placeholder:text-muted-foreground/30 cursor-not-allowed";
 
-  const actionLabel = selectedType === "measurement" ? "Что замеряем" : selectedType === "installation" ? "Что монтируем" : "Опишите задачу";
+  const isReclamation = selectedType === "reclamation";
+  const actionLabel = selectedType === "measurement" ? "Что замеряем" : selectedType === "installation" ? "Что монтируем" : isReclamation ? "Опишите проблему" : "Опишите задачу";
 
   return (
     <section className="py-24 md:py-40 px-6 md:px-10" ref={formRef}>
@@ -175,29 +177,33 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
               className={filtersSelected ? inputClass : disabledInputClass}
             />
 
-            <div className="pt-6 pb-2">
-              <p className={`text-xs uppercase tracking-[0.15em] ${filtersSelected ? "text-muted-foreground" : "text-muted-foreground/30"}`}>
-                Доп. контакт
-              </p>
-            </div>
+            {!isReclamation && (
+              <>
+                <div className="pt-6 pb-2">
+                  <p className={`text-xs uppercase tracking-[0.15em] ${filtersSelected ? "text-muted-foreground" : "text-muted-foreground/30"}`}>
+                    Доп. контакт
+                  </p>
+                </div>
 
-            <input
-              type="text"
-              placeholder="ФИО доп. контакта"
-              disabled={!filtersSelected}
-              value={form.extraName}
-              onChange={(e) => setForm({ ...form, extraName: e.target.value })}
-              className={filtersSelected ? inputClass : disabledInputClass}
-            />
-            <input
-              type="tel"
-              placeholder="+7 ___ ___ __ __"
-              disabled={!filtersSelected}
-              value={form.extraPhone}
-              onFocus={(e) => { if (!e.target.value) setForm({ ...form, extraPhone: "+7" }); }}
-              onChange={(e) => setForm({ ...form, extraPhone: formatPhone(e.target.value) })}
-              className={filtersSelected ? inputClass : disabledInputClass}
-            />
+                <input
+                  type="text"
+                  placeholder="ФИО доп. контакта"
+                  disabled={!filtersSelected}
+                  value={form.extraName}
+                  onChange={(e) => setForm({ ...form, extraName: e.target.value })}
+                  className={filtersSelected ? inputClass : disabledInputClass}
+                />
+                <input
+                  type="tel"
+                  placeholder="+7 ___ ___ __ __"
+                  disabled={!filtersSelected}
+                  value={form.extraPhone}
+                  onFocus={(e) => { if (!e.target.value) setForm({ ...form, extraPhone: "+7" }); }}
+                  onChange={(e) => setForm({ ...form, extraPhone: formatPhone(e.target.value) })}
+                  className={filtersSelected ? inputClass : disabledInputClass}
+                />
+              </>
+            )}
 
             {/* Address */}
             <div className="relative">
