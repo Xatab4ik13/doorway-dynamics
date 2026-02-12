@@ -1,10 +1,11 @@
 import { useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import api from "@/lib/api";
 
 const formatPhone = (value: string): string => {
   const digits = value.replace(/\D/g, "");
-  // Ensure starts with 7
   const d = digits.startsWith("7") ? digits : digits.startsWith("8") ? "7" + digits.slice(1) : "7" + digits;
   let result = "+7";
   if (d.length > 1) result += " " + d.slice(1, 4);
@@ -18,6 +19,8 @@ const cities = [
   { id: "moscow", label: "Москва" },
   { id: "spb", label: "Санкт-Петербург" },
 ];
+
+const cityMap: Record<string, string> = { moscow: "Москва", spb: "Санкт-Петербург" };
 
 const requestTypes = [
   { id: "measurement", label: "Заявка на замер" },
@@ -40,6 +43,7 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
 
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     name: "",
@@ -75,16 +79,42 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
     }, 300);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!filtersSelected) {
       toast.error("Пожалуйста, выберите город и тип заявки");
       return;
     }
-    toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
-    setForm({ name: "", phone: "", extraName: "", extraPhone: "", address: "", workDescription: "" });
-    setSelectedCity(null);
-    setSelectedType(null);
+    if (form.phone.replace(/\D/g, "").length < 11) {
+      toast.error("Введите корректный номер телефона");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await api("/api/requests/public", {
+        method: "POST",
+        body: {
+          client_name: form.name,
+          client_phone: form.phone,
+          client_address: form.address,
+          city: cityMap[selectedCity!],
+          type: selectedType,
+          work_description: form.workDescription,
+          extra_name: form.extraName || undefined,
+          extra_phone: form.extraPhone || undefined,
+          source: "site",
+        },
+      });
+      toast.success("Заявка отправлена! Мы свяжемся с вами в ближайшее время.");
+      setForm({ name: "", phone: "", extraName: "", extraPhone: "", address: "", workDescription: "" });
+      setSelectedCity(null);
+      setSelectedType(null);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка отправки заявки");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -150,32 +180,20 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
             </div>
           </div>
 
-          {/* Form — always visible, disabled until filters selected */}
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-0 relative">
-            {/* Overlay blocker when filters not selected */}
             {!filtersSelected && (
               <div className="absolute inset-0 z-10 cursor-not-allowed" onClick={() => toast.info("Сначала выберите город и тип заявки")} />
             )}
 
-            <input
-              type="text"
-              placeholder="ФИО"
-              required
-              disabled={!filtersSelected}
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className={filtersSelected ? inputClass : disabledInputClass}
-            />
-            <input
-              type="tel"
-              placeholder="+7 ___ ___ __ __"
-              required
-              disabled={!filtersSelected}
+            <input type="text" placeholder="ФИО" required disabled={!filtersSelected}
+              value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={filtersSelected ? inputClass : disabledInputClass} />
+            <input type="tel" placeholder="+7 ___ ___ __ __" required disabled={!filtersSelected}
               value={form.phone}
               onFocus={(e) => { if (!e.target.value) setForm({ ...form, phone: "+7" }); }}
               onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })}
-              className={filtersSelected ? inputClass : disabledInputClass}
-            />
+              className={filtersSelected ? inputClass : disabledInputClass} />
 
             {!isReclamation && (
               <>
@@ -184,59 +202,32 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
                     Доп. контакт
                   </p>
                 </div>
-
-                <input
-                  type="text"
-                  placeholder="ФИО доп. контакта"
-                  disabled={!filtersSelected}
-                  value={form.extraName}
-                  onChange={(e) => setForm({ ...form, extraName: e.target.value })}
-                  className={filtersSelected ? inputClass : disabledInputClass}
-                />
-                <input
-                  type="tel"
-                  placeholder="+7 ___ ___ __ __"
-                  disabled={!filtersSelected}
+                <input type="text" placeholder="ФИО доп. контакта" disabled={!filtersSelected}
+                  value={form.extraName} onChange={(e) => setForm({ ...form, extraName: e.target.value })}
+                  className={filtersSelected ? inputClass : disabledInputClass} />
+                <input type="tel" placeholder="+7 ___ ___ __ __" disabled={!filtersSelected}
                   value={form.extraPhone}
                   onFocus={(e) => { if (!e.target.value) setForm({ ...form, extraPhone: "+7" }); }}
                   onChange={(e) => setForm({ ...form, extraPhone: formatPhone(e.target.value) })}
-                  className={filtersSelected ? inputClass : disabledInputClass}
-                />
+                  className={filtersSelected ? inputClass : disabledInputClass} />
               </>
             )}
 
             {/* Address */}
             <div className="relative">
-              <input
-                type="text"
-                placeholder="Адрес"
-                required
-                disabled={!filtersSelected}
-                value={form.address}
-                onChange={(e) => handleAddressChange(e.target.value)}
+              <input type="text" placeholder="Адрес" required disabled={!filtersSelected}
+                value={form.address} onChange={(e) => handleAddressChange(e.target.value)}
                 onFocus={() => form.address.length >= 3 && setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className={filtersSelected ? inputClass : disabledInputClass}
-              />
+                className={filtersSelected ? inputClass : disabledInputClass} />
               <AnimatePresence>
                 {showSuggestions && addressSuggestions.length > 0 && filtersSelected && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-full left-0 right-0 z-50 bg-background border border-border shadow-lg"
-                  >
+                  <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }} className="absolute top-full left-0 right-0 z-50 bg-background border border-border shadow-lg">
                     {addressSuggestions.map((s, i) => (
-                      <button
-                        key={i}
-                        type="button"
+                      <button key={i} type="button"
                         className="w-full text-left px-4 py-3 text-sm text-foreground/80 hover:bg-secondary/50 transition-colors duration-200"
-                        onMouseDown={() => {
-                          setForm({ ...form, address: s });
-                          setShowSuggestions(false);
-                        }}
-                      >
+                        onMouseDown={() => { setForm({ ...form, address: s }); setShowSuggestions(false); }}>
                         {s}
                       </button>
                     ))}
@@ -245,28 +236,19 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
               </AnimatePresence>
             </div>
 
-            {/* Work description - free text */}
-            <textarea
-              placeholder={actionLabel}
-              required
-              disabled={!filtersSelected}
-              rows={3}
-              value={form.workDescription}
-              onChange={(e) => setForm({ ...form, workDescription: e.target.value })}
-              className={`${filtersSelected ? inputClass : disabledInputClass} resize-none`}
-            />
+            <textarea placeholder={actionLabel} required disabled={!filtersSelected} rows={3}
+              value={form.workDescription} onChange={(e) => setForm({ ...form, workDescription: e.target.value })}
+              className={`${filtersSelected ? inputClass : disabledInputClass} resize-none`} />
 
             <div className="pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <p className={`text-xs max-w-sm ${filtersSelected ? "text-muted-foreground" : "text-muted-foreground/30"}`}>
                 Нажимая на кнопку, вы даете согласие на обработку{" "}
                 <a href="/privacy" target="_blank" className="underline hover:text-foreground transition-colors">персональных данных</a>
               </p>
-              <button
-                type="submit"
-                disabled={!filtersSelected}
-                className={`btn-primary ${!filtersSelected ? "opacity-30 cursor-not-allowed" : ""}`}
-              >
-                Отправить
+              <button type="submit" disabled={!filtersSelected || submitting}
+                className={`btn-primary flex items-center gap-2 ${!filtersSelected ? "opacity-30 cursor-not-allowed" : ""}`}>
+                {submitting && <Loader2 size={16} className="animate-spin" />}
+                {submitting ? "Отправка..." : "Отправить"}
               </button>
             </div>
           </form>
