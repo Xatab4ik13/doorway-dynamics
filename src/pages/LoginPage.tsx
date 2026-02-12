@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { Send, Shield, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { Send, Shield, Lock, Loader2, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 
@@ -11,53 +11,98 @@ type LoginMode = "telegram" | "admin";
 
 const telegramBotUrl = "https://t.me/primedoor_bot";
 
+const roleRoutes: Record<string, string> = {
+  admin: "/admin",
+  manager: "/manager",
+  measurer: "/measurer",
+  installer: "/installer",
+  partner: "/partner",
+};
+
 const LoginPage = () => {
   const [mode, setMode] = useState<LoginMode>("telegram");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [waitingTelegram, setWaitingTelegram] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { login, isAuthenticated, user } = useAuth();
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     document.title = "Вход в кабинет — PrimeDoor Service";
-
-    // Handle token from Telegram bot URL
-    const tokenFromUrl = searchParams.get("token");
-    if (tokenFromUrl) {
-      try {
-        const payload = JSON.parse(atob(tokenFromUrl.split(".")[1]));
-        const userData = { id: payload.id, name: payload.name, role: payload.role };
-        login(tokenFromUrl, userData);
-        const roleRoutes: Record<string, string> = {
-          admin: "/admin",
-          manager: "/manager",
-          measurer: "/measurer",
-          installer: "/installer",
-          partner: "/partner",
-        };
-        toast.success(`Добро пожаловать, ${payload.name}!`);
-        navigate(roleRoutes[payload.role] || "/", { replace: true });
-      } catch {
-        toast.error("Невалидный токен. Попробуйте снова через бота.");
-      }
-    }
-  }, [searchParams]);
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      const roleRoutes: Record<string, string> = {
-        admin: "/admin",
-        manager: "/manager",
-        measurer: "/measurer",
-        installer: "/installer",
-        partner: "/partner",
-      };
       navigate(roleRoutes[user.role] || "/");
     }
   }, [isAuthenticated, user, navigate]);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    sessionCodeRef.current = null;
+    setWaitingTelegram(false);
+  }, []);
+
+  const handleTelegramLogin = async () => {
+    setWaitingTelegram(true);
+    try {
+      // Create session
+      const { code } = await api<{ code: string }>("/api/auth/telegram/session", {
+        method: "POST",
+      });
+      sessionCodeRef.current = code;
+
+      // Open bot with code
+      window.open(`${telegramBotUrl}?start=${code}`, "_blank");
+
+      // Poll for confirmation every 2 seconds
+      pollingRef.current = setInterval(async () => {
+        try {
+          const result = await api<{ status: string; token?: string; user?: any }>(
+            `/api/auth/telegram/check/${code}`
+          );
+
+          if (result.status === "confirmed" && result.token && result.user) {
+            stopPolling();
+            login(result.token, result.user);
+            toast.success(`Добро пожаловать, ${result.user.name}!`);
+            navigate(roleRoutes[result.user.role] || "/", { replace: true });
+          } else if (result.status === "expired") {
+            stopPolling();
+            toast.error("Сессия истекла. Попробуйте ещё раз.");
+          }
+        } catch {
+          // Silent retry
+        }
+      }, 2000);
+
+      // Auto-stop after 5 minutes
+      setTimeout(() => {
+        if (pollingRef.current) {
+          stopPolling();
+          toast.error("Время ожидания истекло. Попробуйте ещё раз.");
+        }
+      }, 5 * 60 * 1000);
+
+    } catch (err: any) {
+      setWaitingTelegram(false);
+      toast.error(err.message || "Ошибка создания сессии");
+    }
+  };
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,20 +121,6 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-
-  const handleTelegramLogin = () => {
-    window.open(telegramBotUrl, "_blank");
-    toast.info("Откройте бота в Telegram и нажмите /start. После проверки вашего ID вы получите доступ.");
-  };
-
-  // Demo quick-access buttons
-  const demoRoles = [
-    { label: "Менеджер", path: "/manager", color: "bg-blue-50 text-blue-700 hover:bg-blue-100" },
-    { label: "Замерщик", path: "/measurer", color: "bg-purple-50 text-purple-700 hover:bg-purple-100" },
-    { label: "Монтажник", path: "/installer", color: "bg-orange-50 text-orange-700 hover:bg-orange-100" },
-    { label: "Партнёр", path: "/partner", color: "bg-green-50 text-green-700 hover:bg-green-100" },
-    { label: "Админ", path: "/admin", color: "bg-red-50 text-red-700 hover:bg-red-100" },
-  ];
 
   const inputClass =
     "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
@@ -112,7 +143,7 @@ const LoginPage = () => {
         {/* Mode tabs */}
         <div className="flex gap-2 mb-8">
           <button
-            onClick={() => setMode("telegram")}
+            onClick={() => { setMode("telegram"); stopPolling(); }}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "telegram"
                 ? "bg-[#229ED9] text-white"
@@ -122,7 +153,7 @@ const LoginPage = () => {
             <Send size={16} /> Через Telegram
           </button>
           <button
-            onClick={() => setMode("admin")}
+            onClick={() => { setMode("admin"); stopPolling(); }}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "admin"
                 ? "bg-foreground text-background"
@@ -137,20 +168,32 @@ const LoginPage = () => {
           <div className="space-y-6">
             <div className="text-center space-y-3">
               <div className="w-16 h-16 rounded-full bg-[#229ED9]/10 flex items-center justify-center mx-auto">
-                <Send size={28} className="text-[#229ED9]" />
+                {waitingTelegram ? (
+                  <Loader2 size={28} className="text-[#229ED9] animate-spin" />
+                ) : (
+                  <Send size={28} className="text-[#229ED9]" />
+                )}
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Нажмите кнопку ниже — вас перенаправит в Telegram-бот.
-                Бот считает ваш ID и, если администратор добавил вас в систему,
-                вы получите доступ к своему кабинету.
+                {waitingTelegram
+                  ? "Откройте бота в Telegram и нажмите Start. Ожидаем подтверждение..."
+                  : "Нажмите кнопку ниже — вас перенаправит в Telegram-бот. После нажатия Start вход произойдёт автоматически."}
               </p>
             </div>
 
             <button
-              onClick={handleTelegramLogin}
-              className="w-full py-4 rounded-lg text-sm font-medium bg-[#229ED9] text-white hover:bg-[#1a8abf] transition-colors flex items-center justify-center gap-2"
+              onClick={waitingTelegram ? stopPolling : handleTelegramLogin}
+              className={`w-full py-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                waitingTelegram
+                  ? "bg-accent text-foreground hover:bg-accent/80"
+                  : "bg-[#229ED9] text-white hover:bg-[#1a8abf]"
+              }`}
             >
-              <Send size={18} /> Войти через Telegram
+              {waitingTelegram ? (
+                <><X size={18} /> Отменить</>
+              ) : (
+                <><Send size={18} /> Войти через Telegram</>
+              )}
             </button>
 
             <div className="text-center">
@@ -190,8 +233,6 @@ const LoginPage = () => {
             </div>
           </form>
         )}
-
-        {/* Demo access removed — routes are now protected */}
 
         <p className="text-center text-xs text-muted-foreground mt-10">
           <Link to="/" className="hover:text-foreground transition-colors">
