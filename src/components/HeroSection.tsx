@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useCallback, useEffect } from "react";
-const CACHE_BUST = "v10";
+const CACHE_BUST = "v11";
 const videos = [
   `/videos/hero-video-new-1.mp4?${CACHE_BUST}`,
+  `/videos/hero-video-2.mp4?${CACHE_BUST}`,
 ];
 
 const HeroSection = () => {
@@ -42,7 +43,6 @@ const HeroSection = () => {
             src={videos[currentIndex]}
             autoPlay
             muted
-            loop
             playsInline
             preload="metadata"
             webkit-playsinline=""
