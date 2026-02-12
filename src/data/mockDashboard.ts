@@ -3,6 +3,7 @@
 export type RequestStatus =
   | "new"
   | "assigned"
+  | "date_agreed"
   | "measurement_done"
   | "installation_scheduled"
   | "installation_done"
@@ -11,6 +12,7 @@ export type RequestStatus =
 export const statusLabels: Record<RequestStatus, string> = {
   new: "Новая",
   assigned: "Назначена",
+  date_agreed: "Дата согласована",
   measurement_done: "Замер выполнен",
   installation_scheduled: "Монтаж назначен",
   installation_done: "Монтаж выполнен",
@@ -20,6 +22,7 @@ export const statusLabels: Record<RequestStatus, string> = {
 export const statusColors: Record<RequestStatus, string> = {
   new: "bg-blue-100 text-blue-700",
   assigned: "bg-amber-100 text-amber-700",
+  date_agreed: "bg-cyan-100 text-cyan-700",
   measurement_done: "bg-purple-100 text-purple-700",
   installation_scheduled: "bg-orange-100 text-orange-700",
   installation_done: "bg-green-100 text-green-700",
@@ -102,6 +105,7 @@ export const mockChartData = [
 export const mockFunnelData = [
   { stage: "Новые заявки", value: 156, fill: "hsl(217, 91%, 50%)" },
   { stage: "Назначены", value: 120, fill: "hsl(38, 92%, 50%)" },
+  { stage: "Дата согласована", value: 105, fill: "hsl(190, 80%, 45%)" },
   { stage: "Замер выполнен", value: 98, fill: "hsl(280, 65%, 50%)" },
   { stage: "Монтаж назначен", value: 78, fill: "hsl(25, 95%, 53%)" },
   { stage: "Монтаж выполнен", value: 65, fill: "hsl(142, 71%, 45%)" },
