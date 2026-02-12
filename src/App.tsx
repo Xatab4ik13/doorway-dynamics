@@ -31,10 +31,13 @@ const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
 const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
 const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
 const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
+const ManagerEstimates = lazy(() => import("./pages/manager/ManagerEstimates"));
 const MeasurerDashboard = lazy(() => import("./pages/measurer/MeasurerDashboard"));
 const MeasurerHistory = lazy(() => import("./pages/measurer/MeasurerHistory"));
+const MeasurerEstimates = lazy(() => import("./pages/measurer/MeasurerEstimates"));
 const InstallerDashboard = lazy(() => import("./pages/installer/InstallerDashboard"));
 const InstallerHistory = lazy(() => import("./pages/installer/InstallerHistory"));
+const InstallerEstimates = lazy(() => import("./pages/installer/InstallerEstimates"));
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
 const PartnerNewRequest = lazy(() => import("./pages/partner/PartnerNewRequest"));
 const PartnerHistory = lazy(() => import("./pages/partner/PartnerHistory"));
@@ -83,12 +86,15 @@ const AppRoutes = () => (
         <Route path="/manager" element={<ManagerDashboard />} />
         <Route path="/manager/assign" element={<ManagerAssign />} />
         <Route path="/manager/files" element={<ManagerFiles />} />
+        <Route path="/manager/estimates" element={<ManagerEstimates />} />
         {/* Measurer */}
         <Route path="/measurer" element={<MeasurerDashboard />} />
         <Route path="/measurer/history" element={<MeasurerHistory />} />
+        <Route path="/measurer/estimates" element={<MeasurerEstimates />} />
         {/* Installer */}
         <Route path="/installer" element={<InstallerDashboard />} />
         <Route path="/installer/history" element={<InstallerHistory />} />
+        <Route path="/installer/estimates" element={<InstallerEstimates />} />
         {/* Partner */}
         <Route path="/partner" element={<PartnerDashboard />} />
         <Route path="/partner/new" element={<PartnerNewRequest />} />
