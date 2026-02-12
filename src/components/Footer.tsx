@@ -22,7 +22,7 @@ const Footer = () => {
                 { label: "Портфолио", path: "/portfolio" },
                 { label: "Услуги", path: "/services" },
                 { label: "Контакты", path: "/contacts" },
-                { label: "Отзывы", path: "/reviews" },
+                { label: "Новости", path: "/news" },
               ].map((item) => (
                 <li key={item.path}>
                   <Link to={item.path} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-300">
