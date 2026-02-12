@@ -1,3 +1,8 @@
 import EstimateCalculator from "@/components/dashboard/EstimateCalculator";
-const MeasurerEstimates = () => <EstimateCalculator role="measurer" userName="Сидоров К.В." />;
+import { useAuth } from "@/contexts/AuthContext";
+
+const MeasurerEstimates = () => {
+  const { user } = useAuth();
+  return <EstimateCalculator role="measurer" userName={user?.name || "Замерщик"} />;
+};
 export default MeasurerEstimates;

@@ -91,7 +91,7 @@ const AdminEstimates = () => {
   const inputClass = "w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
 
   return (
-    <DashboardLayout role="admin" userName="Корженевский М.А.">
+    <DashboardLayout role="admin" userName="Админ">
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-heading font-bold">Конструктор смет</h1>

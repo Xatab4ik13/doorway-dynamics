@@ -1,3 +1,8 @@
 import EstimateCalculator from "@/components/dashboard/EstimateCalculator";
-const ManagerEstimates = () => <EstimateCalculator role="manager" userName="Смирнова Е.П." />;
+import { useAuth } from "@/contexts/AuthContext";
+
+const ManagerEstimates = () => {
+  const { user } = useAuth();
+  return <EstimateCalculator role="manager" userName={user?.name || "Менеджер"} />;
+};
 export default ManagerEstimates;

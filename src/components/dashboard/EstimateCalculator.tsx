@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Download, Plus, Search } from "lucide-react";
+import { Trash2, Download, Plus, Search, Loader2 } from "lucide-react";
 import { priceData, serviceTypeLabels, parsePrice, type PriceItem } from "@/data/priceData";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
+import api from "@/lib/api";
 import type { UserRole } from "@/data/mockDashboard";
 
 interface EstimateItem {
@@ -38,10 +39,27 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [discount, setDiscount] = useState(0);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("interior");
-  const [savedEstimates, setSavedEstimates] = useState<{ id: string; client: string; total: number; date: string }[]>([]);
+  const [savedEstimates, setSavedEstimates] = useState<{ id: string; number: string; client: string; total: number; date: string }[]>([]);
   const [variantModal, setVariantModal] = useState<{ item: PriceItem; variants: string[] } | null>(null);
+  const [loadingSaved, setLoadingSaved] = useState(true);
 
   useEffect(() => { document.title = "Калькулятор смет"; }, []);
+
+  // Load saved estimates from API
+  useEffect(() => {
+    api<any[]>("/api/estimates", { auth: true })
+      .then((data) => {
+        setSavedEstimates(data.map((e: any) => ({
+          id: e.id,
+          number: e.number,
+          client: e.client_name,
+          total: e.total,
+          date: e.created_at?.split("T")[0] || "",
+        })));
+      })
+      .catch(() => {})
+      .finally(() => setLoadingSaved(false));
+  }, []);
 
   const currentPriceList = priceData[activeCategory] || [];
   const filteredPriceList = currentPriceList.filter((p) =>
@@ -104,15 +122,24 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
 
   const [isSaved, setIsSaved] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
     if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
-    setSavedEstimates((prev) => [
-      { id: `EST-${String(prev.length + 1).padStart(3, "0")}`, client: clientName, total, date: new Date().toISOString().split("T")[0] },
-      ...prev,
-    ]);
-    setIsSaved(true);
-    toast.success("Смета сохранена");
+    try {
+      const saved = await api<any>("/api/estimates", {
+        method: "POST",
+        body: { client_name: clientName, client_address: clientAddress, city, items, discount, total },
+        auth: true,
+      });
+      setSavedEstimates((prev) => [
+        { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" },
+        ...prev,
+      ]);
+      setIsSaved(true);
+      toast.success("Смета сохранена");
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка сохранения");
+    }
   };
 
   const handleDownloadPdf = () => {
@@ -452,7 +479,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                     {savedEstimates.map((est) => (
                       <div key={est.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                         <div>
-                          <p className="text-xs font-mono text-muted-foreground">{est.id}</p>
+                          <p className="text-xs font-mono text-muted-foreground">{est.number}</p>
                           <p className="text-sm font-medium">{est.client}</p>
                         </div>
                         <div className="text-right">

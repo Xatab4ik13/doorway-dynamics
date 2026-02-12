@@ -1,3 +1,8 @@
 import EstimateCalculator from "@/components/dashboard/EstimateCalculator";
-const InstallerEstimates = () => <EstimateCalculator role="installer" userName="Бригада №3" />;
+import { useAuth } from "@/contexts/AuthContext";
+
+const InstallerEstimates = () => {
+  const { user } = useAuth();
+  return <EstimateCalculator role="installer" userName={user?.name || "Монтажник"} />;
+};
 export default InstallerEstimates;
