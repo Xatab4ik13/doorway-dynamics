@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { Send, Shield, Lock, ArrowRight } from "lucide-react";
+import { Send, Shield, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 type LoginMode = "telegram" | "admin";
 
@@ -13,15 +15,44 @@ const LoginPage = () => {
   const [mode, setMode] = useState<LoginMode>("telegram");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login, isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     document.title = "Вход в кабинет — PrimeDoor Service";
   }, []);
 
-  const handleAdminLogin = (e: React.FormEvent) => {
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const roleRoutes: Record<string, string> = {
+        admin: "/admin",
+        manager: "/manager",
+        measurer: "/measurer",
+        installer: "/installer",
+        partner: "/partner",
+      };
+      navigate(roleRoutes[user.role] || "/");
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.info("Авторизация будет доступна после подключения бэкенда");
+    setLoading(true);
+    try {
+      const data = await api("/api/auth/admin", {
+        method: "POST",
+        body: { email, password },
+      });
+      login(data.token, data.user);
+      toast.success(`Добро пожаловать, ${data.user.name}!`);
+      navigate("/admin");
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка авторизации");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleTelegramLogin = () => {
@@ -131,8 +162,8 @@ const LoginPage = () => {
               className={inputClass}
             />
             <div className="pt-10">
-              <button type="submit" className="btn-primary w-full">
-                Войти
+              <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2" disabled={loading}>
+                {loading ? <><Loader2 size={16} className="animate-spin" /> Вход...</> : "Войти"}
               </button>
             </div>
           </form>
