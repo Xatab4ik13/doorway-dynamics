@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import Header from "@/components/Header";
+import DashboardErrorBoundary from "@/components/DashboardErrorBoundary";
 import Footer from "@/components/Footer";
 import FloatingPhone from "@/components/FloatingPhone";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -104,28 +105,28 @@ const AppRoutes = () => (
         <Route path="/reclamation" element={<ReclamationPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         {/* Admin */}
-        <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><AdminDashboard /></ProtectedRoute>} />
-        <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["admin"]}><AdminRequests /></ProtectedRoute>} />
-        <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><AdminAccounts /></ProtectedRoute>} />
-        <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><AdminNews /></ProtectedRoute>} />
-        <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><AdminEstimates /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminRequests /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAccounts /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminNews /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Manager */}
-        <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerDashboard /></ProtectedRoute>} />
-        <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerAssign /></ProtectedRoute>} />
-        <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerFiles /></ProtectedRoute>} />
-        <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><ManagerEstimates /></ProtectedRoute>} />
+        <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAssign /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerFiles /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Measurer */}
-        <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerDashboard /></ProtectedRoute>} />
-        <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerHistory /></ProtectedRoute>} />
-        <Route path="/measurer/estimates" element={<ProtectedRoute allowedRoles={["measurer"]}><MeasurerEstimates /></ProtectedRoute>} />
+        <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/measurer/estimates" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Installer */}
-        <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerDashboard /></ProtectedRoute>} />
-        <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerHistory /></ProtectedRoute>} />
-        <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><InstallerEstimates /></ProtectedRoute>} />
+        <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Partner */}
-        <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerDashboard /></ProtectedRoute>} />
-        <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerNewRequest /></ProtectedRoute>} />
-        <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><PartnerHistory /></ProtectedRoute>} />
+        <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerNewRequest /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </Suspense>
