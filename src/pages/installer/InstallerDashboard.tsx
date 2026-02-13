@@ -22,6 +22,8 @@ const InstallerDashboard = () => {
   const [agreedDate, setAgreedDate] = useState("");
   const [dateConfirmed, setDateConfirmed] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [rescheduleComment, setRescheduleComment] = useState("");
 
   useEffect(() => { document.title = "Мои заявки — Монтажник"; }, []);
 
@@ -35,6 +37,8 @@ const InstallerDashboard = () => {
     setValidationShown(false);
     setAgreedDate(r.agreed_date?.split("T")[0] || "");
     setDateConfirmed(!!r.agreed_date);
+    setRescheduleOpen(false);
+    setRescheduleComment("");
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -57,15 +61,21 @@ const InstallerDashboard = () => {
 
   const handleConfirmDate = async () => {
     if (!agreedDate || !selected) return;
-    // Installer can only reschedule (change existing date), not set initial date
-    // Initial date must be set by admin/manager
     if (!selected.agreed_date) {
       toast.error("Дата монтажа назначается менеджером");
       return;
     }
+    if (!rescheduleComment.trim()) {
+      toast.error("Укажите причину переноса");
+      return;
+    }
     try {
-      const updated = await updateRequest(selected.id, { agreed_date: agreedDate });
+      const updated = await updateRequest(selected.id, {
+        agreed_date: agreedDate,
+        status_comment: rescheduleComment.trim(),
+      });
       setDateConfirmed(true);
+      setRescheduleOpen(false);
       setSelected(updated);
       toast.success("Дата перенесена");
     } catch {}
@@ -181,7 +191,7 @@ const InstallerDashboard = () => {
                 <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
 
-              {!dateConfirmed && !selected.agreed_date && (
+              {!selected.agreed_date && (
                 <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
                   <div className="flex items-start gap-2">
                     <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
@@ -193,31 +203,51 @@ const InstallerDashboard = () => {
                 </div>
               )}
 
-              {!dateConfirmed && selected.agreed_date && (
-                <div className="border border-blue-200 bg-blue-50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Calendar size={16} className="text-primary mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-800">Перенести дату монтажа</p>
-                      <p className="text-xs text-blue-700">Только если клиент сам попросил перенести.</p>
+              {selected.agreed_date && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} className="text-primary" />
+                      <span className="text-sm font-medium text-primary">Дата монтажа: {selected.agreed_date.split("T")[0]}</span>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      className="flex-1 px-3 py-2 rounded-xl border border-blue-200 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                    <button onClick={handleConfirmDate} disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0]}
-                      className="px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40">
-                      Перенести
+                    <button
+                      onClick={() => setRescheduleOpen(!rescheduleOpen)}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                    >
+                      {rescheduleOpen ? "Отменить перенос" : "Перенести дату"}
                     </button>
                   </div>
-                </div>
-              )}
 
-              {dateConfirmed && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
-                  <Calendar size={14} className="text-primary" />
-                  <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
+                  {rescheduleOpen && (
+                    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">Перенос даты монтажа</p>
+                          <p className="text-xs text-amber-700">Укажите новую дату и причину переноса.</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        <textarea
+                          value={rescheduleComment}
+                          onChange={(e) => setRescheduleComment(e.target.value)}
+                          placeholder="Причина переноса (обязательно)..."
+                          rows={2}
+                          className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                        />
+                      </div>
+                      <button
+                        onClick={handleConfirmDate}
+                        disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0] || !rescheduleComment.trim()}
+                        className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40"
+                      >
+                        Подтвердить перенос
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

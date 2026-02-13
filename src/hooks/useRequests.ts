@@ -13,6 +13,7 @@ export interface ApiRequest {
   city?: string;
   extra_name?: string;
   extra_phone?: string;
+  status_comment?: string;
   work_description?: string;
   notes?: string;
   photos?: { url: string; type: string; stage: string; uploaded_at: string }[];
