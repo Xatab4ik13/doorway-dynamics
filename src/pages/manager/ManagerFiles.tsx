@@ -5,11 +5,6 @@ import { Image, FolderOpen, Search, Download, Eye, ChevronDown, ChevronRight, Lo
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 
-const stageLabels: Record<string, string> = {
-  measurement: "Замер",
-  before_installation: "До монтажа",
-  after_installation: "После монтажа",
-};
 
 const ManagerFiles = () => {
   const { user } = useAuth();
@@ -82,13 +77,6 @@ const ManagerFiles = () => {
           {(search ? allRequests : requestsWithFiles).map((req) => {
             const isExpanded = expandedRequests.has(req.id);
             const photos = req.photos || [];
-            const grouped = photos.reduce((acc, p) => {
-              const key = p.stage || "other";
-              if (!acc[key]) acc[key] = [];
-              acc[key].push(p);
-              return acc;
-            }, {} as Record<string, typeof photos>);
-
             return (
               <Card key={req.id}>
                 <div onClick={() => toggleExpand(req.id)}
@@ -121,30 +109,21 @@ const ManagerFiles = () => {
                           Файлы ещё не загружены исполнителями
                         </p>
                       ) : (
-                        <div className="space-y-4">
-                          {Object.entries(grouped).map(([stage, files]) => (
-                            <div key={stage}>
-                              <h4 className="text-xs font-medium text-muted-foreground mb-2">
-                                {stageLabels[stage] || stage}
-                              </h4>
-                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                {files.map((photo, i) => (
-                                  <div key={i} className="group relative aspect-square rounded-lg overflow-hidden border border-border bg-accent/30">
-                                    <img src={photo.url} alt={`${stage} ${i + 1}`}
-                                      className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                                      <button onClick={(e) => { e.stopPropagation(); setPreviewUrl(photo.url); }}
-                                        className="p-1.5 bg-white/90 rounded-lg hover:bg-white transition-colors">
-                                        <Eye size={14} />
-                                      </button>
-                                      <a href={photo.url} download target="_blank" rel="noopener noreferrer"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="p-1.5 bg-white/90 rounded-lg hover:bg-white transition-colors">
-                                        <Download size={14} />
-                                      </a>
-                                    </div>
-                                  </div>
-                                ))}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                          {photos.map((photo, i) => (
+                            <div key={i} className="group relative aspect-square rounded-lg overflow-hidden border border-border bg-accent/30">
+                              <img src={photo.url} alt={`Файл ${i + 1}`}
+                                className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                                <button onClick={(e) => { e.stopPropagation(); setPreviewUrl(photo.url); }}
+                                  className="p-1.5 bg-white/90 rounded-lg hover:bg-white transition-colors">
+                                  <Eye size={14} />
+                                </button>
+                                <a href={photo.url} download target="_blank" rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="p-1.5 bg-white/90 rounded-lg hover:bg-white transition-colors">
+                                  <Download size={14} />
+                                </a>
                               </div>
                             </div>
                           ))}

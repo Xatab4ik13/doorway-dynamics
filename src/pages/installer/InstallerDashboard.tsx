@@ -17,8 +17,7 @@ const InstallerDashboard = () => {
   const [hardwareInstalled, setHardwareInstalled] = useState("");
   const [clientAccepted, setClientAccepted] = useState(false);
   const [defects, setDefects] = useState("");
-  const [photosBefore, setPhotosBefore] = useState<string[]>([]);
-  const [photosAfter, setPhotosAfter] = useState<string[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [validationShown, setValidationShown] = useState(false);
   const [agreedDate, setAgreedDate] = useState("");
   const [dateConfirmed, setDateConfirmed] = useState(false);
@@ -32,21 +31,19 @@ const InstallerDashboard = () => {
     setHardwareInstalled("");
     setClientAccepted(false);
     setDefects("");
-    setPhotosBefore([]);
-    setPhotosAfter([]);
+    setUploadedFiles([]);
     setValidationShown(false);
     setAgreedDate(r.agreed_date?.split("T")[0] || "");
     setDateConfirmed(!!r.agreed_date);
   };
 
-  const handleUpload = async (type: "before" | "after", e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     try {
-      const { url } = await uploadFile(file, `installations/${type}`);
-      if (type === "before") setPhotosBefore(prev => [...prev, url]);
-      else setPhotosAfter(prev => [...prev, url]);
+      const { url } = await uploadFile(file, "installations");
+      setUploadedFiles(prev => [...prev, url]);
     } catch (err: any) {
       toast.error(err.message || "Ошибка загрузки");
     } finally {
@@ -54,9 +51,8 @@ const InstallerDashboard = () => {
     }
   };
 
-  const removePhoto = (type: "before" | "after", index: number) => {
-    if (type === "before") setPhotosBefore(prev => prev.filter((_, i) => i !== index));
-    else setPhotosAfter(prev => prev.filter((_, i) => i !== index));
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleConfirmDate = async () => {
@@ -75,16 +71,13 @@ const InstallerDashboard = () => {
     } catch {}
   };
 
-  const isComplete = dateConfirmed && doorsInstalled.trim() && hardwareInstalled.trim() && clientAccepted && photosBefore.length > 0 && photosAfter.length > 0;
+  const isComplete = dateConfirmed && doorsInstalled.trim() && hardwareInstalled.trim() && clientAccepted && uploadedFiles.length > 0;
 
   const handleComplete = async () => {
     if (!isComplete) { setValidationShown(true); return; }
     if (!selected) return;
     try {
-      const allPhotos = [
-        ...photosBefore.map(url => ({ url, type: "image", stage: "before_installation", uploaded_at: new Date().toISOString() })),
-        ...photosAfter.map(url => ({ url, type: "image", stage: "after_installation", uploaded_at: new Date().toISOString() })),
-      ];
+      const allPhotos = uploadedFiles.map(url => ({ url, type: "image", stage: "general", uploaded_at: new Date().toISOString() }));
       const existingPhotos = selected.photos || [];
       await updateRequest(selected.id, {
         status: "closed" as any,
@@ -107,8 +100,7 @@ const InstallerDashboard = () => {
     if (!doorsInstalled.trim()) missingFields.push("Установленные двери");
     if (!hardwareInstalled.trim()) missingFields.push("Фурнитура");
     if (!clientAccepted) missingFields.push("Подтверждение клиента");
-    if (photosBefore.length === 0) missingFields.push("Фото до монтажа");
-    if (photosAfter.length === 0) missingFields.push("Фото после монтажа");
+    if (uploadedFiles.length === 0) missingFields.push("Фото / файлы");
   }
 
   return (
@@ -251,45 +243,24 @@ const InstallerDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-                        <Camera size={14} /> Фото ДО <span className="text-destructive">*</span>
-                      </label>
-                      {photosBefore.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          {photosBefore.map((f, i) => (
-                            <span key={i} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs">
-                              📎 {f.split("/").pop()}
-                              <button onClick={() => removePhoto("before", i)} className="hover:text-destructive"><X size={10} /></button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
-                        {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
-                        <input type="file" className="hidden" onChange={(e) => handleUpload("before", e)} accept="image/*" />
-                      </label>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-                        <Camera size={14} /> Фото ПОСЛЕ <span className="text-destructive">*</span>
-                      </label>
-                      {photosAfter.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          {photosAfter.map((f, i) => (
-                            <span key={i} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs">
-                              📎 {f.split("/").pop()}
-                              <button onClick={() => removePhoto("after", i)} className="hover:text-destructive"><X size={10} /></button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                      <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
-                        {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
-                        <input type="file" className="hidden" onChange={(e) => handleUpload("after", e)} accept="image/*" />
-                      </label>
-                    </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                      <Camera size={14} /> Фото / файлы <span className="text-destructive">*</span>
+                    </label>
+                    {uploadedFiles.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {uploadedFiles.map((f, i) => (
+                          <span key={i} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs">
+                            📎 {f.split("/").pop()}
+                            <button onClick={() => removeFile(i)} className="hover:text-destructive"><X size={10} /></button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
+                      {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
+                      <input type="file" className="hidden" onChange={handleUpload} accept="image/*,.pdf" />
+                    </label>
                   </div>
 
                   <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
