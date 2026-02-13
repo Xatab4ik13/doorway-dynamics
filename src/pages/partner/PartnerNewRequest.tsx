@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Send, MapPin, FileText, Upload, X, CheckCircle2, Loader2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import AddressInput from "@/components/AddressInput";
 
 const requestTypes = [
   { value: "measurement", label: "Замер", desc: "Выезд специалиста для замера проёмов" },
@@ -166,8 +167,14 @@ const PartnerNewRequest = () => {
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block flex items-center gap-1">
                   <MapPin size={14} /> Адрес <span className="text-destructive">*</span>
                 </label>
-                <input type="text" value={address} onChange={(e) => setAddress(e.target.value)} className={inputClass("address")} placeholder="ул. Ленина, 15" />
-                {errors.address && <p className="text-xs text-destructive mt-1">{errors.address}</p>}
+                <AddressInput
+                  value={address}
+                  onChange={setAddress}
+                  city={city}
+                  placeholder="ул. Ленина, 15"
+                  className={inputClass("address")}
+                  error={errors.address}
+                />
               </div>
 
               <div>

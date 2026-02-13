@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ShieldCheck, Clock, CheckCircle, Phone } from "lucide-react";
+import AddressInput from "@/components/AddressInput";
 
 const formatPhone = (value: string): string => {
   const digits = value.replace(/\D/g, "");
@@ -33,28 +34,7 @@ const ReclamationPage = () => {
     description: "",
   });
 
-  const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const addressTimeout = useRef<ReturnType<typeof setTimeout>>();
-
-  const handleAddressChange = (value: string) => {
-    setForm({ ...form, address: value });
-    if (addressTimeout.current) clearTimeout(addressTimeout.current);
-    if (value.length < 3) {
-      setAddressSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-    addressTimeout.current = setTimeout(() => {
-      const city = selectedCity === "moscow" ? "Москва" : "Санкт-Петербург";
-      setAddressSuggestions([
-        `${city}, ул. ${value}`,
-        `${city}, пр-т ${value}`,
-        `${city}, ${value}, д. 1`,
-      ]);
-      setShowSuggestions(true);
-    }, 300);
-  };
+  const cityMap: Record<string, string> = { moscow: "Москва", spb: "Санкт-Петербург" };
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -264,44 +244,15 @@ const ReclamationPage = () => {
               />
 
               {/* Address */}
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Адрес"
-                  required
-                  disabled={!selectedCity}
-                  value={form.address}
-                  onChange={(e) => handleAddressChange(e.target.value)}
-                  onFocus={() => form.address.length >= 3 && setShowSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className={selectedCity ? inputClass : disabledInputClass}
-                />
-                <AnimatePresence>
-                  {showSuggestions && addressSuggestions.length > 0 && selectedCity && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute top-full left-0 right-0 z-50 bg-background border border-border shadow-lg"
-                    >
-                      {addressSuggestions.map((s, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          className="w-full text-left px-4 py-3 text-sm text-foreground/80 hover:bg-secondary/50 transition-colors duration-200"
-                          onMouseDown={() => {
-                            setForm({ ...form, address: s });
-                            setShowSuggestions(false);
-                          }}
-                        >
-                          {s}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+              <AddressInput
+                value={form.address}
+                onChange={(val) => setForm({ ...form, address: val })}
+                city={selectedCity ? cityMap[selectedCity] : undefined}
+                placeholder="Адрес"
+                disabled={!selectedCity}
+                className={selectedCity ? inputClass : disabledInputClass}
+                dropdownClassName="absolute top-full left-0 right-0 z-50 bg-background border border-border shadow-lg"
+              />
 
               <textarea
                 placeholder="Опишите проблему"
