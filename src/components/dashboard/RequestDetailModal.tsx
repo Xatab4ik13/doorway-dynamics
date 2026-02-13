@@ -206,6 +206,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, viewerRole = "
                 </div>
               )}
 
+              {/* Status comment (e.g. reason for date change) */}
+              {request.status_comment && (
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
+                  <label className="text-[10px] font-medium text-amber-700 mb-2 block uppercase tracking-wider flex items-center gap-1">
+                    <MessageSquare size={12} /> Комментарий к статусу
+                  </label>
+                  <p className="text-sm leading-relaxed text-amber-900">{request.status_comment}</p>
+                </div>
+              )}
+
               {/* Status change — only for admin/manager */}
               {canEdit && (
                 <div>
