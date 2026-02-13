@@ -22,6 +22,8 @@ const PartnerNewRequest = () => {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
   const [contactName, setContactName] = useState("");
+  const [extraName, setExtraName] = useState("");
+  const [extraPhone, setExtraPhone] = useState("");
   const [comment, setComment] = useState("");
   const [agree, setAgree] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -50,7 +52,7 @@ const PartnerNewRequest = () => {
     if (!city) e.city = "Выберите город";
     if (!address.trim()) e.address = "Укажите адрес";
     if (phone.replace(/\D/g, "").length < 11) e.phone = "Введите корректный номер";
-    if (type !== "reclamation" && !contactName.trim()) e.contactName = "Укажите контактное лицо";
+    if (!contactName.trim()) e.contactName = "Укажите контактное лицо";
     if (type === "reclamation" && !comment.trim()) e.comment = "Опишите проблему";
     if (!agree) e.agree = "Необходимо согласие";
     return e;
@@ -67,12 +69,14 @@ const PartnerNewRequest = () => {
       await api("/api/requests", {
         method: "POST",
         body: {
-          client_name: contactName || "Рекламация",
+          client_name: contactName,
           client_phone: phone,
           client_address: address,
           city,
           type,
           work_description: comment,
+          extra_name: extraName || undefined,
+          extra_phone: extraPhone || undefined,
           source: "partner",
         },
         auth: true,
@@ -92,6 +96,8 @@ const PartnerNewRequest = () => {
     setAddress("");
     setPhone("");
     setContactName("");
+    setExtraName("");
+    setExtraPhone("");
     setComment("");
     setAgree(false);
     setSubmitted(false);
@@ -183,13 +189,23 @@ const PartnerNewRequest = () => {
                 {errors.phone && <p className="text-xs text-destructive mt-1">{errors.phone}</p>}
               </div>
 
-              {type !== "reclamation" && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Контактное лицо <span className="text-destructive">*</span></label>
+                <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} className={inputClass("contactName")} placeholder="Иванов Иван Иванович" />
+                {errors.contactName && <p className="text-xs text-destructive mt-1">{errors.contactName}</p>}
+              </div>
+
+              {/* Extra contact */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Контактное лицо <span className="text-destructive">*</span></label>
-                  <input type="text" value={contactName} onChange={(e) => setContactName(e.target.value)} className={inputClass("contactName")} placeholder="Иванов Иван Иванович" />
-                  {errors.contactName && <p className="text-xs text-destructive mt-1">{errors.contactName}</p>}
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Доп. контакт</label>
+                  <input type="text" value={extraName} onChange={(e) => setExtraName(e.target.value)} className={inputClass("")} placeholder="ФИО" />
                 </div>
-              )}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Доп. телефон</label>
+                  <input type="tel" value={extraPhone} onChange={(e) => setExtraPhone(formatPhone(e.target.value))} className={inputClass("")} placeholder="+7 ..." />
+                </div>
+              </div>
 
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
