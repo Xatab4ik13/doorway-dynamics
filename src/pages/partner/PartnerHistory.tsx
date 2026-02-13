@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
-import { Search, Calendar, MapPin, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
-import { useRequests } from "@/hooks/useRequests";
+import { Search, Loader2 } from "lucide-react";
+import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 
 const PartnerHistory = () => {
   const { user } = useAuth();
   const { requests, loading } = useRequests();
   const [search, setSearch] = useState("");
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
 
   useEffect(() => { document.title = "История заявок — Партнёр"; }, []);
 
@@ -44,49 +45,39 @@ const PartnerHistory = () => {
           <div className="grid gap-3">
             {filtered.map((r) => (
               <Card key={r.id} className="cursor-pointer hover:shadow-sm transition-shadow"
-                onClick={() => setExpandedId(expandedId === r.id ? null : r.id)}>
+                onClick={() => setSelectedRequest(r)}>
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
-                          <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-accent text-muted-foreground">
-                            {requestTypeLabels[r.type] || r.type}
-                          </span>
-                        </div>
-                        <p className="font-medium text-sm mt-1">{r.client_name}</p>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-accent text-muted-foreground">
+                          {requestTypeLabels[r.type] || r.type}
+                        </span>
                       </div>
+                      <p className="font-medium text-sm mt-1">{r.client_name}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
                         {statusLabels[r.status as RequestStatus] || r.status}
                       </span>
-                      {expandedId === r.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      <span className="text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</span>
                     </div>
                   </div>
-
-                  {expandedId === r.id && (
-                    <div className="mt-3 pt-3 border-t border-border space-y-2 text-sm">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin size={14} /> {r.client_address}
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Calendar size={14} /> Создана: {r.created_at?.split("T")[0]}
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Исполнитель: <span className="font-medium text-foreground">PrimeDoor Service</span>
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
       </div>
+
+      {selectedRequest && (
+        <RequestDetailModal
+          request={selectedRequest}
+          onClose={() => setSelectedRequest(null)}
+          viewerRole="partner"
+        />
+      )}
     </DashboardLayout>
   );
 };
