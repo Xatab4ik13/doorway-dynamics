@@ -3,6 +3,7 @@ import { X, Send, Loader2, MapPin, Phone, User, FileText, Building2 } from "luci
 import { type ApiRequest } from "@/hooks/useRequests";
 import { requestTypeLabels } from "@/data/mockDashboard";
 import { motion, AnimatePresence } from "framer-motion";
+import AddressInput from "@/components/AddressInput";
 
 const cities = ["Москва", "Санкт-Петербург"];
 
@@ -150,8 +151,14 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
               <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
                 <MapPin size={12} /> Адрес <span className="text-destructive">*</span>
               </label>
-              <input type="text" value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} className={inputClass("clientAddress")} placeholder="ул. Ленина, 15, кв. 42" />
-              {errors.clientAddress && <p className="text-xs text-destructive mt-1">{errors.clientAddress}</p>}
+              <AddressInput
+                value={clientAddress}
+                onChange={setClientAddress}
+                city={city}
+                placeholder="ул. Ленина, 15, кв. 42"
+                className={inputClass("clientAddress")}
+                error={errors.clientAddress}
+              />
             </div>
 
             {/* Extra contact */}
