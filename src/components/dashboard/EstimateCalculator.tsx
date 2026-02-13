@@ -40,6 +40,12 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
 
   useEffect(() => { document.title = "Калькулятор смет"; }, []);
 
+  // Auto-switch from entrance if SPb selected
+  useEffect(() => {
+    if (city === "spb" && activeCategory === "entrance") {
+      setActiveCategory("interior");
+    }
+  }, [city, activeCategory]);
   useEffect(() => {
     api<any[]>("/api/estimates", { auth: true })
       .then((data) => {
@@ -157,8 +163,11 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         td { padding: 8px; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
         .total-row td { font-weight: bold; font-size: 16px; border-top: 2px solid #3b82f6; }
         .footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #999; }
-        @media print { body { padding: 20px; } }
+        .print-btn { display: block; margin: 0 auto 30px; padding: 12px 40px; background: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: 600; }
+        .print-btn:hover { background: #2563eb; }
+        @media print { body { padding: 20px; } .print-btn { display: none !important; } }
       </style></head><body>
+      <button class="print-btn" onclick="window.print()">📄 Скачать / Печать</button>
       <div class="header">
         <div><h1>PrimeDoor Service</h1><p style="font-size:12px;color:#666;">Смета</p></div>
         <div class="meta"><p>${new Date().toLocaleDateString("ru-RU")}</p></div>
@@ -213,7 +222,9 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </div>
 
               <div className="flex gap-1.5 flex-wrap">
-                {Object.entries(serviceTypeLabels).map(([key, label]) => (
+                {Object.entries(serviceTypeLabels)
+                  .filter(([key]) => !(city === "spb" && key === "entrance"))
+                  .map(([key, label]) => (
                   <button
                     key={key}
                     onClick={() => { setActiveCategory(key); setSearch(""); }}
