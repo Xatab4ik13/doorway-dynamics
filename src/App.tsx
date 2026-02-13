@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import FloatingPhone from "@/components/FloatingPhone";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import CookieBanner from "@/components/CookieBanner";
 import Index from "./pages/Index";
 
 const ServicesPage = lazy(() => import("./pages/ServicesPage"));
@@ -59,6 +60,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {children}
       {!isDashboard && <Footer />}
       {!isDashboard && <FloatingPhone />}
+      {!isDashboard && <CookieBanner />}
     </>
   );
 };
