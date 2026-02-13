@@ -14,7 +14,7 @@ const InstallerHistory = () => {
 
   useEffect(() => { document.title = "История — Монтажник"; }, []);
 
-  const completed = requests.filter((r) => r.status === "installation_done" || r.status === "closed");
+  const completed = requests.filter((r) => r.status === "closed");
 
   const filtered = completed.filter((r) =>
     r.client_name.toLowerCase().includes(search.toLowerCase()) ||

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink } from "lucide-react";
-import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
+import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,14 +25,22 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
 
-  const allStatuses = Object.entries(statusLabels);
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
-  // Installer can only reschedule (change date), not set initially
   const canChangeDateInstaller = viewerRole === "installer" && !!request.agreed_date;
   const canChangeDate = canEdit || canChangeDateInstaller;
 
+  // Get valid statuses for this request type
+  const validStatuses = statusFlows[request.type as RequestType] || Object.keys(statusLabels);
+  // Add terminal statuses
+  const allValidStatuses = [...new Set([...validStatuses, "cancelled", ...(request.type === "measurement" ? ["client_refused"] : [])])];
+
   const photos = request.photos || [];
   const hasFiles = photos.length > 0;
+
+  // Determine which assignment fields to show based on request type
+  const showMeasurerField = request.type === "measurement";
+  const showInstallerField = request.type === "installation";
+  const showDateField = true; // All types have date agreement
 
   const handleSave = async () => {
     if (!onSave) { onClose(); return; }
@@ -40,8 +48,8 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
     try {
       const updates: any = { status, notes };
       if (canEdit) {
-        if (measurerId) updates.measurer_id = measurerId;
-        if (installerId) updates.installer_id = installerId;
+        if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
+        if (showInstallerField && installerId) updates.installer_id = installerId;
       }
       if (canChangeDate && agreedDate) updates.agreed_date = agreedDate;
       await onSave(request.id, updates);
@@ -55,6 +63,7 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
   const stageLabels: Record<string, string> = {
     before_measurement: "До замера",
     after_measurement: "После замера",
+    measurement: "Замер",
     before_installation: "До монтажа",
     after_installation: "После монтажа",
     document: "Документ",
@@ -63,10 +72,7 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div
-          className="absolute inset-0 bg-black/50"
-          onClick={onClose}
-        />
+        <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -79,6 +85,9 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-mono text-xs text-muted-foreground">{request.number}</p>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent text-muted-foreground">
+                  {requestTypeLabels[request.type] || request.type}
+                </span>
                 {request.partner_id && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
                     <Briefcase size={10} /> Партнёр
@@ -167,25 +176,29 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
                   </span>
                 </div>
                 {/* Agreed date */}
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-                  <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Согласованная дата</p>
-                    {canChangeDate ? (
-                      <input
-                        type="date"
-                        value={agreedDate}
-                        onChange={(e) => setAgreedDate(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                    ) : (
-                      <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
-                    )}
-                    {canChangeDateInstaller && !canEdit && (
-                      <p className="text-[10px] text-muted-foreground mt-1">Можно перенести по просьбе клиента</p>
-                    )}
+                {showDateField && (
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                    <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                        {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
+                      </p>
+                      {canChangeDate ? (
+                        <input
+                          type="date"
+                          value={agreedDate}
+                          onChange={(e) => setAgreedDate(e.target.value)}
+                          className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                        />
+                      ) : (
+                        <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+                      )}
+                      {canChangeDateInstaller && !canEdit && (
+                        <p className="text-[10px] text-muted-foreground mt-1">Можно перенести по просьбе клиента</p>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Work description */}
@@ -198,12 +211,12 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
                 </div>
               )}
 
-              {/* Status change */}
+              {/* Status change — only for admin/manager */}
               {canEdit && (
                 <div>
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Статус</label>
                   <div className="flex flex-wrap gap-1.5">
-                    {allStatuses.map(([key, label]) => (
+                    {allValidStatuses.map((key) => (
                       <button
                         key={key}
                         onClick={() => setStatus(key)}
@@ -213,38 +226,42 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
                             : "bg-accent text-muted-foreground hover:text-foreground"
                         }`}
                       >
-                        {label}
+                        {getStatusLabel(key as RequestStatus, request.type as RequestType)}
                       </button>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Assignment */}
+              {/* Assignment — context-dependent */}
               {canEdit && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Замерщик</label>
-                    <select
-                      value={measurerId}
-                      onChange={(e) => setMeasurerId(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    >
-                      <option value="">Не назначен</option>
-                      {measurers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник</label>
-                    <select
-                      value={installerId}
-                      onChange={(e) => setInstallerId(e.target.value)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    >
-                      <option value="">Не назначен</option>
-                      {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                    </select>
-                  </div>
+                  {showMeasurerField && (
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Замерщик</label>
+                      <select
+                        value={measurerId}
+                        onChange={(e) => setMeasurerId(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      >
+                        <option value="">Не назначен</option>
+                        {measurers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      </select>
+                    </div>
+                  )}
+                  {showInstallerField && (
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник</label>
+                      <select
+                        value={installerId}
+                        onChange={(e) => setInstallerId(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                      >
+                        <option value="">Не назначен</option>
+                        {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -274,7 +291,6 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Group by stage */}
                   {Object.entries(
                     photos.reduce((acc, p) => {
                       const stage = p.stage || "other";

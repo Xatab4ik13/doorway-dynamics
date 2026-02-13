@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
+import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase, Loader2, Plus, MapPin } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
@@ -161,7 +161,7 @@ const ManagerDashboard = () => {
                         </td>
                         <td className="py-3.5 pr-4">
                           <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
-                            {statusLabels[r.status as RequestStatus] || r.status}
+                            {getStatusLabel(r.status as RequestStatus, r.type as RequestType)}
                           </span>
                         </td>
                         <td className="py-3.5 pr-4 text-xs">
