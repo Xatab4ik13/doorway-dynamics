@@ -68,7 +68,7 @@ const MeasurerDashboard = () => {
   const handleComplete = async () => {
     if (!selected || !canComplete) return;
     try {
-      const newPhotos = uploadedFiles.map(url => ({ url, type: "image", stage: "measurement", uploaded_at: new Date().toISOString() }));
+      const newPhotos = uploadedFiles.map(url => ({ url, type: "image", stage: "general", uploaded_at: new Date().toISOString() }));
       const existingPhotos = selected.photos || [];
       await updateRequest(selected.id, {
         status: "measurement_done" as any,
