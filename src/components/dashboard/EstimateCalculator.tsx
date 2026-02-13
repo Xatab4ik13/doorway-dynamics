@@ -139,7 +139,8 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   };
 
   const handleDownloadPdf = () => {
-    if (!isSaved) { toast.error("Сначала сохраните смету"); return; }
+    if (!clientName) { toast.error("Укажите имя клиента"); return; }
+    if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
     const printWindow = window.open("", "_blank");
     if (!printWindow) { toast.error("Разрешите всплывающие окна"); return; }
     printWindow.document.write(`
@@ -304,28 +305,30 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                     Выберите позиции из прайс-листа слева
                   </p>
                 ) : (
-                  <div className="space-y-2">
+              <div className="space-y-3">
                     {items.map((item) => (
                       <motion.div
                         key={item.id}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="p-3 rounded-xl border border-border bg-accent/30 space-y-2"
+                        className="p-4 rounded-xl border border-border bg-accent/30 space-y-3"
                       >
-                        <input type="text" value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                          placeholder="Название" className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
-                        <div className="flex items-center gap-2">
-                          <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
-                            className="w-14 px-2 py-1.5 rounded-lg border border-border bg-background text-xs text-center focus:outline-none" />
-                          <span className="text-[10px] text-muted-foreground">{item.unit}</span>
-                          <span className="text-[10px] text-muted-foreground">×</span>
-                          <input type="number" min={0} value={item.price} onChange={(e) => updateItem(item.id, "price", Number(e.target.value))}
-                            className="w-20 px-2 py-1.5 rounded-lg border border-border bg-background text-xs text-center focus:outline-none" />
-                          <span className="text-[10px] text-muted-foreground">₽</span>
-                          <span className="text-xs font-semibold ml-auto text-primary">{(item.price * item.quantity).toLocaleString("ru")} ₽</span>
-                          <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/5">
-                            <Trash2 size={12} />
+                        <div className="flex items-start justify-between gap-3">
+                          <input type="text" value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                            placeholder="Название" className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/30" />
+                          <span className="text-sm font-semibold text-primary whitespace-nowrap pt-2">{(item.price * item.quantity).toLocaleString("ru")} ₽</span>
+                          <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive transition-colors p-2 rounded-lg hover:bg-destructive/10 shrink-0">
+                            <Trash2 size={18} />
                           </button>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
+                            className="w-16 px-3 py-2 rounded-lg border border-border bg-background text-sm text-center focus:outline-none" />
+                          <span className="text-xs text-muted-foreground">{item.unit}</span>
+                          <span className="text-xs text-muted-foreground">×</span>
+                          <input type="number" min={0} value={item.price} onChange={(e) => updateItem(item.id, "price", Number(e.target.value))}
+                            className="w-24 px-3 py-2 rounded-lg border border-border bg-background text-sm text-center focus:outline-none" />
+                          <span className="text-xs text-muted-foreground">₽</span>
                         </div>
                       </motion.div>
                     ))}
@@ -357,18 +360,10 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardContent>
             </Card>
 
-            <div className="flex gap-3">
-              <button onClick={handleSave}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
-                Сохранить
-              </button>
-              <button onClick={handleDownloadPdf} disabled={!isSaved}
-                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${
-                  isSaved ? "bg-accent text-foreground hover:bg-accent/80" : "bg-accent/50 text-muted-foreground cursor-not-allowed"
-                }`}>
-                <Download size={16} /> PDF
-              </button>
-            </div>
+            <button onClick={handleDownloadPdf}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
+              <Download size={18} /> Скачать смету
+            </button>
 
             {savedEstimates.length > 0 && (
               <Card className="border-0 shadow-lg">
