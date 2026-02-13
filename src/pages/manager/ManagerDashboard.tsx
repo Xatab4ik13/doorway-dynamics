@@ -6,7 +6,9 @@ import { ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase, Loader2, P
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
-import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
+import Pagination from "@/components/dashboard/Pagination";
+import { useUsers, useRequests, type ApiRequest } from "@/hooks/useRequests";
+import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
@@ -20,55 +22,33 @@ const quickFilters = [
 
 const ManagerDashboard = () => {
   const { user } = useAuth();
-  const { requests, loading, updateRequest, createRequest } = useRequests();
   const { users, getUserName } = useUsers();
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [quickFilter, setQuickFilter] = useState("all");
+  const { requests, total, page, totalPages, limit, counts, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter });
+  const { createRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => { document.title = "Заявки — Менеджер"; }, []);
 
-  const filtered = requests.filter((r) => {
-    const s = filters.search.toLowerCase();
-    const matchSearch = !s ||
-      r.client_name.toLowerCase().includes(s) ||
-      r.number.toLowerCase().includes(s) ||
-      (r.client_address || "").toLowerCase().includes(s) ||
-      (r.client_phone || "").toLowerCase().includes(s) ||
-      (r.city || "").toLowerCase().includes(s);
-    const matchStatus = filters.status === "all" || r.status === filters.status;
-    const matchType = filters.type === "all" || r.type === filters.type;
-    const matchMeasurer = filters.measurerId === "all" || r.measurer_id === filters.measurerId;
-    const matchInstaller = filters.installerId === "all" || r.installer_id === filters.installerId;
-    const matchPartner = filters.partnerId === "all" || r.partner_id === filters.partnerId;
-    const created = r.created_at?.split("T")[0] || "";
-    const matchDateFrom = !filters.dateFrom || created >= filters.dateFrom;
-    const matchDateTo = !filters.dateTo || created <= filters.dateTo;
-
-    let matchQuick = true;
-    if (quickFilter === "new") matchQuick = r.status === "new";
-    else if (quickFilter === "in_progress") matchQuick = !["new", "closed", "cancelled"].includes(r.status);
-    else if (quickFilter === "reclamation") matchQuick = r.type === "reclamation";
-
-    return matchSearch && matchStatus && matchType && matchMeasurer && matchInstaller && matchPartner && matchDateFrom && matchDateTo && matchQuick;
-  });
-
-  const counts = {
-    all: requests.length,
-    new: requests.filter((r) => r.status === "new").length,
-    in_progress: requests.filter((r) => !["new", "closed", "cancelled"].includes(r.status)).length,
-    reclamation: requests.filter((r) => r.type === "reclamation").length,
-  };
+  const displayCounts = counts || { all: 0, new: 0, in_progress: 0, reclamation: 0 };
 
   const handleExport = (format: "csv" | "xlsx") => {
-    if (format === "csv") exportToCSV(filtered, getUserName);
-    else exportToExcel(filtered, getUserName);
+    if (format === "csv") exportToCSV(requests, getUserName);
+    else exportToExcel(requests, getUserName);
   };
 
   const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
     await updateRequest(id, updates);
     setSelectedRequest(null);
+    refetch();
+  };
+
+  const handleCreate = async (data: Partial<ApiRequest>) => {
+    const created = await createRequest(data);
+    refetch();
+    return created;
   };
 
   return (
@@ -101,7 +81,7 @@ const ManagerDashboard = () => {
               <span className={`ml-1 text-xs px-2 py-0.5 rounded-full font-bold ${
                 quickFilter === f.value ? "bg-primary-foreground/20 text-primary-foreground" : "bg-accent"
               }`}>
-                {counts[f.value as keyof typeof counts]}
+                {displayCounts[f.value as keyof typeof displayCounts] ?? 0}
               </span>
             </button>
           ))}
@@ -114,7 +94,7 @@ const ManagerDashboard = () => {
               onChange={setFilters}
               users={users}
               onExport={handleExport}
-              resultCount={filtered.length}
+              resultCount={total}
             />
 
             {loading ? (
@@ -138,7 +118,7 @@ const ManagerDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((r, i) => (
+                    {requests.map((r, i) => (
                       <motion.tr
                         key={r.id}
                         initial={{ opacity: 0, y: 8 }}
@@ -181,9 +161,17 @@ const ManagerDashboard = () => {
                     ))}
                   </tbody>
                 </table>
-                {filtered.length === 0 && (
+                {requests.length === 0 && (
                   <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
                 )}
+
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={total}
+                  limit={limit}
+                  onPageChange={setPage}
+                />
               </div>
             )}
           </CardContent>
@@ -202,7 +190,7 @@ const ManagerDashboard = () => {
       {showCreate && (
         <CreateRequestModal
           onClose={() => setShowCreate(false)}
-          onCreate={createRequest}
+          onCreate={handleCreate}
         />
       )}
     </DashboardLayout>
