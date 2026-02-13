@@ -19,7 +19,6 @@ const Footer = () => {
             <p className="section-label mb-6">Навигация</p>
             <ul className="space-y-3">
               {[
-                { label: "Портфолио", path: "/portfolio" },
                 { label: "Услуги", path: "/services" },
                 { label: "Контакты", path: "/contacts" },
                 { label: "Новости", path: "/news" },
