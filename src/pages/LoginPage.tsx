@@ -205,10 +205,19 @@ const LoginPage = () => {
               )}
             </button>
 
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <p className="text-xs text-muted-foreground">
                 Нет доступа? Обратитесь к администратору для добавления вашего Telegram ID.
               </p>
+              <a
+                href="https://t.me/primedoor_bot?start=myid"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs text-[#229ED9] hover:text-[#1a8abf] transition-colors"
+              >
+                <Send size={12} />
+                Узнать свой Telegram ID
+              </a>
             </div>
           </div>
         ) : (
