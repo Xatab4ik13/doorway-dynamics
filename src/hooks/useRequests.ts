@@ -35,7 +35,7 @@ export interface ApiUser {
   active: boolean;
 }
 
-const POLL_INTERVAL = 3000; // 3 seconds
+const POLL_INTERVAL = 10000; // 10 seconds
 
 export function useRequests() {
   const [requests, setRequests] = useState<ApiRequest[]>([]);
