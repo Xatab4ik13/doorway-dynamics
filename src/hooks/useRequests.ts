@@ -46,7 +46,8 @@ export function useRequests() {
   const fetchRequests = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const data = await api<ApiRequest[]>("/api/requests", { auth: true });
+      const response = await api<ApiRequest[] | { data: ApiRequest[] }>("/api/requests", { auth: true });
+      const data = Array.isArray(response) ? response : response.data;
       
       // Notify about new requests
       if (prevCountRef.current !== null && data.length > prevCountRef.current) {
