@@ -59,6 +59,10 @@ const LoginPage = () => {
 
   const handleTelegramLogin = async () => {
     setWaitingTelegram(true);
+
+    // Open window synchronously (before await) so Safari doesn't block it
+    const botWindow = window.open("about:blank", "_blank");
+
     try {
       // Create session
       const { code } = await api<{ code: string }>("/api/auth/telegram/session", {
@@ -66,8 +70,13 @@ const LoginPage = () => {
       });
       sessionCodeRef.current = code;
 
-      // Open bot with code
-      window.open(`${telegramBotUrl}?start=${code}`, "_blank");
+      // Navigate the pre-opened window to bot URL
+      if (botWindow) {
+        botWindow.location.href = `${telegramBotUrl}?start=${code}`;
+      } else {
+        // Fallback: direct navigation (e.g. if popup was still blocked)
+        window.location.href = `${telegramBotUrl}?start=${code}`;
+      }
 
       // Poll for confirmation every 2 seconds
       pollingRef.current = setInterval(async () => {
