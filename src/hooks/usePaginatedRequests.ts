@@ -115,9 +115,10 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
     }
   }, [buildQuery, page, limit, filters, quickFilter]);
 
-  // Reset to page 1 when filters change
+  // Reset to page 1 and suppress notification when filters change
   useEffect(() => {
     setPage(1);
+    prevTotalRef.current = null;
   }, [filters.search, filters.status, filters.type, filters.measurerId, filters.installerId, filters.partnerId, filters.dateFrom, filters.dateTo, quickFilter]);
 
   useEffect(() => {
