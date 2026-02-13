@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { type ApiRequest } from "@/hooks/useRequests";
 import { type FilterState } from "@/components/dashboard/RequestFilters";
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 10000;
 const DEFAULT_LIMIT = 30;
 
 export interface PaginatedResponse {
