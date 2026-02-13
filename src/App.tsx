@@ -13,7 +13,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 
 const ServicesPage = lazy(() => import("./pages/ServicesPage"));
-const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
+
 
 const ContactsPage = lazy(() => import("./pages/ContactsPage"));
 const RequestPage = lazy(() => import("./pages/RequestPage"));
@@ -77,7 +77,7 @@ const AppRoutes = () => (
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/services" element={<ServicesPage />} />
-        <Route path="/portfolio" element={<PortfolioPage />} />
+        
         
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/request" element={<RequestPage />} />
