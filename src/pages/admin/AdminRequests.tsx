@@ -13,7 +13,7 @@ import { motion } from "framer-motion";
 
 const AdminRequests = () => {
   const { user } = useAuth();
-  const { requests, loading, updateRequest, createRequest } = useRequests();
+  const { requests, loading, updateRequest, createRequest, deleteRequest } = useRequests();
   const { users, getUserName } = useUsers();
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
@@ -153,6 +153,7 @@ const AdminRequests = () => {
           request={selectedRequest}
           onClose={() => setSelectedRequest(null)}
           onSave={handleSave}
+          onDelete={deleteRequest}
           viewerRole="admin"
         />
       )}

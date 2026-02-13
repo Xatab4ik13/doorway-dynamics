@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2 } from "lucide-react";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
@@ -9,10 +9,11 @@ interface RequestDetailModalProps {
   request: ApiRequest;
   onClose: () => void;
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, onSave, onDelete, viewerRole = "admin" }: RequestDetailModalProps) => {
   const { getByRole } = useUsers();
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
@@ -21,6 +22,8 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
   const [agreedDate, setAgreedDate] = useState(request.agreed_date?.split("T")[0] || "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
@@ -313,19 +316,53 @@ const RequestDetailModal = ({ request, onClose, onSave, viewerRole = "admin" }: 
           )}
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 p-5 border-t border-border sticky bottom-0 bg-card rounded-b-2xl">
-            <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
-              Отмена
-            </button>
-            {(canEdit || canChangeDateInstaller) && (
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md shadow-primary/25 disabled:opacity-50 flex items-center gap-2"
-              >
-                {saving ? <Loader2 size={16} className="animate-spin" /> : "Сохранить"}
+          <div className="flex items-center justify-between p-5 border-t border-border sticky bottom-0 bg-card rounded-b-2xl">
+            <div>
+              {viewerRole === "admin" && onDelete && !confirmDelete && (
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <Trash2 size={14} /> Удалить заявку
+                </button>
+              )}
+              {viewerRole === "admin" && onDelete && confirmDelete && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-destructive font-medium">Удалить безвозвратно?</span>
+                  <button
+                    onClick={async () => {
+                      setDeleting(true);
+                      try {
+                        await onDelete(request.id);
+                        onClose();
+                        toast.success("Заявка удалена");
+                      } catch {} finally { setDeleting(false); }
+                    }}
+                    disabled={deleting}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                  >
+                    {deleting ? <Loader2 size={12} className="animate-spin" /> : "Да, удалить"}
+                  </button>
+                  <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
+                    Отмена
+                  </button>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
+                Отмена
               </button>
-            )}
+              {(canEdit || canChangeDateInstaller) && (
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-md shadow-primary/25 disabled:opacity-50 flex items-center gap-2"
+                >
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : "Сохранить"}
+                </button>
+              )}
+            </div>
           </div>
         </motion.div>
       </div>
