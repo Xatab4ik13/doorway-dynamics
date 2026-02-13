@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import api from "@/lib/api";
 import { toast } from "sonner";
 
@@ -34,24 +34,42 @@ export interface ApiUser {
   active: boolean;
 }
 
+const POLL_INTERVAL = 12000; // 12 seconds
+
 export function useRequests() {
   const [requests, setRequests] = useState<ApiRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevCountRef = useRef<number | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval>>();
 
-  const fetchRequests = useCallback(async () => {
+  const fetchRequests = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const data = await api<ApiRequest[]>("/api/requests", { auth: true });
-      console.log("[useRequests] fetched requests, sample photos:", data.slice(0, 3).map(r => ({ id: r.number, photos: r.photos })));
+      
+      // Notify about new requests
+      if (prevCountRef.current !== null && data.length > prevCountRef.current) {
+        const newCount = data.length - prevCountRef.current;
+        toast.info(`🔔 ${newCount === 1 ? 'Новая заявка!' : `Новых заявок: ${newCount}`}`, {
+          duration: 5000,
+          position: "top-right",
+        });
+      }
+      prevCountRef.current = data.length;
+      
       setRequests(data);
     } catch (err: any) {
-      toast.error(err.message || "Ошибка загрузки заявок");
+      if (!silent) toast.error(err.message || "Ошибка загрузки заявок");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchRequests(); }, [fetchRequests]);
+  useEffect(() => {
+    fetchRequests();
+    pollRef.current = setInterval(() => fetchRequests(true), POLL_INTERVAL);
+    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+  }, [fetchRequests]);
 
   const updateRequest = useCallback(async (id: string, updates: Partial<ApiRequest>) => {
     try {
@@ -68,7 +86,23 @@ export function useRequests() {
     }
   }, []);
 
-  return { requests, loading, fetchRequests, updateRequest, setRequests };
+  const createRequest = useCallback(async (data: Partial<ApiRequest>) => {
+    try {
+      const created = await api<ApiRequest>("/api/requests", {
+        method: "POST",
+        body: data,
+        auth: true,
+      });
+      setRequests(prev => [created, ...prev]);
+      prevCountRef.current = (prevCountRef.current || 0) + 1;
+      return created;
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка создания");
+      throw err;
+    }
+  }, []);
+
+  return { requests, loading, fetchRequests, updateRequest, createRequest, setRequests };
 }
 
 export function useUsers() {

@@ -61,11 +61,17 @@ const InstallerDashboard = () => {
 
   const handleConfirmDate = async () => {
     if (!agreedDate || !selected) return;
+    // Installer can only reschedule (change existing date), not set initial date
+    // Initial date must be set by admin/manager
+    if (!selected.agreed_date) {
+      toast.error("Дата монтажа назначается менеджером");
+      return;
+    }
     try {
-      const updated = await updateRequest(selected.id, { agreed_date: agreedDate, status: "date_agreed" as any });
+      const updated = await updateRequest(selected.id, { agreed_date: agreedDate });
       setDateConfirmed(true);
       setSelected(updated);
-      toast.success("Дата согласована");
+      toast.success("Дата перенесена");
     } catch {}
   };
 
@@ -189,22 +195,34 @@ const InstallerDashboard = () => {
                 <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
 
-              {!dateConfirmed && (
-                <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
+              {!dateConfirmed && !selected.agreed_date && (
+                <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
                   <div className="flex items-start gap-2">
                     <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800">Выберите дату монтажа</p>
-                      <p className="text-xs text-amber-700">Укажите дату, которую согласовали с клиентом.</p>
+                      <p className="text-sm font-medium text-amber-800">Ожидание даты монтажа</p>
+                      <p className="text-xs text-amber-700">Дата будет назначена менеджером после согласования с клиентом.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {!dateConfirmed && selected.agreed_date && (
+                <div className="border border-blue-200 bg-blue-50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Calendar size={16} className="text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-800">Перенести дату монтажа</p>
+                      <p className="text-xs text-blue-700">Только если клиент сам попросил перенести.</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
                       min={new Date().toISOString().split("T")[0]}
-                      className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <button onClick={handleConfirmDate} disabled={!agreedDate}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40">
-                      Подтвердить
+                      className="flex-1 px-3 py-2 rounded-xl border border-blue-200 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                    <button onClick={handleConfirmDate} disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0]}
+                      className="px-4 py-2 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40">
+                      Перенести
                     </button>
                   </div>
                 </div>

@@ -7,7 +7,8 @@ export type RequestStatus =
   | "measurement_done"
   | "installation_scheduled"
   | "installation_done"
-  | "closed";
+  | "closed"
+  | "cancelled";
 
 export const statusLabels: Record<RequestStatus, string> = {
   new: "Новая",
@@ -17,6 +18,7 @@ export const statusLabels: Record<RequestStatus, string> = {
   installation_scheduled: "Монтаж назначен",
   installation_done: "Монтаж выполнен",
   closed: "Закрыта",
+  cancelled: "Отменена",
 };
 
 export const statusColors: Record<RequestStatus, string> = {
@@ -25,8 +27,9 @@ export const statusColors: Record<RequestStatus, string> = {
   date_agreed: "bg-cyan-100 text-cyan-700",
   measurement_done: "bg-purple-100 text-purple-700",
   installation_scheduled: "bg-orange-100 text-orange-700",
-  installation_done: "bg-green-100 text-green-700",
+  installation_done: "bg-emerald-100 text-emerald-700",
   closed: "bg-gray-100 text-gray-500",
+  cancelled: "bg-red-100 text-red-500",
 };
 
 export type RequestType = "measurement" | "installation" | "reclamation";
