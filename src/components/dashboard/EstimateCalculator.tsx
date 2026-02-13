@@ -7,6 +7,7 @@ import logo from "@/assets/logo.png";
 import { toast } from "sonner";
 import api from "@/lib/api";
 import type { UserRole } from "@/data/mockDashboard";
+import { motion } from "framer-motion";
 
 interface EstimateItem {
   id: string;
@@ -21,15 +22,8 @@ interface EstimateCalculatorProps {
   userName: string;
 }
 
-/** Check if a price string has slash-separated variants like "2 000 / 2 750" */
-const hasVariants = (priceStr: string): boolean => {
-  return priceStr.includes("/") && !priceStr.startsWith("+");
-};
-
-/** Parse slash-separated price variants */
-const parseVariants = (priceStr: string): string[] => {
-  return priceStr.split("/").map((s) => s.trim());
-};
+const hasVariants = (priceStr: string): boolean => priceStr.includes("/") && !priceStr.startsWith("+");
+const parseVariants = (priceStr: string): string[] => priceStr.split("/").map((s) => s.trim());
 
 const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [clientName, setClientName] = useState("");
@@ -42,19 +36,15 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [savedEstimates, setSavedEstimates] = useState<{ id: string; number: string; client: string; total: number; date: string }[]>([]);
   const [variantModal, setVariantModal] = useState<{ item: PriceItem; variants: string[] } | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => { document.title = "Калькулятор смет"; }, []);
 
-  // Load saved estimates from API
   useEffect(() => {
     api<any[]>("/api/estimates", { auth: true })
       .then((data) => {
         setSavedEstimates(data.map((e: any) => ({
-          id: e.id,
-          number: e.number,
-          client: e.client_name,
-          total: e.total,
-          date: e.created_at?.split("T")[0] || "",
+          id: e.id, number: e.number, client: e.client_name, total: e.total, date: e.created_at?.split("T")[0] || "",
         })));
       })
       .catch(() => {})
@@ -62,22 +52,28 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   }, []);
 
   const currentPriceList = priceData[activeCategory] || [];
-  const filteredPriceList = currentPriceList.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPriceList = currentPriceList.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
+  // Add or increment quantity on double-click
   const addFromPrice = (item: PriceItem) => {
     const priceStr = item[city];
+    const isReclamation = activeCategory === "reclamation";
     
-    // Check for slash-separated variants
-    if (hasVariants(priceStr)) {
-      const variants = parseVariants(priceStr);
-      setVariantModal({ item, variants });
+    if (!isReclamation && hasVariants(priceStr)) {
+      setVariantModal({ item, variants: parseVariants(priceStr) });
+      return;
+    }
+
+    const priceValue = isReclamation ? 0 : parsePrice(priceStr);
+    
+    // Check if item already exists — increment quantity
+    const existing = items.find(i => i.name === item.name && i.price === priceValue);
+    if (existing) {
+      setItems(prev => prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i));
       return;
     }
     
-    const priceValue = parsePrice(priceStr);
-    setItems((prev) => [...prev, {
+    setItems(prev => [...prev, {
       id: String(Date.now()) + Math.random(),
       name: item.name,
       quantity: 1,
@@ -88,11 +84,19 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
 
   const addWithVariant = (item: PriceItem, variant: string) => {
     const priceValue = parsePrice(variant);
-    // Add variant label to name for clarity
-    const variantLabel = variant.trim();
-    setItems((prev) => [...prev, {
+    const name = `${item.name} (${variant.trim()}${priceValue > 0 ? " ₽" : ""})`;
+    
+    // Check existing
+    const existing = items.find(i => i.name === name && i.price === priceValue);
+    if (existing) {
+      setItems(prev => prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i));
+      setVariantModal(null);
+      return;
+    }
+    
+    setItems(prev => [...prev, {
       id: String(Date.now()) + Math.random(),
-      name: `${item.name} (${variantLabel}${priceValue > 0 ? " ₽" : ""})`,
+      name,
       quantity: 1,
       unit: item.unit,
       price: priceValue,
@@ -101,26 +105,18 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   };
 
   const addEmpty = () => {
-    setItems((prev) => [...prev, {
-      id: String(Date.now()),
-      name: "",
-      quantity: 1,
-      unit: "шт",
-      price: 0,
-    }]);
+    setItems(prev => [...prev, { id: String(Date.now()), name: "", quantity: 1, unit: "шт", price: 0 }]);
   };
 
   const updateItem = (id: string, field: keyof EstimateItem, value: any) => {
-    setItems((prev) => prev.map((i) => i.id === id ? { ...i, [field]: value } : i));
+    setItems(prev => prev.map(i => i.id === id ? { ...i, [field]: value } : i));
   };
 
-  const removeItem = (id: string) => setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
   const discountAmount = subtotal * (discount / 100);
   const total = subtotal - discountAmount;
-
-  const [isSaved, setIsSaved] = useState(false);
 
   const handleSave = async () => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
@@ -131,7 +127,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         body: { client_name: clientName, client_address: clientAddress, city, items, discount, total },
         auth: true,
       });
-      setSavedEstimates((prev) => [
+      setSavedEstimates(prev => [
         { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" },
         ...prev,
       ]);
@@ -151,15 +147,14 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       <style>
         body { font-family: Arial, sans-serif; padding: 40px; color: #1a1a1a; max-width: 800px; margin: 0 auto; }
         h1 { font-size: 20px; margin-bottom: 4px; }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1d4ed8; padding-bottom: 16px; margin-bottom: 24px; }
-        .header img { height: 40px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
         .meta { font-size: 12px; color: #666; text-align: right; }
         .client { margin-bottom: 20px; }
         .client p { margin: 2px 0; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th { text-align: left; padding: 8px; font-size: 12px; color: #666; border-bottom: 2px solid #e5e7eb; }
         td { padding: 8px; font-size: 13px; border-bottom: 1px solid #e5e7eb; }
-        .total-row td { font-weight: bold; font-size: 16px; border-top: 2px solid #1d4ed8; }
+        .total-row td { font-weight: bold; font-size: 16px; border-top: 2px solid #3b82f6; }
         .footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #999; }
         @media print { body { padding: 20px; } }
       </style></head><body>
@@ -167,10 +162,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         <div><h1>PrimeDoor Service</h1><p style="font-size:12px;color:#666;">Смета</p></div>
         <div class="meta"><p>${new Date().toLocaleDateString("ru-RU")}</p></div>
       </div>
-      <div class="client">
-        <p><strong>${clientName}</strong></p>
-        ${clientAddress ? `<p>${clientAddress}</p>` : ""}
-      </div>
+      <div class="client"><p><strong>${clientName}</strong></p>${clientAddress ? `<p>${clientAddress}</p>` : ""}</div>
       <table>
         <thead><tr><th>№</th><th>Позиция</th><th>Кол.</th><th>Ед.</th><th>Цена</th><th style="text-align:right">Сумма</th></tr></thead>
         <tbody>
@@ -190,119 +182,104 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
     setTimeout(() => printWindow.print(), 300);
   };
 
-  const inputClass = "w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
+  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 hover:border-primary/40 transition-all";
 
   return (
     <DashboardLayout role={role} userName={userName}>
-      <div className="space-y-6">
+      <div className="space-y-5">
         <h1 className="text-2xl font-heading font-bold">Калькулятор смет</h1>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Left: Price list picker */}
-          <div className="xl:col-span-1 space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Прайс-лист</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* City */}
-                <div className="flex gap-2">
-                  {[{ value: "moscow" as const, label: "Москва" }, { value: "spb" as const, label: "Санкт-Петербург" }].map((c) => (
-                    <button
-                      key={c.value}
-                      onClick={() => setCity(c.value)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        city === c.value ? "bg-primary text-primary-foreground" : "bg-accent text-muted-foreground"
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          {/* Left: Price list */}
+          <Card className="border-0 shadow-lg overflow-hidden">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Прайс-лист</CardTitle>
+              <p className="text-xs text-muted-foreground">Нажмите на услугу для добавления. Повторное нажатие увеличит количество.</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2">
+                {[{ value: "moscow" as const, label: "Москва" }, { value: "spb" as const, label: "СПб" }].map((c) => (
+                  <button
+                    key={c.value}
+                    onClick={() => setCity(c.value)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-medium transition-all ${
+                      city === c.value ? "bg-primary text-primary-foreground shadow-md shadow-primary/25" : "bg-accent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-1.5 flex-wrap">
+                {Object.entries(serviceTypeLabels).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => { setActiveCategory(key); setSearch(""); }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
+                      activeCategory === key ? "bg-primary text-primary-foreground shadow-sm" : "bg-accent text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск в прайсе..."
+                  className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-primary/30" />
+              </div>
+
+              {activeCategory === "reclamation" && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+                  <p className="text-xs text-emerald-700 font-medium">Рекламация — бесплатная услуга</p>
+                </div>
+              )}
+
+              <div className="max-h-[500px] overflow-auto space-y-1">
+                {filteredPriceList.map((item, i) => {
+                  const price = item[city];
+                  const isReclamation = activeCategory === "reclamation";
+                  const showPrice = isReclamation ? "Бесплатно" : price;
+                  const existingItem = items.find(it => it.name === item.name);
+                  return (
+                    <motion.button
+                      key={i}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => addFromPrice(item)}
+                      className={`w-full text-left p-3 rounded-xl transition-all group ${
+                        existingItem ? "bg-primary/5 border border-primary/20" : "hover:bg-accent border border-transparent"
                       }`}
                     >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Category tabs */}
-                <div className="flex gap-1 flex-wrap">
-                  {Object.entries(serviceTypeLabels).map(([key, label]) => (
-                    <button
-                      key={key}
-                      onClick={() => { setActiveCategory(key); setSearch(""); }}
-                      className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                        activeCategory === key ? "bg-primary text-primary-foreground" : "bg-accent text-muted-foreground"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Search */}
-                <div className="relative">
-                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Поиск в прайсе..."
-                    className="w-full pl-8 pr-3 py-2 rounded-lg border border-border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-ring"
-                  />
-                </div>
-
-                {/* Reclamation notice */}
-                {activeCategory === "reclamation" && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                    <p className="text-xs text-green-700 font-medium">Рекламация — бесплатная услуга</p>
-                  </div>
-                )}
-
-                {/* Price items */}
-                <div className="max-h-[400px] overflow-auto space-y-1">
-                  {filteredPriceList.map((item, i) => {
-                    const price = item[city];
-                    const isReclamation = activeCategory === "reclamation";
-                    const showPrice = isReclamation ? "Бесплатно" : price;
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => {
-                          if (isReclamation) {
-                            // Add as free item
-                            setItems((prev) => [...prev, {
-                              id: String(Date.now()) + Math.random(),
-                              name: item.name,
-                              quantity: 1,
-                              unit: item.unit,
-                              price: 0,
-                            }]);
-                          } else {
-                            addFromPrice(item);
-                          }
-                        }}
-                        className="w-full text-left p-2 rounded-lg hover:bg-accent transition-colors group"
-                      >
-                        <p className="text-xs leading-tight">{item.name}</p>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="text-[10px] text-muted-foreground">{item.unit}</span>
-                          <span className={`text-xs font-medium ${isReclamation ? "text-green-600" : "text-primary"}`}>
-                            {showPrice}{!isReclamation && parsePrice(price) > 0 && !price.startsWith("+") ? " ₽" : ""}
-                            {hasVariants(price) && !isReclamation && (
-                              <span className="ml-1 text-[10px] text-muted-foreground">▾</span>
-                            )}
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-xs leading-tight flex-1">{item.name}</p>
+                        {existingItem && (
+                          <span className="shrink-0 bg-primary text-primary-foreground text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                            {existingItem.quantity}
                           </span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                  {filteredPriceList.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-4">Ничего не найдено</p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[10px] text-muted-foreground">{item.unit}</span>
+                        <span className={`text-xs font-medium ${isReclamation ? "text-emerald-600" : "text-primary"}`}>
+                          {showPrice}{!isReclamation && parsePrice(price) > 0 && !price.startsWith("+") ? " ₽" : ""}
+                          {hasVariants(price) && !isReclamation && <span className="ml-1 text-[10px] text-muted-foreground">▾</span>}
+                        </span>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+                {filteredPriceList.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-4">Ничего не найдено</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Center: Estimate builder */}
-          <div className="xl:col-span-1 space-y-4">
-            <Card>
+          {/* Right: Estimate builder + saved */}
+          <div className="space-y-5">
+            <Card className="border-0 shadow-lg">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Данные клиента</CardTitle>
               </CardHeader>
@@ -312,57 +289,45 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="border-0 shadow-lg">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">Позиции ({items.length})</CardTitle>
-                  <button onClick={addEmpty} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs font-medium hover:bg-accent/80 transition-colors">
+                  <button onClick={addEmpty} className="flex items-center gap-1 px-3 py-1.5 bg-accent rounded-xl text-xs font-medium hover:bg-accent/80 transition-all">
                     <Plus size={12} /> Пустая
                   </button>
                 </div>
               </CardHeader>
               <CardContent>
                 {items.length === 0 ? (
-                  <p className="text-center text-muted-foreground text-xs py-6">
+                  <p className="text-center text-muted-foreground text-xs py-8">
                     Выберите позиции из прайс-листа слева
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {items.map((item) => (
-                      <div key={item.id} className="p-2 rounded-lg border border-border space-y-1.5">
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) => updateItem(item.id, "name", e.target.value)}
-                          placeholder="Название позиции"
-                          className="w-full px-2 py-1 rounded border border-border bg-background text-xs focus:outline-none focus:ring-1 focus:ring-ring"
-                        />
+                      <motion.div
+                        key={item.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-3 rounded-xl border border-border bg-accent/30 space-y-2"
+                      >
+                        <input type="text" value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                          placeholder="Название" className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-xs focus:outline-none focus:ring-1 focus:ring-primary/30" />
                         <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min={1}
-                            value={item.quantity}
-                            onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
-                            className="w-14 px-2 py-1 rounded border border-border bg-background text-xs text-center focus:outline-none"
-                            title="Количество"
-                          />
+                          <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
+                            className="w-14 px-2 py-1.5 rounded-lg border border-border bg-background text-xs text-center focus:outline-none" />
                           <span className="text-[10px] text-muted-foreground">{item.unit}</span>
                           <span className="text-[10px] text-muted-foreground">×</span>
-                          <input
-                            type="number"
-                            min={0}
-                            value={item.price}
-                            onChange={(e) => updateItem(item.id, "price", Number(e.target.value))}
-                            className="w-20 px-2 py-1 rounded border border-border bg-background text-xs text-center focus:outline-none"
-                            title="Цена за единицу"
-                          />
+                          <input type="number" min={0} value={item.price} onChange={(e) => updateItem(item.id, "price", Number(e.target.value))}
+                            className="w-20 px-2 py-1.5 rounded-lg border border-border bg-background text-xs text-center focus:outline-none" />
                           <span className="text-[10px] text-muted-foreground">₽</span>
-                          <span className="text-xs font-medium ml-auto">{(item.price * item.quantity).toLocaleString("ru")} ₽</span>
-                          <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive">
+                          <span className="text-xs font-semibold ml-auto text-primary">{(item.price * item.quantity).toLocaleString("ru")} ₽</span>
+                          <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded-lg hover:bg-destructive/5">
                             <Trash2 size={12} />
                           </button>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 )}
@@ -376,18 +341,16 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">Скидка</span>
-                        <input
-                          type="number" min={0} max={100} value={discount}
+                        <input type="number" min={0} max={100} value={discount}
                           onChange={(e) => setDiscount(Number(e.target.value))}
-                          className="w-14 px-2 py-1 rounded border border-border bg-background text-xs text-center"
-                        />
+                          className="w-14 px-2 py-1 rounded-lg border border-border bg-background text-xs text-center" />
                         <span className="text-muted-foreground text-xs">%</span>
                       </div>
                       <span className="text-muted-foreground">−{discountAmount.toLocaleString("ru")} ₽</span>
                     </div>
-                    <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
+                    <div className="flex justify-between text-xl font-bold pt-3 border-t border-border">
                       <span>Итого</span>
-                      <span>{total.toLocaleString("ru")} ₽</span>
+                      <span className="text-primary">{total.toLocaleString("ru")} ₽</span>
                     </div>
                   </div>
                 )}
@@ -395,91 +358,29 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
             </Card>
 
             <div className="flex gap-3">
-              <button onClick={handleSave} className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+              <button onClick={handleSave}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
                 Сохранить
               </button>
-              <button
-                onClick={handleDownloadPdf}
-                disabled={!isSaved}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              <button onClick={handleDownloadPdf} disabled={!isSaved}
+                className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${
                   isSaved ? "bg-accent text-foreground hover:bg-accent/80" : "bg-accent/50 text-muted-foreground cursor-not-allowed"
-                }`}
-              >
+                }`}>
                 <Download size={16} /> PDF
               </button>
             </div>
-          </div>
-
-          {/* Right: Preview + saved */}
-          <div className="xl:col-span-1 space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Превью сметы</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-background rounded-lg p-4 border border-border text-xs space-y-3">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <img src={logo} alt="PrimeDoor" className="h-6" />
-                    <div className="text-right text-[10px] text-muted-foreground">
-                      <p>PrimeDoor Service</p>
-                      <p>{new Date().toLocaleDateString("ru-RU")}</p>
-                    </div>
-                  </div>
-                  {clientName && <p className="font-semibold">{clientName}</p>}
-                  {clientAddress && <p className="text-muted-foreground">{clientAddress}</p>}
-                  {items.length > 0 && (
-                    <table className="w-full text-[10px]">
-                      <thead>
-                        <tr className="border-b border-border text-muted-foreground">
-                          <th className="text-left pb-1">Позиция</th>
-                          <th className="text-center pb-1">Кол.</th>
-                          <th className="text-right pb-1">Сумма</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {items.map((i) => (
-                          <tr key={i.id} className="border-b border-border/50">
-                            <td className="py-1">{i.name || "—"}</td>
-                            <td className="text-center py-1">{i.quantity}</td>
-                            <td className="text-right py-1">{(i.price * i.quantity).toLocaleString("ru")} ₽</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                  {items.length > 0 && (
-                    <div className="pt-2 border-t border-border">
-                      {discount > 0 && (
-                        <div className="flex justify-between text-muted-foreground">
-                          <span>Скидка {discount}%</span>
-                          <span>−{discountAmount.toLocaleString("ru")} ₽</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between font-bold text-sm mt-1">
-                        <span>Итого</span>
-                        <span>{total.toLocaleString("ru")} ₽</span>
-                      </div>
-                    </div>
-                  )}
-                  <div className="pt-3 border-t border-border text-[9px] text-muted-foreground">
-                    <p>ИП Корженевский М.А. · ИНН 971502093793</p>
-                    <p>+7 (495) 000-00-00 · info@primedoor.ru</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
             {savedEstimates.length > 0 && (
-              <Card>
+              <Card className="border-0 shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Сохранённые</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
                     {savedEstimates.map((est) => (
-                      <div key={est.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div key={est.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
                         <div>
-                          <p className="text-xs font-mono text-muted-foreground">{est.number}</p>
+                          <p className="text-xs font-mono text-primary">{est.number}</p>
                           <p className="text-sm font-medium">{est.client}</p>
                         </div>
                         <div className="text-right">
@@ -496,11 +397,15 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         </div>
       </div>
 
-      {/* Variant selection modal */}
+      {/* Variant modal */}
       {variantModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setVariantModal(null)} />
-          <div className="relative bg-card rounded-xl shadow-2xl w-full max-w-sm">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setVariantModal(null)} />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative bg-card rounded-2xl shadow-2xl w-full max-w-sm"
+          >
             <div className="p-5 space-y-4">
               <h3 className="text-sm font-heading font-bold">Выберите вариант</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">{variantModal.item.name}</p>
@@ -508,29 +413,22 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                 {variantModal.variants.map((v, i) => {
                   const price = parsePrice(v);
                   return (
-                    <button
-                      key={i}
-                      onClick={() => addWithVariant(variantModal.item, v)}
-                      className="w-full text-left p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
-                    >
+                    <button key={i} onClick={() => addWithVariant(variantModal.item, v)}
+                      className="w-full text-left p-3 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">Вариант {i + 1}</span>
-                        <span className="text-sm font-medium text-primary">
-                          {price > 0 ? `${v.trim()} ₽` : v.trim()}
-                        </span>
+                        <span className="text-sm font-medium text-primary">{price > 0 ? `${v.trim()} ₽` : v.trim()}</span>
                       </div>
                     </button>
                   );
                 })}
               </div>
-              <button
-                onClick={() => setVariantModal(null)}
-                className="w-full px-4 py-2 rounded-lg text-xs font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
-              >
+              <button onClick={() => setVariantModal(null)}
+                className="w-full px-4 py-2.5 rounded-xl text-xs font-medium bg-accent text-foreground hover:bg-accent/80 transition-all">
                 Отмена
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </DashboardLayout>

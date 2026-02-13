@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
-import { Search, ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase, Loader2 } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase, Loader2, Plus, MapPin } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
+import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
+import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
 import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
+import { motion } from "framer-motion";
 
 const quickFilters = [
   { label: "Все", value: "all", icon: <ClipboardList size={14} /> },
@@ -16,29 +20,38 @@ const quickFilters = [
 
 const ManagerDashboard = () => {
   const { user } = useAuth();
-  const { requests, loading, updateRequest } = useRequests();
-  const { getUserName } = useUsers();
-  const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterType, setFilterType] = useState<string>("all");
+  const { requests, loading, updateRequest, createRequest } = useRequests();
+  const { users, getUserName } = useUsers();
+  const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [quickFilter, setQuickFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => { document.title = "Заявки — Менеджер"; }, []);
 
   const filtered = requests.filter((r) => {
-    const matchSearch = r.client_name.toLowerCase().includes(search.toLowerCase()) ||
-      r.number.toLowerCase().includes(search.toLowerCase()) ||
-      (r.client_address || "").toLowerCase().includes(search.toLowerCase());
-    const matchStatus = filterStatus === "all" || r.status === filterStatus;
-    const matchType = filterType === "all" || r.type === filterType;
+    const s = filters.search.toLowerCase();
+    const matchSearch = !s ||
+      r.client_name.toLowerCase().includes(s) ||
+      r.number.toLowerCase().includes(s) ||
+      (r.client_address || "").toLowerCase().includes(s) ||
+      (r.client_phone || "").toLowerCase().includes(s) ||
+      (r.city || "").toLowerCase().includes(s);
+    const matchStatus = filters.status === "all" || r.status === filters.status;
+    const matchType = filters.type === "all" || r.type === filters.type;
+    const matchMeasurer = filters.measurerId === "all" || r.measurer_id === filters.measurerId;
+    const matchInstaller = filters.installerId === "all" || r.installer_id === filters.installerId;
+    const matchPartner = filters.partnerId === "all" || r.partner_id === filters.partnerId;
+    const created = r.created_at?.split("T")[0] || "";
+    const matchDateFrom = !filters.dateFrom || created >= filters.dateFrom;
+    const matchDateTo = !filters.dateTo || created <= filters.dateTo;
 
     let matchQuick = true;
     if (quickFilter === "new") matchQuick = r.status === "new";
     else if (quickFilter === "in_progress") matchQuick = !["new", "closed", "cancelled"].includes(r.status);
     else if (quickFilter === "reclamation") matchQuick = r.type === "reclamation";
 
-    return matchSearch && matchStatus && matchType && matchQuick;
+    return matchSearch && matchStatus && matchType && matchMeasurer && matchInstaller && matchPartner && matchDateFrom && matchDateTo && matchQuick;
   });
 
   const counts = {
@@ -48,12 +61,9 @@ const ManagerDashboard = () => {
     reclamation: requests.filter((r) => r.type === "reclamation").length,
   };
 
-  const getAssignedName = (r: ApiRequest) => {
-    return getUserName(r.measurer_id) || getUserName(r.installer_id) || "—";
-  };
-
-  const getPartnerName = (r: ApiRequest) => {
-    return getUserName(r.partner_id) || "Партнёр";
+  const handleExport = (format: "csv" | "xlsx") => {
+    if (format === "csv") exportToCSV(filtered, getUserName);
+    else exportToExcel(filtered, getUserName);
   };
 
   const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
@@ -63,8 +73,16 @@ const ManagerDashboard = () => {
 
   return (
     <DashboardLayout role="manager" userName={user?.name || "Менеджер"}>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-heading font-bold">Все заявки</h1>
+      <div className="space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <h1 className="text-2xl font-heading font-bold">Все заявки</h1>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25"
+          >
+            <Plus size={16} /> Создать заявку
+          </button>
+        </div>
 
         {/* Quick filters */}
         <div className="flex flex-wrap gap-2">
@@ -72,15 +90,15 @@ const ManagerDashboard = () => {
             <button
               key={f.value}
               onClick={() => setQuickFilter(f.value)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 quickFilter === f.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card border border-border text-muted-foreground hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                  : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/40"
               }`}
             >
               {f.icon}
               {f.label}
-              <span className={`ml-1 text-xs px-1.5 py-0.5 rounded-full ${
+              <span className={`ml-1 text-xs px-2 py-0.5 rounded-full font-bold ${
                 quickFilter === f.value ? "bg-primary-foreground/20 text-primary-foreground" : "bg-accent"
               }`}>
                 {counts[f.value as keyof typeof counts]}
@@ -89,52 +107,28 @@ const ManagerDashboard = () => {
           ))}
         </div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="relative flex-1">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder="Поиск по имени, номеру или адресу..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="all">Все типы</option>
-                {Object.entries(requestTypeLabels).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                <option value="all">Все статусы</option>
-                {Object.entries(statusLabels).map(([k, v]) => (
-                  <option key={k} value={k}>{v}</option>
-                ))}
-              </select>
-            </div>
+        <Card className="overflow-hidden border-0 shadow-lg">
+          <CardContent className="p-5">
+            <RequestFilters
+              filters={filters}
+              onChange={setFilters}
+              users={users}
+              onExport={handleExport}
+              resultCount={filtered.length}
+            />
 
             {loading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="animate-spin text-muted-foreground" size={32} />
+              <div className="flex justify-center py-16">
+                <Loader2 className="animate-spin text-primary" size={36} />
               </div>
             ) : (
-              <div className="overflow-auto">
+              <div className="overflow-auto mt-4">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                    <tr className="border-b-2 border-border text-left text-[10px] text-muted-foreground uppercase tracking-wider">
                       <th className="pb-3 pr-4">№</th>
                       <th className="pb-3 pr-4">Клиент</th>
+                      <th className="pb-3 pr-4">Адрес</th>
                       <th className="pb-3 pr-4">Город</th>
                       <th className="pb-3 pr-4">Тип</th>
                       <th className="pb-3 pr-4">Статус</th>
@@ -144,43 +138,51 @@ const ManagerDashboard = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((r) => (
-                      <tr
+                    {filtered.map((r, i) => (
+                      <motion.tr
                         key={r.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.02, duration: 0.2 }}
                         onClick={() => setSelectedRequest(r)}
-                        className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer"
+                        className="border-b border-border/50 last:border-0 hover:bg-primary/5 transition-colors cursor-pointer"
                       >
-                        <td className="py-3 pr-4 font-mono text-xs">{r.number}</td>
-                        <td className="py-3 pr-4 font-medium">{r.client_name}</td>
-                        <td className="py-3 pr-4 text-xs text-muted-foreground">{r.city || "—"}</td>
-                        <td className="py-3 pr-4 text-xs">
+                        <td className="py-3.5 pr-4 font-mono text-xs text-primary">{r.number}</td>
+                        <td className="py-3.5 pr-4 font-medium">{r.client_name}</td>
+                        <td className="py-3.5 pr-4 text-xs text-muted-foreground max-w-[200px] truncate">
+                          <span className="flex items-center gap-1"><MapPin size={10} className="shrink-0" />{r.client_address || "—"}</span>
+                        </td>
+                        <td className="py-3.5 pr-4 text-xs text-muted-foreground">{r.city || "—"}</td>
+                        <td className="py-3.5 pr-4 text-xs">
                           {requestTypeLabels[r.type] || r.type}
                           {r.type === "reclamation" && (
-                            <span className="ml-1 text-[10px] text-green-600">Бесплатно</span>
+                            <span className="ml-1 text-[10px] text-emerald-600 font-medium">Бесплатно</span>
                           )}
                         </td>
-                        <td className="py-3 pr-4">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                        <td className="py-3.5 pr-4">
+                          <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
                             {statusLabels[r.status as RequestStatus] || r.status}
                           </span>
                         </td>
-                        <td className="py-3 pr-4 text-xs">
+                        <td className="py-3.5 pr-4 text-xs">
                           {r.partner_id ? (
-                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 text-[10px] font-medium">
-                              <Briefcase size={10} /> {getPartnerName(r)}
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-medium">
+                              <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
                             </span>
                           ) : (
                             <span className="text-muted-foreground">Сайт</span>
                           )}
                         </td>
-                        <td className="py-3 pr-4 text-xs text-muted-foreground">{getAssignedName(r)}</td>
-                        <td className="py-3 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
-                      </tr>
+                        <td className="py-3.5 pr-4 text-xs text-muted-foreground">
+                          {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
+                        </td>
+                        <td className="py-3.5 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>
                 {filtered.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8 text-sm">Заявки не найдены</p>
+                  <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
                 )}
               </div>
             )}
@@ -194,6 +196,13 @@ const ManagerDashboard = () => {
           onClose={() => setSelectedRequest(null)}
           onSave={handleSave}
           viewerRole="manager"
+        />
+      )}
+
+      {showCreate && (
+        <CreateRequestModal
+          onClose={() => setShowCreate(false)}
+          onCreate={createRequest}
         />
       )}
     </DashboardLayout>
