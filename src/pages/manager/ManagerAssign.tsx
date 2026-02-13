@@ -26,7 +26,7 @@ const ManagerAssign = () => {
     if (!executor) return;
 
     const updates: Partial<ApiRequest> = {
-      status: "assigned" as any,
+      status: (executor.role === "measurer" ? "measurer_assigned" : "installer_assigned") as any,
     };
     if (executor.role === "measurer") {
       (updates as any).measurer_id = executor.id;

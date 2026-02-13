@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { statusLabels, statusColors, requestTypeLabels, type RequestStatus, type RequestType } from "@/data/mockDashboard";
-import { MapPin, Calendar, Package, Clock, CheckCircle2, FileText, Search, Loader2 } from "lucide-react";
+import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
+import { MapPin, Calendar, Package, Clock, CheckCircle2, FileText, Search, Loader2, Image, ExternalLink } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 
-const statusSteps: RequestStatus[] = ["new", "assigned", "measurement_done", "installation_scheduled", "installation_done", "closed"];
+const getPartnerSteps = (type?: RequestType): RequestStatus[] => {
+  if (!type) return statusFlows.measurement;
+  return statusFlows[type];
+};
 
 const PartnerDashboard = () => {
   const { user } = useAuth();
@@ -30,7 +33,8 @@ const PartnerDashboard = () => {
   const activeRequests = filtered.filter((r) => r.status !== "closed");
   const closedRequests = filtered.filter((r) => r.status === "closed");
 
-  const currentStepIndex = selected ? statusSteps.indexOf(selected.status as RequestStatus) : -1;
+  const partnerSteps = selected ? getPartnerSteps(selected.type as RequestType) : [];
+  const currentStepIndex = selected ? partnerSteps.indexOf(selected.status as RequestStatus) : -1;
 
   return (
     <DashboardLayout role="partner" userName={user?.name || "Партнёр"}>
@@ -177,7 +181,7 @@ const PartnerDashboard = () => {
                         <Clock size={14} /> Прогресс выполнения
                       </h3>
                       <div className="space-y-0">
-                        {statusSteps.map((step, i) => {
+                        {partnerSteps.map((step, i) => {
                           const isPast = i <= currentStepIndex;
                           const isCurrent = i === currentStepIndex;
                           return (
@@ -188,20 +192,60 @@ const PartnerDashboard = () => {
                                     : isPast ? "border-green-500 bg-green-500"
                                     : "border-border bg-background"
                                 }`} />
-                                {i < statusSteps.length - 1 && (
+                                {i < partnerSteps.length - 1 && (
                                   <div className={`w-0.5 h-5 ${isPast ? "bg-green-300" : "bg-border"}`} />
                                 )}
                               </div>
                               <p className={`text-xs pb-3 ${
                                 isCurrent ? "font-semibold text-primary" : isPast ? "text-foreground" : "text-muted-foreground"
                               }`}>
-                                {statusLabels[step]}
+                                {getStatusLabel(step, selected?.type as RequestType)}
                               </p>
                             </div>
                           );
                         })}
                       </div>
                     </div>
+
+                    {/* Files section for partner */}
+                    {selected.photos && selected.photos.length > 0 && (
+                      <div className="border-t border-border pt-4">
+                        <h3 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1">
+                          <Image size={14} /> Файлы ({selected.photos.length})
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {selected.photos.map((file, i) => (
+                            <a
+                              key={i}
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all"
+                            >
+                              {file.type === "image" ? (
+                                <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
+                                  <FileText size={20} className="text-muted-foreground" />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <ExternalLink size={14} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {selected.agreed_date && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                        <Calendar size={14} className="text-primary" />
+                        <span className="text-xs font-medium text-primary">
+                          {selected.type === "measurement" ? "Дата замера" : selected.type === "installation" ? "Дата монтажа" : "Дата визита"}: {selected.agreed_date.split("T")[0]}
+                        </span>
+                      </div>
+                    )}
 
                     <p className="text-xs text-muted-foreground text-center pt-2 border-t border-border">
                       Исполнитель: <span className="font-medium text-foreground">PrimeDoor Service</span>

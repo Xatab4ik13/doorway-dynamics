@@ -80,8 +80,8 @@ const MeasurerDashboard = () => {
     } catch {}
   };
 
-  const activeRequests = requests.filter((r) => !["measurement_done", "closed", "cancelled", "installation_scheduled", "installation_done"].includes(r.status));
-  const doneRequests = requests.filter((r) => r.status === "measurement_done");
+  const activeRequests = requests.filter((r) => !["measurement_done", "closed", "cancelled"].includes(r.status));
+  const doneRequests = requests.filter((r) => ["measurement_done", "closed"].includes(r.status));
 
   return (
     <DashboardLayout role="measurer" userName={user?.name || "Замерщик"}>

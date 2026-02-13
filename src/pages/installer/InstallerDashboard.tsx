@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
-import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, Wrench, ClipboardCheck, Loader2 } from "lucide-react";
+import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
@@ -87,7 +87,7 @@ const InstallerDashboard = () => {
       ];
       const existingPhotos = selected.photos || [];
       await updateRequest(selected.id, {
-        status: "installation_done" as any,
+        status: "closed" as any,
         notes: `Двери: ${doorsInstalled}, Фурнитура: ${hardwareInstalled}. ${defects ? `Дефекты: ${defects}` : ""}`,
         photos: [...existingPhotos, ...allPhotos] as any,
       });
@@ -96,16 +96,10 @@ const InstallerDashboard = () => {
     } catch {}
   };
 
-  const handleStartInstallation = async () => {
-    if (!selected || !dateConfirmed) return;
-    try {
-      const updated = await updateRequest(selected.id, { status: "installation_scheduled" as any });
-      setSelected(updated);
-    } catch {}
-  };
+  // No separate "start installation" step needed - installer confirms date then completes
 
-  const activeRequests = requests.filter((r) => !["installation_done", "closed", "cancelled"].includes(r.status));
-  const doneRequests = requests.filter((r) => r.status === "installation_done");
+  const activeRequests = requests.filter((r) => !["closed", "cancelled"].includes(r.status));
+  const doneRequests = requests.filter((r) => r.status === "closed");
 
   const missingFields: string[] = [];
   if (validationShown && !isComplete) {
@@ -235,14 +229,7 @@ const InstallerDashboard = () => {
                 </div>
               )}
 
-              {dateConfirmed && selected.status === "measurement_done" && (
-                <button onClick={handleStartInstallation}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-primary rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
-                  <Wrench size={16} /> Начать монтаж
-                </button>
-              )}
-
-              {dateConfirmed && (selected.status === "installation_scheduled" || selected.status === "installation_done") && (
+              {dateConfirmed && (
                 <div className="border-t border-border pt-4 space-y-4">
                   <h3 className="text-sm font-semibold flex items-center gap-2"><ClipboardCheck size={16} /> Отчёт о монтаже</h3>
 

@@ -11,16 +11,16 @@ import { ru } from "date-fns/locale";
 
 const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
   { status: "new", fill: "hsl(217, 91%, 50%)" },
-  { status: "assigned", fill: "hsl(38, 92%, 50%)" },
+  { status: "pending", fill: "hsl(45, 93%, 47%)" },
+  { status: "measurer_assigned", fill: "hsl(38, 92%, 50%)" },
+  { status: "installer_assigned", fill: "hsl(25, 95%, 53%)" },
   { status: "date_agreed", fill: "hsl(190, 80%, 45%)" },
   { status: "measurement_done", fill: "hsl(280, 65%, 50%)" },
-  { status: "installation_scheduled", fill: "hsl(25, 95%, 53%)" },
-  { status: "installation_done", fill: "hsl(142, 71%, 45%)" },
-  { status: "closed", fill: "hsl(220, 10%, 50%)" },
+  { status: "closed", fill: "hsl(142, 71%, 45%)" },
 ];
 
-const IN_PROGRESS_STATUSES: RequestStatus[] = ["assigned", "date_agreed", "measurement_done", "installation_scheduled"];
-const DONE_STATUSES: RequestStatus[] = ["installation_done", "closed"];
+const IN_PROGRESS_STATUSES: RequestStatus[] = ["pending", "measurer_assigned", "installer_assigned", "date_agreed", "measurement_done"];
+const DONE_STATUSES: RequestStatus[] = ["closed"];
 const DAY_NAMES = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
 function computeStats(requests: ApiRequest[]) {
