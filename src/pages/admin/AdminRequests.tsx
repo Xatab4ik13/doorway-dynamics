@@ -6,48 +6,45 @@ import { Download, Briefcase, Loader2, Plus, MapPin } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
-import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
+import Pagination from "@/components/dashboard/Pagination";
+import { useUsers, type ApiRequest } from "@/hooks/useRequests";
+import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
+import { useRequests } from "@/hooks/useRequests";
 
 const AdminRequests = () => {
   const { user } = useAuth();
-  const { requests, loading, updateRequest, createRequest, deleteRequest } = useRequests();
   const { users, getUserName } = useUsers();
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters);
+  const { createRequest, deleteRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
   useEffect(() => { document.title = "Заявки — Админ-панель"; }, []);
 
-  const filtered = requests.filter((r) => {
-    const s = filters.search.toLowerCase();
-    const matchSearch = !s ||
-      r.client_name.toLowerCase().includes(s) ||
-      r.number.toLowerCase().includes(s) ||
-      (r.client_address || "").toLowerCase().includes(s) ||
-      (r.client_phone || "").toLowerCase().includes(s) ||
-      (r.city || "").toLowerCase().includes(s);
-    const matchStatus = filters.status === "all" || r.status === filters.status;
-    const matchType = filters.type === "all" || r.type === filters.type;
-    const matchMeasurer = filters.measurerId === "all" || r.measurer_id === filters.measurerId;
-    const matchInstaller = filters.installerId === "all" || r.installer_id === filters.installerId;
-    const matchPartner = filters.partnerId === "all" || r.partner_id === filters.partnerId;
-    const created = r.created_at?.split("T")[0] || "";
-    const matchDateFrom = !filters.dateFrom || created >= filters.dateFrom;
-    const matchDateTo = !filters.dateTo || created <= filters.dateTo;
-    return matchSearch && matchStatus && matchType && matchMeasurer && matchInstaller && matchPartner && matchDateFrom && matchDateTo;
-  });
-
   const handleExport = (format: "csv" | "xlsx") => {
-    if (format === "csv") exportToCSV(filtered, getUserName);
-    else exportToExcel(filtered, getUserName);
+    if (format === "csv") exportToCSV(requests, getUserName);
+    else exportToExcel(requests, getUserName);
   };
 
   const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
     await updateRequest(id, updates);
     setSelectedRequest(null);
+    refetch();
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteRequest(id);
+    refetch();
+  };
+
+  const handleCreate = async (data: Partial<ApiRequest>) => {
+    const created = await createRequest(data);
+    refetch();
+    return created;
   };
 
   return (
@@ -70,7 +67,7 @@ const AdminRequests = () => {
               onChange={setFilters}
               users={users}
               onExport={handleExport}
-              resultCount={filtered.length}
+              resultCount={total}
             />
 
             {loading ? (
@@ -95,7 +92,7 @@ const AdminRequests = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((r, i) => (
+                    {requests.map((r, i) => (
                       <motion.tr
                         key={r.id}
                         initial={{ opacity: 0, y: 8 }}
@@ -139,9 +136,17 @@ const AdminRequests = () => {
                     ))}
                   </tbody>
                 </table>
-                {filtered.length === 0 && (
+                {requests.length === 0 && (
                   <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
                 )}
+
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={total}
+                  limit={limit}
+                  onPageChange={setPage}
+                />
               </div>
             )}
           </CardContent>
@@ -153,7 +158,7 @@ const AdminRequests = () => {
           request={selectedRequest}
           onClose={() => setSelectedRequest(null)}
           onSave={handleSave}
-          onDelete={deleteRequest}
+          onDelete={handleDelete}
           viewerRole="admin"
         />
       )}
@@ -161,7 +166,7 @@ const AdminRequests = () => {
       {showCreate && (
         <CreateRequestModal
           onClose={() => setShowCreate(false)}
-          onCreate={createRequest}
+          onCreate={handleCreate}
         />
       )}
     </DashboardLayout>
