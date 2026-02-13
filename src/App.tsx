@@ -67,10 +67,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const SuspenseFallback = () => {
   const location = useLocation();
-  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner"].some(
+  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner", "/login"].some(
     (p) => location.pathname.startsWith(p)
   );
-  return <div className={`min-h-screen ${isDashboard ? "dashboard-theme bg-[hsl(220,20%,97%)]" : ""}`} />;
+  return (
+    <div
+      className={`fixed inset-0 z-50 ${isDashboard ? "bg-[hsl(220,25%,97%)]" : "bg-background"}`}
+      style={{ minHeight: "100vh" }}
+    />
+  );
 };
 
 const AppRoutes = () => (
