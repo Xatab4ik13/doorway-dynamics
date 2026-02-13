@@ -5,7 +5,7 @@ import {
   Ruler, Wrench, Briefcase, LogOut, Menu, X, ChevronLeft,
   History, Upload, PlusCircle, Eye, Calculator, Bell,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+
 import type { UserRole } from "@/data/mockDashboard";
 import { roleLabels } from "@/data/mockDashboard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -78,16 +78,11 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-4 border-b border-border/50 flex items-center gap-3">
-        <Link to="/">
-          <img src={logo} alt="PrimeDoor" className="h-20 w-auto" />
+      <div className="p-5 border-b border-border/50">
+        <Link to="/" className="block">
+          <h1 className="text-2xl font-heading font-black tracking-tight text-foreground leading-none">PrimeDoor</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">{roleLabels[role]}</p>
         </Link>
-        {sidebarOpen && (
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-foreground truncate">PrimeDoor</p>
-            <p className="text-[10px] text-muted-foreground truncate">{roleLabels[role]}</p>
-          </div>
-        )}
       </div>
 
       {/* Nav */}
