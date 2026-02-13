@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -52,6 +52,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner", "/login"].some(
     (p) => location.pathname.startsWith(p)
   );
+
+  // Sync body background with dashboard/site theme to prevent black flash
+  useEffect(() => {
+    if (isDashboard) {
+      document.body.style.backgroundColor = "hsl(220, 25%, 97%)";
+    } else {
+      document.body.style.backgroundColor = "";
+    }
+    return () => { document.body.style.backgroundColor = ""; };
+  }, [isDashboard]);
   
   return (
     <>
