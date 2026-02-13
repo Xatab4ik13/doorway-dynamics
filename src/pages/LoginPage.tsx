@@ -144,7 +144,7 @@ const LoginPage = () => {
       >
         <div className="text-center mb-12">
           <Link to="/">
-            <img src={logo} alt="PrimeDoor Service" className="h-24 w-auto mx-auto mb-8 brightness-0 invert" />
+            <img src={logo} alt="PrimeDoor Service" className="h-52 w-auto mx-auto mb-8 brightness-0 invert" />
           </Link>
           <h1 className="heading-md">Вход в кабинет</h1>
         </div>
