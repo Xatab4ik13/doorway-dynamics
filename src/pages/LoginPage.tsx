@@ -135,7 +135,7 @@ const LoginPage = () => {
     "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
+    <main className="min-h-screen flex items-center justify-center px-6 bg-background">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -155,7 +155,7 @@ const LoginPage = () => {
             onClick={() => { setMode("telegram"); stopPolling(); }}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "telegram"
-                ? "bg-[#229ED9] text-white"
+                ? "bg-foreground text-background"
                 : "bg-accent text-muted-foreground hover:text-foreground"
             }`}
           >
