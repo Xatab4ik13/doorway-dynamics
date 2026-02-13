@@ -271,6 +271,11 @@
   color: white;
 }
 
+.dashboard-theme ::selection {
+  background: hsl(221 83% 53% / 0.2);
+  color: hsl(222 47% 11%);
+}
+
 html { scroll-behavior: smooth; }
 
 /* Works gallery — accordion hover */

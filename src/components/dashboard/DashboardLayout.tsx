@@ -80,7 +80,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
       {/* Logo */}
       <div className="p-4 border-b border-border/50 flex items-center gap-3">
         <Link to="/">
-          <img src={logo} alt="PrimeDoor" className="h-10 w-auto" />
+          <img src={logo} alt="PrimeDoor" className="h-20 w-auto" />
         </Link>
         {sidebarOpen && (
           <div className="min-w-0">
@@ -127,10 +127,10 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
         )}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-destructive transition-colors w-full px-3 py-2 rounded-xl hover:bg-destructive/5"
+          className="flex items-center gap-3 text-base text-muted-foreground hover:text-destructive transition-colors w-full px-4 py-3 rounded-xl hover:bg-destructive/5"
         >
-          <LogOut size={18} />
-          {sidebarOpen && <span>Выйти</span>}
+          <LogOut size={22} />
+          {sidebarOpen && <span className="font-medium">Выйти</span>}
         </button>
       </div>
     </div>
@@ -151,18 +151,15 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
       <AnimatePresence>
         {mobileOpen && (
           <div className="fixed inset-0 z-50 md:hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            <div
+              className="absolute inset-0 bg-black/50"
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
               initial={{ x: -280 }}
               animate={{ x: 0 }}
               exit={{ x: -280 }}
-              transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               className="absolute left-0 top-0 bottom-0 w-64 bg-card border-r border-border shadow-2xl"
             >
               <div className="flex justify-end p-3">
