@@ -400,10 +400,11 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       {/* Variant modal */}
       {variantModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setVariantModal(null)} />
+          <div className="absolute inset-0 bg-black/50" onClick={() => setVariantModal(null)} />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="relative bg-card rounded-2xl shadow-2xl w-full max-w-sm"
           >
             <div className="p-5 space-y-4">

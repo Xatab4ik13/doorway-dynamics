@@ -76,18 +76,15 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        <div
+          className="absolute inset-0 bg-black/50"
           onClick={onClose}
         />
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ type: "spring", duration: 0.4, bounce: 0.15 }}
+          initial={{ opacity: 0, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.97 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           className="relative bg-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto"
         >
           <div className="flex items-center justify-between p-5 border-b border-border">
