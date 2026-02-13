@@ -8,7 +8,7 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
           {/* Logo & info */}
           <div className="md:col-span-1">
-            <img src={logo} alt="PrimeDoor Service" className="h-20 w-auto brightness-0 invert mb-6" />
+            <img src={logo} alt="PrimeDoor Service" className="h-32 w-auto brightness-0 invert mb-6" />
             <p className="text-xs text-muted-foreground leading-relaxed">
               Профессиональная установка дверей в Москве и Санкт-Петербурге
             </p>
