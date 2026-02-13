@@ -166,6 +166,13 @@ const MeasurerDashboard = () => {
                   <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
                   <p className="text-sm text-muted-foreground">{selected.client_address}</p>
                   <p className="text-sm text-muted-foreground">{selected.client_phone}</p>
+                  {selected.extra_name && (
+                    <div className="mt-2 p-2 rounded-lg bg-accent/50">
+                      <p className="text-xs text-muted-foreground">Доп. контакт</p>
+                      <p className="text-sm font-medium">{selected.extra_name}</p>
+                      {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
