@@ -187,6 +187,13 @@ const InstallerDashboard = () => {
                   <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> {selected.client_address}</div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> {selected.client_phone}</div>
+                  {selected.extra_name && (
+                    <div className="mt-2 p-2 rounded-lg bg-accent/50">
+                      <p className="text-xs text-muted-foreground">Доп. контакт</p>
+                      <p className="text-sm font-medium">{selected.extra_name}</p>
+                      {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
