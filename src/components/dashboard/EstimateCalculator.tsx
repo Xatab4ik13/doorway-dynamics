@@ -189,7 +189,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       <div className="space-y-5">
         <h1 className="text-2xl font-heading font-bold">Калькулятор смет</h1>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto w-full">
           {/* Left: Price list */}
           <Card className="border-0 shadow-lg overflow-hidden">
             <CardHeader className="pb-3">
@@ -237,7 +237,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                 </div>
               )}
 
-              <div className="max-h-[500px] overflow-auto space-y-1">
+              <div className="max-h-[70vh] overflow-auto space-y-1">
                 {filteredPriceList.map((item, i) => {
                   const price = item[city];
                   const isReclamation = activeCategory === "reclamation";
