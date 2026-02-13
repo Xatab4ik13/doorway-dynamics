@@ -103,7 +103,18 @@ export function useRequests() {
     }
   }, []);
 
-  return { requests, loading, fetchRequests, updateRequest, createRequest, setRequests };
+  const deleteRequest = useCallback(async (id: string) => {
+    try {
+      await api(`/api/requests/${id}`, { method: "DELETE", auth: true });
+      setRequests(prev => prev.filter(r => r.id !== id));
+      prevCountRef.current = (prevCountRef.current || 0) - 1;
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка удаления");
+      throw err;
+    }
+  }, []);
+
+  return { requests, loading, fetchRequests, updateRequest, createRequest, deleteRequest, setRequests };
 }
 
 export function useUsers() {
