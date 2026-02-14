@@ -160,6 +160,23 @@ const AdminRequests = () => {
           onSave={handleSave}
           onDelete={handleDelete}
           viewerRole="admin"
+          onSendToInstallation={async (req) => {
+            await createRequest({
+              type: "installation",
+              client_name: req.client_name,
+              client_phone: req.client_phone,
+              client_address: req.client_address,
+              city: req.city,
+              extra_name: req.extra_name,
+              extra_phone: req.extra_phone,
+              work_description: req.work_description,
+              notes: req.notes,
+              photos: req.photos,
+              source: req.source,
+              partner_id: req.partner_id,
+            });
+            refetch();
+          }}
         />
       )}
 

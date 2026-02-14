@@ -79,10 +79,10 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-5 border-b border-border/50">
-        <Link to="/" className="block">
-          <img src={logoImg} alt="PrimeDoor" className="h-14 brightness-0 object-contain" />
-          <p className="text-sm text-muted-foreground mt-1 font-medium">{roleLabels[role]}</p>
+      <div className="px-5 py-6 border-b border-border/50 flex flex-col items-center">
+        <Link to="/" className="block text-center">
+          <img src={logoImg} alt="PrimeDoor" className="h-16 brightness-0 object-contain mx-auto" />
+          <p className="text-sm text-muted-foreground mt-2 font-medium">{roleLabels[role]}</p>
         </Link>
       </div>
 

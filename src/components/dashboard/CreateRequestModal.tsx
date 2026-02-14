@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { X, Send, Loader2, MapPin, Phone, User, FileText, Building2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Send, Loader2, MapPin, Phone, User, FileText, Building2, Upload, Trash2 } from "lucide-react";
 import { type ApiRequest } from "@/hooks/useRequests";
 import { requestTypeLabels } from "@/data/mockDashboard";
 import { motion, AnimatePresence } from "framer-motion";
 import AddressInput from "@/components/AddressInput";
+import { uploadFile } from "@/lib/api";
 
 const cities = ["Москва", "Санкт-Петербург"];
 
@@ -23,6 +24,9 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   const [workDescription, setWorkDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [files, setFiles] = useState<{ file: File; preview?: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatPhone = (value: string) => {
     const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -51,6 +55,25 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
 
     setSaving(true);
     try {
+      // Upload files if any
+      let photos: { url: string; type: string; stage: string; uploaded_at: string }[] | undefined;
+      if (files.length > 0) {
+        setUploading(true);
+        const uploaded = await Promise.all(
+          files.map(async (f) => {
+            const result = await uploadFile(f.file, "requests");
+            return {
+              url: result.url,
+              type: f.file.type.startsWith("image/") ? "image" : "document",
+              stage: "general",
+              uploaded_at: new Date().toISOString(),
+            };
+          })
+        );
+        photos = uploaded;
+        setUploading(false);
+      }
+
       await onCreate({
         type,
         client_name: clientName,
@@ -61,9 +84,11 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
         extra_phone: extraPhone || undefined,
         work_description: workDescription || undefined,
         source: "site",
+        ...(photos ? { photos } : {}),
       });
       onClose();
     } catch {
+      setUploading(false);
     } finally {
       setSaving(false);
     }
@@ -180,6 +205,48 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
               </label>
               <textarea value={workDescription} onChange={(e) => setWorkDescription(e.target.value)} rows={3} className={inputClass("") + " resize-none"} placeholder="Опишите что нужно сделать..." />
             </div>
+
+            {/* File upload for installation */}
+            {type === "installation" && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                  <Upload size={12} /> Файлы для монтажника
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    const newFiles = Array.from(e.target.files || []).map(f => ({
+                      file: f,
+                      preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined,
+                    }));
+                    setFiles(prev => [...prev, ...newFiles]);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-3 border-2 border-dashed border-border rounded-xl text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all"
+                >
+                  Нажмите для выбора файлов
+                </button>
+                {files.length > 0 && (
+                  <div className="mt-2 space-y-1.5">
+                    {files.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent/50 text-xs">
+                        <span className="truncate flex-1">{f.file.name}</span>
+                        <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive ml-2">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-3 p-5 border-t border-border">
