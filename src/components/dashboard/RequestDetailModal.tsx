@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2 } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight } from "lucide-react";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
@@ -10,10 +10,11 @@ interface RequestDetailModalProps {
   onClose: () => void;
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
+  onSendToInstallation?: (request: ApiRequest) => Promise<void>;
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const RequestDetailModal = ({ request, onClose, onSave, onDelete, viewerRole = "admin" }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
   const { getByRole } = useUsers();
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
@@ -24,6 +25,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, viewerRole = "
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [sendingToInstall, setSendingToInstall] = useState(false);
 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
@@ -359,7 +361,23 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, viewerRole = "
                 </div>
               )}
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 flex-wrap">
+              {/* Send to installation button — for measurement requests */}
+              {request.type === "measurement" && canEdit && onSendToInstallation && (
+                <button
+                  onClick={async () => {
+                    setSendingToInstall(true);
+                    try {
+                      await onSendToInstallation(request);
+                      toast.success("Заявка на монтаж создана");
+                    } catch {} finally { setSendingToInstall(false); }
+                  }}
+                  disabled={sendingToInstall}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
+                </button>
+              )}
               <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
                 Отмена
               </button>

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { X, Send } from "lucide-react";
+import { X, Send, Phone, Mail, StickyNote } from "lucide-react";
 import { type UserRole, roleLabels } from "@/data/mockDashboard";
 
 interface CreateAccountModalProps {
   onClose: () => void;
-  onSave: (data: { name: string; role: UserRole; telegramId: string }) => void;
+  onSave: (data: { name: string; role: UserRole; telegramId: string; phone?: string; email?: string; notes?: string }) => void;
 }
 
 const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
@@ -13,10 +13,13 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
   const [name, setName] = useState("");
   const [role, setRole] = useState<UserRole>("measurer");
   const [telegramId, setTelegramId] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [notes, setNotes] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ name, role, telegramId });
+    onSave({ name, role, telegramId, phone: phone || undefined, email: email || undefined, notes: notes || undefined });
   };
 
   const inputClass = "w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring";
@@ -69,6 +72,27 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+              <Phone size={14} /> Телефон
+            </label>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="+7 999 999 99 99" />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+              <Mail size={14} /> Почта
+            </label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} placeholder="email@example.com" />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+              <StickyNote size={14} /> Заметка
+            </label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className={inputClass + " resize-none"} placeholder="Любая информация..." />
           </div>
 
           <div className="flex justify-end gap-3 pt-2">

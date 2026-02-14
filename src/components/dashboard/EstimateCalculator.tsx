@@ -28,6 +28,7 @@ const parseVariants = (priceStr: string): string[] => priceStr.split("/").map((s
 
 const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [city, setCity] = useState<"moscow" | "spb">("moscow");
   const [items, setItems] = useState<EstimateItem[]>([]);
@@ -196,11 +197,11 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       <div class="header">
         <div>
           ${logoBase64 ? `<img src="${logoBase64}" alt="PrimeDoor" class="header-logo" />` : `<h1>PrimeDoor Service</h1>`}
-          <p style="font-size:12px;color:#666;margin-top:4px;">Смета</p>
+          <p style="font-size:12px;color:#666;margin-top:4px;">Смета от ${new Date().toLocaleDateString("ru-RU")}</p>
         </div>
-        <div class="meta"><p>${new Date().toLocaleDateString("ru-RU")}</p></div>
+        <div class="meta"><p>+7 926 166 30 62</p><p>info@primedoor.ru</p></div>
       </div>
-      <div class="client"><p><strong>${clientName}</strong></p>${clientAddress ? `<p>${clientAddress}</p>` : ""}</div>
+      <div class="client"><p><strong>${clientName}</strong></p>${clientPhone ? `<p>Тел: ${clientPhone}</p>` : ""}${clientAddress ? `<p>${clientAddress}</p>` : ""}</div>
       <table>
         <thead><tr><th>№</th><th>Позиция</th><th>Кол.</th><th>Ед.</th><th>Цена</th><th style="text-align:right">Сумма</th></tr></thead>
         <tbody>
@@ -209,9 +210,21 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
           <tr class="total-row"><td colspan="5">Итого</td><td style="text-align:right">${total.toLocaleString("ru")} ₽</td></tr>
         </tbody>
       </table>
+      <div style="margin-top:60px;">
+        <div style="display:flex;justify-content:space-between;gap:40px;">
+          <div style="flex:1;border-top:1px solid #333;padding-top:8px;">
+            <p style="font-size:12px;color:#666;">Заказчик</p>
+            <p style="font-size:11px;color:#999;margin-top:4px;">ФИО / подпись / дата</p>
+          </div>
+          <div style="flex:1;border-top:1px solid #333;padding-top:8px;">
+            <p style="font-size:12px;color:#666;">Исполнитель</p>
+            <p style="font-size:11px;color:#999;margin-top:4px;">ИП Корженевский М.А. / подпись / дата</p>
+          </div>
+        </div>
+      </div>
       <div class="footer">
         <p>ИП Корженевский М.А. · ИНН 971502093793</p>
-        <p>+7 (495) 000-00-00 · info@primedoor.ru</p>
+        <p>+7 926 166 30 62 · info@primedoor.ru</p>
       </div>
       </body></html>
     `);
@@ -325,6 +338,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} className={inputClass} placeholder="ФИО или название объекта" />
+                <input type="tel" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className={inputClass} placeholder="Телефон клиента" />
                 <AddressInput
                   value={clientAddress}
                   onChange={setClientAddress}

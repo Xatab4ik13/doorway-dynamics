@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { roleLabels, type UserRole } from "@/data/mockDashboard";
 import { UserPlus, Trash2, Search, Loader2 } from "lucide-react";
 import CreateAccountModal from "@/components/dashboard/CreateAccountModal";
+import AccountDetailModal from "@/components/dashboard/AccountDetailModal";
 import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
 import { toast } from "sonner";
 import api from "@/lib/api";
@@ -14,7 +15,9 @@ interface UserAccount {
   name: string;
   role: UserRole;
   telegram_id?: string;
+  phone?: string;
   email?: string;
+  notes?: string;
   active: boolean;
   created_at: string;
 }
@@ -35,6 +38,7 @@ const AdminAccounts = () => {
   const [filterRole, setFilterRole] = useState<string>("all");
   const [showCreate, setShowCreate] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<UserAccount | null>(null);
+  const [detailTarget, setDetailTarget] = useState<UserAccount | null>(null);
 
   useEffect(() => {
     document.title = "Аккаунты — Админ-панель";
@@ -83,6 +87,21 @@ const AdminAccounts = () => {
       setDeleteTarget(null);
     } catch (err: any) {
       toast.error(err.message || "Ошибка удаления");
+    }
+  };
+
+  const handleUpdate = async (id: string, updates: Partial<UserAccount>) => {
+    try {
+      const updated = await api<UserAccount>(`/api/users/${id}`, {
+        method: "PUT",
+        body: updates,
+        auth: true,
+      });
+      setUsers(users.map((u) => (u.id === id ? { ...u, ...updated } : u)));
+      toast.success("Аккаунт обновлён");
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка обновления");
+      throw err;
     }
   };
 
@@ -139,7 +158,7 @@ const AdminAccounts = () => {
                 </thead>
                 <tbody>
                   {filtered.map((u) => (
-                    <tr key={u.id} className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors">
+                    <tr key={u.id} className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => setDetailTarget(u)}>
                       <td className="py-3 pr-4 font-mono text-xs">{u.id}</td>
                       <td className="py-3 pr-4 font-medium">{u.name}</td>
                       <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.telegram_id || "—"}</td>
@@ -155,7 +174,7 @@ const AdminAccounts = () => {
                       <td className="py-3 pr-4 text-xs text-muted-foreground">{u.created_at?.split("T")[0]}</td>
                       <td className="py-3">
                         <button
-                          onClick={() => setDeleteTarget(u)}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(u); }}
                           className="text-muted-foreground hover:text-destructive transition-colors"
                         >
                           <Trash2 size={16} />
@@ -180,6 +199,13 @@ const AdminAccounts = () => {
           description={`Аккаунт "${deleteTarget.name}" будет удалён без возможности восстановления.`}
           onClose={() => setDeleteTarget(null)}
           onConfirm={handleDelete}
+        />
+      )}
+      {detailTarget && (
+        <AccountDetailModal
+          user={detailTarget}
+          onClose={() => setDetailTarget(null)}
+          onSave={handleUpdate}
         />
       )}
     </DashboardLayout>
