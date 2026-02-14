@@ -81,7 +81,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
       {/* Logo */}
       <div className="px-5 py-6 border-b border-border/50 flex flex-col items-center">
         <Link to="/" className="block text-center">
-          <img src={logoImg} alt="PrimeDoor" className="h-16 brightness-0 object-contain mx-auto" />
+          <img src={logoImg} alt="PrimeDoor" className="h-40 brightness-0 object-contain mx-auto" />
           <p className="text-sm text-muted-foreground mt-2 font-medium">{roleLabels[role]}</p>
         </Link>
       </div>
