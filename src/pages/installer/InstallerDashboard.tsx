@@ -199,11 +199,11 @@ const InstallerDashboard = () => {
               </div>
 
               {/* Existing files from request */}
-              {(selected.photos || []).length > 0 && (
-                <div className="border border-border rounded-xl p-4">
-                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <Camera size={14} /> Прикреплённые файлы ({selected.photos.length})
-                  </h3>
+              <div className="border border-border rounded-xl p-4">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                  <Camera size={14} /> Прикреплённые файлы {(selected.photos || []).length > 0 && `(${selected.photos.length})`}
+                </h3>
+                {(selected.photos || []).length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {selected.photos.map((file: any, i: number) => (
                       <a
@@ -224,8 +224,10 @@ const InstallerDashboard = () => {
                       </a>
                     ))}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">Нет прикреплённых файлов</p>
+                )}
+              </div>
 
               {!selected.agreed_date && (
                 <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
