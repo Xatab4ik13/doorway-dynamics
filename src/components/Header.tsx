@@ -253,11 +253,16 @@ const Header = () => {
                   transition={{ delay: 0.9 }}
                   className="flex flex-col gap-4"
                 >
-                  <a href="tel:+74951234567" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
-                    +7 (495) 123-45-67
+                  <p className="text-white/40 uppercase tracking-[0.1em] text-[10px] mb-2">Москва</p>
+                  <a href="tel:+79261663062" className="block text-white/60 text-sm tracking-wider hover:text-white transition-colors">
+                    +7 926 166 30 62
                   </a>
-                  <a href="mailto:info@primedoor.ru" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
-                    info@primedoor.ru
+                  <a href="tel:+79255700609" className="block text-white/60 text-sm tracking-wider hover:text-white transition-colors mt-1">
+                    +7 925 570 06 09
+                  </a>
+                  <p className="text-white/40 uppercase tracking-[0.1em] text-[10px] mt-4 mb-2">Санкт-Петербург</p>
+                  <a href="tel:+79932663504" className="block text-white/60 text-sm tracking-wider hover:text-white transition-colors">
+                    +7 993 266 35 04
                   </a>
                   <Link
                     to="/login"
