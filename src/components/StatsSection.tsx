@@ -46,16 +46,6 @@ const StatsSection = () => {
   return (
     <section className="py-24 md:py-40 px-6 md:px-10">
       <div className="max-w-7xl mx-auto">
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="section-label mb-16 md:mb-24"
-        >
-          Пример проекта
-        </motion.p>
-
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8">
           {stats.map((stat, i) => (
             <motion.div

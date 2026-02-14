@@ -194,12 +194,29 @@ const Header = () => {
                     </AnimatePresence>
                   </motion.div>
 
-                  {/* Новости */}
+                  {/* Заявка */}
                   <motion.div
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.6, delay: 0.5 }}
+                  >
+                    <Link
+                      to="/request"
+                      onClick={closeMenu}
+                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      Заявка
+                    </Link>
+                  </motion.div>
+
+                  {/* Новости */}
+                  <motion.div
+                    initial={{ opacity: 0, x: 40 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ duration: 0.6, delay: 0.55 }}
                   >
                     <Link
                       to="/news"
@@ -216,7 +233,7 @@ const Header = () => {
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.55 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
                   >
                     <Link
                       to="/contacts"
@@ -225,23 +242,6 @@ const Header = () => {
                       style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                     >
                       Контакты
-                    </Link>
-                  </motion.div>
-
-                  {/* Заявка на замер */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.6 }}
-                  >
-                    <Link
-                      to="/request"
-                      onClick={closeMenu}
-                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      Заявка
                     </Link>
                   </motion.div>
 
