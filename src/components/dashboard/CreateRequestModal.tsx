@@ -206,12 +206,11 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
               <textarea value={workDescription} onChange={(e) => setWorkDescription(e.target.value)} rows={3} className={inputClass("") + " resize-none"} placeholder="Опишите что нужно сделать..." />
             </div>
 
-            {/* File upload for installation */}
-            {type === "installation" && (
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                  <Upload size={12} /> Файлы для монтажника
-                </label>
+            {/* File upload */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Upload size={12} /> Файлы (необязательно)
+              </label>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -245,8 +244,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
                     ))}
                   </div>
                 )}
-              </div>
-            )}
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 p-5 border-t border-border">
