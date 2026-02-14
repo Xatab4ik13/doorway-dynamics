@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload } from "lucide-react";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { uploadFile } from "@/lib/api";
 
 interface RequestDetailModalProps {
   request: ApiRequest;
@@ -26,6 +27,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sendingToInstall, setSendingToInstall] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
@@ -290,13 +293,60 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           )}
 
           {activeTab === "files" && (
-            <div className="p-5">
-              {photos.length === 0 ? (
+            <div className="p-5 space-y-4">
+              {/* Upload button for admin/manager/partner */}
+              {(canEdit || viewerRole === "partner") && onSave && (
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    onChange={async (e) => {
+                      const selectedFiles = Array.from(e.target.files || []);
+                      if (!selectedFiles.length) return;
+                      setUploadingFile(true);
+                      try {
+                        const uploaded = await Promise.all(
+                          selectedFiles.map(async (f) => {
+                            const result = await uploadFile(f, "requests");
+                            return {
+                              url: result.url,
+                              type: f.type.startsWith("image/") ? "image" : "document",
+                              stage: "general",
+                              uploaded_at: new Date().toISOString(),
+                            };
+                          })
+                        );
+                        const updatedPhotos = [...photos, ...uploaded];
+                        await onSave(request.id, { photos: updatedPhotos as any });
+                        toast.success(`Загружено файлов: ${uploaded.length}`);
+                      } catch (err: any) {
+                        toast.error(err.message || "Ошибка загрузки");
+                      } finally {
+                        setUploadingFile(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingFile}
+                    className="w-full py-3 border-2 border-dashed border-border rounded-xl text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {uploadingFile ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    {uploadingFile ? "Загрузка..." : "Загрузить файлы"}
+                  </button>
+                </div>
+              )}
+
+              {photos.length === 0 && !uploadingFile ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Image size={40} className="mx-auto mb-3 opacity-30" />
                   <p className="text-sm">Нет файлов по этой заявке</p>
                 </div>
-              ) : (
+              ) : photos.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {photos.map((file, i) => (
                     <a
@@ -323,7 +373,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </a>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
           )}
 
