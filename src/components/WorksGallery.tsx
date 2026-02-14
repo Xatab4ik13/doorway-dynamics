@@ -33,6 +33,18 @@ const WorksGallery = () => {
         >
           наши работы
         </motion.span>
+        <motion.a
+          href="https://disk.yandex.ru/d/Fx-0Cm8rK08ZGQ"
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mt-6 inline-block text-sm md:text-base uppercase tracking-[0.2em] text-foreground/60 border-b border-foreground/30 pb-1 hover:text-foreground hover:border-foreground transition-all duration-500"
+        >
+          Портфолио →
+        </motion.a>
       </div>
 
       {isMobile ? (
