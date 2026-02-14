@@ -10,6 +10,7 @@ import type { UserRole } from "@/data/mockDashboard";
 import { roleLabels } from "@/data/mockDashboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
+import logoImg from "@/assets/logo.png";
 
 interface NavItem {
   label: string;
@@ -80,7 +81,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
       {/* Logo */}
       <div className="p-5 border-b border-border/50">
         <Link to="/" className="block">
-          <h1 className="text-2xl font-heading font-black tracking-tight text-foreground leading-none">PrimeDoor</h1>
+          <img src={logoImg} alt="PrimeDoor" className="h-14 brightness-0 object-contain" />
           <p className="text-sm text-muted-foreground mt-1 font-medium">{roleLabels[role]}</p>
         </Link>
       </div>
@@ -155,14 +156,16 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute left-0 top-0 bottom-0 w-64 bg-card border-r border-border shadow-2xl"
+              className="absolute left-0 top-0 bottom-0 w-64 bg-card border-r border-border shadow-2xl flex flex-col"
             >
               <div className="flex justify-end p-3">
                 <button onClick={() => setMobileOpen(false)} className="p-2 rounded-xl hover:bg-accent">
                   <X size={20} className="text-muted-foreground" />
                 </button>
               </div>
-              <SidebarContent />
+              <div className="flex-1 overflow-auto">
+                <SidebarContent />
+              </div>
             </motion.aside>
           </div>
         )}
@@ -191,7 +194,13 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
             </div>
             <div className="h-6 w-px bg-border" />
-            <span className="text-xs text-muted-foreground font-medium">{displayName}</span>
+            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">{displayName}</span>
+            <button
+              onClick={handleLogout}
+              className="md:hidden flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1.5 rounded-lg hover:bg-destructive/5"
+            >
+              <LogOut size={16} />
+            </button>
           </div>
         </header>
 

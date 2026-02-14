@@ -125,6 +125,28 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const discountAmount = subtotal * (discount / 100);
   const total = subtotal - discountAmount;
 
+  // Convert logo to base64 for print window
+  const getLogoBase64 = useCallback((): Promise<string> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL("image/png"));
+        } else {
+          resolve("");
+        }
+      };
+      img.onerror = () => resolve("");
+      img.src = logo;
+    });
+  }, []);
+
   const handleSave = async () => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
     if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
@@ -145,9 +167,10 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
     }
   };
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
     if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
+    const logoBase64 = await getLogoBase64();
     const printWindow = window.open("", "_blank");
     if (!printWindow) { toast.error("Разрешите всплывающие окна"); return; }
     printWindow.document.write(`
@@ -156,6 +179,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         body { font-family: Arial, sans-serif; padding: 40px; color: #1a1a1a; max-width: 800px; margin: 0 auto; }
         h1 { font-size: 20px; margin-bottom: 4px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
+        .header-logo { height: 48px; object-fit: contain; }
         .meta { font-size: 12px; color: #666; text-align: right; }
         .client { margin-bottom: 20px; }
         .client p { margin: 2px 0; font-size: 14px; }
@@ -170,7 +194,10 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       </style></head><body>
       <button class="print-btn" onclick="window.print()">📄 Скачать / Печать</button>
       <div class="header">
-        <div><h1>PrimeDoor Service</h1><p style="font-size:12px;color:#666;">Смета</p></div>
+        <div>
+          ${logoBase64 ? `<img src="${logoBase64}" alt="PrimeDoor" class="header-logo" />` : `<h1>PrimeDoor Service</h1>`}
+          <p style="font-size:12px;color:#666;margin-top:4px;">Смета</p>
+        </div>
         <div class="meta"><p>${new Date().toLocaleDateString("ru-RU")}</p></div>
       </div>
       <div class="client"><p><strong>${clientName}</strong></p>${clientAddress ? `<p>${clientAddress}</p>` : ""}</div>
