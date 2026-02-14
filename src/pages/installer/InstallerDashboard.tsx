@@ -198,6 +198,35 @@ const InstallerDashboard = () => {
                 <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
 
+              {/* Existing files from request */}
+              {(selected.photos || []).length > 0 && (
+                <div className="border border-border rounded-xl p-4">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Camera size={14} /> Прикреплённые файлы ({selected.photos.length})
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {selected.photos.map((file: any, i: number) => (
+                      <a
+                        key={i}
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all"
+                      >
+                        {file.type === "image" ? (
+                          <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
+                            <Upload size={20} className="text-muted-foreground" />
+                            <p className="text-[10px] text-muted-foreground mt-1 px-1 truncate w-full text-center">{file.url.split("/").pop()}</p>
+                          </div>
+                        )}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {!selected.agreed_date && (
                 <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
                   <div className="flex items-start gap-2">

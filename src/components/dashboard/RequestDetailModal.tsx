@@ -104,7 +104,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           </div>
 
           {/* Tabs */}
-          {(canEdit || viewerRole === "partner") && (
+          {(
             <div className="flex border-b border-border px-5">
               <button
                 onClick={() => setActiveTab("details")}
