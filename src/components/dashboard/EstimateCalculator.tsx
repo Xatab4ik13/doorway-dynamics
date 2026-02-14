@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import api from "@/lib/api";
 import type { UserRole } from "@/data/mockDashboard";
 import { motion } from "framer-motion";
+import AddressInput from "@/components/AddressInput";
 
 interface EstimateItem {
   id: string;
@@ -297,7 +298,13 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} className={inputClass} placeholder="ФИО или название объекта" />
-                <input type="text" value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} className={inputClass} placeholder="Адрес" />
+                <AddressInput
+                  value={clientAddress}
+                  onChange={setClientAddress}
+                  city={city === "moscow" ? "Москва" : "Санкт-Петербург"}
+                  placeholder="Адрес"
+                  className={inputClass}
+                />
               </CardContent>
             </Card>
 
