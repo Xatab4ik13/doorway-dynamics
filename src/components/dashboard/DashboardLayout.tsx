@@ -22,17 +22,17 @@ const navByRole: Record<UserRole, NavItem[]> = {
   admin: [
     { label: "Дашборд", href: "/admin", icon: <LayoutDashboard size={20} /> },
     { label: "Заявки", href: "/admin/requests", icon: <ClipboardList size={20} /> },
+    { label: "Календарь", href: "/admin/calendar", icon: <CalendarDays size={20} /> },
+    { label: "Сметы", href: "/admin/estimates", icon: <FileSpreadsheet size={20} /> },
     { label: "Аккаунты", href: "/admin/accounts", icon: <Users size={20} /> },
     { label: "Новости", href: "/admin/news", icon: <Newspaper size={20} /> },
-    { label: "Сметы", href: "/admin/estimates", icon: <FileSpreadsheet size={20} /> },
-    { label: "Календарь", href: "/admin/calendar", icon: <CalendarDays size={20} /> },
   ],
   manager: [
     { label: "Заявки", href: "/manager", icon: <ClipboardList size={20} /> },
+    { label: "Календарь", href: "/manager/calendar", icon: <CalendarDays size={20} /> },
     { label: "Распределение", href: "/manager/assign", icon: <Users size={20} /> },
     { label: "Файлы", href: "/manager/files", icon: <Upload size={20} /> },
     { label: "Сметы", href: "/manager/estimates", icon: <Calculator size={20} /> },
-    { label: "Календарь", href: "/manager/calendar", icon: <CalendarDays size={20} /> },
   ],
   measurer: [
     { label: "Мои заявки", href: "/measurer", icon: <Ruler size={20} /> },
