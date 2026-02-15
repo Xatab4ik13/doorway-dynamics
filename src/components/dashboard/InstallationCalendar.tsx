@@ -37,6 +37,15 @@ const InstallationCalendar = () => {
     }
   }, [updateRequest]);
 
+  const handleRestoreDateAgreed = useCallback(async (requestId: string) => {
+    try {
+      await updateRequest(requestId, { status: "date_agreed" } as any);
+      toast.success("Статус изменён на «Дата монтажа согласована»");
+    } catch {
+      // error handled in hook
+    }
+  }, [updateRequest]);
+
   const installationsByDate = useMemo(() => {
     const map: Record<string, typeof requests> = {};
     requests
