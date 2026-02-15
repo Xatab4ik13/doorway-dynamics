@@ -7,6 +7,7 @@ import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
 import Pagination from "@/components/dashboard/Pagination";
+import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
 import { useUsers, useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,7 +24,8 @@ const quickFilters = [
 const ManagerDashboard = () => {
   const { user } = useAuth();
   const { users, getUserName } = useUsers();
-  const [filters, setFilters] = useState<FilterState>(defaultFilters);
+  const [city, setCity] = useState<CityFilter>("Москва");
+  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
   const [quickFilter, setQuickFilter] = useState("all");
   const { requests, total, page, totalPages, limit, counts, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter });
   const { createRequest, updateRequest } = useRequests();
@@ -55,7 +57,10 @@ const ManagerDashboard = () => {
     <DashboardLayout role="manager" userName={user?.name || "Менеджер"}>
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl font-heading font-bold">Все заявки</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-heading font-bold">Все заявки</h1>
+            <CityToggle value={city} onChange={(c) => { setCity(c); setFilters(f => ({ ...f, city: c })); }} />
+          </div>
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25"

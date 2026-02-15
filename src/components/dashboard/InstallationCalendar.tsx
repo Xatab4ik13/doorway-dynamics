@@ -21,7 +21,11 @@ import { toast } from "sonner";
 
 const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled"];
 
-const InstallationCalendar = () => {
+interface InstallationCalendarProps {
+  cityFilter?: string;
+}
+
+const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { requests, loading, updateRequest } = useRequests();
@@ -50,13 +54,14 @@ const InstallationCalendar = () => {
     const map: Record<string, typeof requests> = {};
     requests
       .filter((r) => r.type === "installation" && r.agreed_date && ACTIVE_STATUSES.includes(r.status))
+      .filter((r) => !cityFilter || r.city === cityFilter)
       .forEach((r) => {
         const dateKey = r.agreed_date!.slice(0, 10);
         if (!map[dateKey]) map[dateKey] = [];
         map[dateKey].push(r);
       });
     return map;
-  }, [requests]);
+  }, [requests, cityFilter]);
 
   const selectedDateRequests = useMemo(() => {
     if (!selectedDate) return [];
