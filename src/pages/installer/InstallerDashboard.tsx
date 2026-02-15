@@ -73,6 +73,7 @@ const InstallerDashboard = () => {
       const updated = await updateRequest(selected.id, {
         agreed_date: agreedDate,
         status_comment: rescheduleComment.trim(),
+        status: "installation_rescheduled" as any,
       });
       setDateConfirmed(true);
       setRescheduleOpen(false);

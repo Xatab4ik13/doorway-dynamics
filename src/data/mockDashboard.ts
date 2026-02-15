@@ -6,6 +6,7 @@ export type RequestStatus =
   | "measurer_assigned"
   | "installer_assigned"
   | "date_agreed"
+  | "installation_rescheduled"
   | "measurement_done"
   | "closed"
   | "client_refused"
@@ -29,6 +30,7 @@ export const statusLabels: Record<RequestStatus, string> = {
   measurer_assigned: "Замерщик назначен",
   installer_assigned: "Монтажник назначен",
   date_agreed: "Дата согласована",
+  installation_rescheduled: "Монтаж перенесён",
   measurement_done: "Замер выполнен",
   closed: "Закрыта",
   client_refused: "Отказ клиента",
@@ -41,6 +43,7 @@ export const statusColors: Record<RequestStatus, string> = {
   measurer_assigned: "bg-amber-100 text-amber-700",
   installer_assigned: "bg-orange-100 text-orange-700",
   date_agreed: "bg-cyan-100 text-cyan-700",
+  installation_rescheduled: "bg-rose-100 text-rose-700",
   measurement_done: "bg-purple-100 text-purple-700",
   closed: "bg-emerald-100 text-emerald-700",
   client_refused: "bg-red-100 text-red-600",
@@ -50,7 +53,7 @@ export const statusColors: Record<RequestStatus, string> = {
 // Valid status flows per request type
 export const statusFlows: Record<RequestType, RequestStatus[]> = {
   measurement: ["new", "pending", "measurer_assigned", "date_agreed", "measurement_done", "closed"],
-  installation: ["new", "pending", "installer_assigned", "date_agreed", "closed"],
+  installation: ["new", "pending", "installer_assigned", "date_agreed", "installation_rescheduled", "closed"],
   reclamation: ["new", "pending", "date_agreed", "closed"],
 };
 
