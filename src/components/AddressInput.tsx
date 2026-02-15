@@ -48,7 +48,14 @@ const AddressInput = ({
         if (city) {
           body.from_bound = { value: "street" };
           body.to_bound = { value: "house" };
-          body.locations = [{ city }];
+          const regionMap: Record<string, string> = {
+            "Москва": "Московская",
+            "Санкт-Петербург": "Ленинградская",
+          };
+          body.locations = [
+            { city },
+            ...(regionMap[city] ? [{ region: regionMap[city] }] : []),
+          ];
         }
 
         const res = await fetch(DADATA_URL, {
