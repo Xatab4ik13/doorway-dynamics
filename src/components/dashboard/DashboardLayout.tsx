@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ClipboardList, Users, Newspaper, FileSpreadsheet,
   Ruler, Wrench, Briefcase, LogOut, Menu, X, ChevronLeft,
-  History, Upload, PlusCircle, Eye, Calculator, Bell,
+  History, Upload, PlusCircle, Eye, Calculator, Bell, CalendarDays,
 } from "lucide-react";
 
 import type { UserRole } from "@/data/mockDashboard";
@@ -25,12 +25,14 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Аккаунты", href: "/admin/accounts", icon: <Users size={20} /> },
     { label: "Новости", href: "/admin/news", icon: <Newspaper size={20} /> },
     { label: "Сметы", href: "/admin/estimates", icon: <FileSpreadsheet size={20} /> },
+    { label: "Календарь", href: "/admin/calendar", icon: <CalendarDays size={20} /> },
   ],
   manager: [
     { label: "Заявки", href: "/manager", icon: <ClipboardList size={20} /> },
     { label: "Распределение", href: "/manager/assign", icon: <Users size={20} /> },
     { label: "Файлы", href: "/manager/files", icon: <Upload size={20} /> },
     { label: "Сметы", href: "/manager/estimates", icon: <Calculator size={20} /> },
+    { label: "Календарь", href: "/manager/calendar", icon: <CalendarDays size={20} /> },
   ],
   measurer: [
     { label: "Мои заявки", href: "/measurer", icon: <Ruler size={20} /> },

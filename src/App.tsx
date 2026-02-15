@@ -32,10 +32,12 @@ const AdminRequests = lazy(() => import("./pages/admin/AdminRequests"));
 const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
 const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
 const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
+const AdminCalendar = lazy(() => import("./pages/admin/AdminCalendar"));
 const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
 const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
 const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
 const ManagerEstimates = lazy(() => import("./pages/manager/ManagerEstimates"));
+const ManagerCalendar = lazy(() => import("./pages/manager/ManagerCalendar"));
 const MeasurerDashboard = lazy(() => import("./pages/measurer/MeasurerDashboard"));
 const MeasurerHistory = lazy(() => import("./pages/measurer/MeasurerHistory"));
 const MeasurerEstimates = lazy(() => import("./pages/measurer/MeasurerEstimates"));
@@ -110,11 +112,13 @@ const AppRoutes = () => (
         <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAccounts /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminNews /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Manager */}
         <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAssign /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerFiles /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Measurer */}
         <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
