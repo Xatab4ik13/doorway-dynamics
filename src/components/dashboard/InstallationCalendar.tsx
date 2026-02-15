@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRequests, useUsers } from "@/hooks/useRequests";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus } from "lucide-react";
 import {
   format,
   startOfMonth,
@@ -16,14 +17,25 @@ import {
   isToday,
 } from "date-fns";
 import { ru } from "date-fns/locale";
+import { toast } from "sonner";
 
-const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled"];
+const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled", "installer_assigned"];
 
 const InstallationCalendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const { requests, loading } = useRequests();
-  const { getUserName } = useUsers();
+  const { requests, loading, updateRequest } = useRequests();
+  const { getUserName, getByRole } = useUsers();
+  const installers = useMemo(() => getByRole("installer"), [getByRole]);
+
+  const handleAssignInstaller = useCallback(async (requestId: string, installerId: string) => {
+    try {
+      await updateRequest(requestId, { installer_id: installerId });
+      toast.success("Монтажник назначен");
+    } catch {
+      // error handled in hook
+    }
+  }, [updateRequest]);
 
   const installationsByDate = useMemo(() => {
     const map: Record<string, typeof requests> = {};
@@ -118,7 +130,7 @@ const InstallationCalendar = () => {
                     <span
                       className={`inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full text-xs md:text-sm font-medium ${
                         today
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-destructive text-destructive-foreground"
                           : !inMonth
                           ? "text-muted-foreground/50"
                           : "text-foreground"
@@ -209,12 +221,25 @@ const InstallationCalendar = () => {
                     </div>
                   )}
 
-                  {r.installer_id && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1 border-t border-border/30">
-                      <Wrench size={12} />
-                      <span>{getUserName(r.installer_id) || "Назначен"}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 text-xs pt-1 border-t border-border/30">
+                    <UserPlus size={12} className="text-muted-foreground shrink-0" />
+                    {r.installer_id ? (
+                      <span className="text-muted-foreground">{getUserName(r.installer_id) || "Назначен"}</span>
+                    ) : null}
+                    <Select
+                      value={r.installer_id || ""}
+                      onValueChange={(val) => handleAssignInstaller(r.id, val)}
+                    >
+                      <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+                        <SelectValue placeholder={r.installer_id ? "Сменить" : "Назначить монтажника"} />
+                      </SelectTrigger>
+                      <SelectContent className="dashboard-theme">
+                        {installers.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
                   {r.status_comment && (
                     <div className="text-xs bg-amber-50 text-amber-700 rounded-lg px-2 py-1.5">
