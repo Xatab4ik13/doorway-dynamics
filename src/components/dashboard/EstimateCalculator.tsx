@@ -16,6 +16,8 @@ interface EstimateItem {
   quantity: number;
   unit: string;
   price: number;
+  isPercent?: boolean;
+  percentValue?: number;
 }
 
 interface EstimateCalculatorProps {
@@ -25,6 +27,12 @@ interface EstimateCalculatorProps {
 
 const hasVariants = (priceStr: string): boolean => priceStr.includes("/") && !priceStr.startsWith("+");
 const parseVariants = (priceStr: string): string[] => priceStr.split("/").map((s) => s.trim());
+const isPercentPrice = (priceStr: string): boolean => /^\+?\d+\s*%/.test(priceStr.trim());
+const parsePercent = (priceStr: string): number => {
+  const match = priceStr.match(/(\d+)\s*%/);
+  return match ? parseInt(match[1], 10) : 0;
+};
+const hasPercentVariants = (priceStr: string): boolean => priceStr.includes("/") && isPercentPrice(priceStr.split("/")[0]);
 
 const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [clientName, setClientName] = useState("");
@@ -65,16 +73,42 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   // Add or increment quantity on double-click
   const addFromPrice = (item: PriceItem) => {
     const priceStr = item[city];
-    const isReclamation = activeCategory === "reclamation";
     
-    if (!isReclamation && hasVariants(priceStr)) {
+    // Handle percent variants like "+30% / +50%"
+    if (hasPercentVariants(priceStr)) {
+      const variants = parseVariants(priceStr);
+      setVariantModal({ item, variants });
+      return;
+    }
+
+    // Handle single percent like "+30%"
+    if (isPercentPrice(priceStr)) {
+      const pct = parsePercent(priceStr);
+      const name = `${item.name} (+${pct}%)`;
+      const existing = items.find(i => i.name === name && i.isPercent);
+      if (existing) {
+        setItems(prev => prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i));
+        return;
+      }
+      setItems(prev => [...prev, {
+        id: String(Date.now()) + Math.random(),
+        name,
+        quantity: 1,
+        unit: item.unit,
+        price: 0,
+        isPercent: true,
+        percentValue: pct,
+      }]);
+      return;
+    }
+
+    if (hasVariants(priceStr)) {
       setVariantModal({ item, variants: parseVariants(priceStr) });
       return;
     }
 
-    const priceValue = isReclamation ? 0 : parsePrice(priceStr);
+    const priceValue = parsePrice(priceStr);
     
-    // Check if item already exists — increment quantity
     const existing = items.find(i => i.name === item.name && i.price === priceValue);
     if (existing) {
       setItems(prev => prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i));
@@ -91,6 +125,29 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   };
 
   const addWithVariant = (item: PriceItem, variant: string) => {
+    // Handle percent variant
+    if (isPercentPrice(variant)) {
+      const pct = parsePercent(variant);
+      const name = `${item.name} (+${pct}%)`;
+      const existing = items.find(i => i.name === name && i.isPercent);
+      if (existing) {
+        setItems(prev => prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i));
+        setVariantModal(null);
+        return;
+      }
+      setItems(prev => [...prev, {
+        id: String(Date.now()) + Math.random(),
+        name,
+        quantity: 1,
+        unit: item.unit,
+        price: 0,
+        isPercent: true,
+        percentValue: pct,
+      }]);
+      setVariantModal(null);
+      return;
+    }
+
     const priceValue = parsePrice(variant);
     const name = `${item.name} (${variant.trim()}${priceValue > 0 ? " ₽" : ""})`;
     
@@ -122,9 +179,13 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
 
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const discountAmount = subtotal * (discount / 100);
-  const total = subtotal - discountAmount;
+  const regularItems = items.filter(i => !i.isPercent);
+  const percentItems = items.filter(i => i.isPercent);
+  const subtotal = regularItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const percentSurcharge = percentItems.reduce((sum, i) => sum + subtotal * ((i.percentValue || 0) / 100) * i.quantity, 0);
+  const subtotalWithSurcharge = subtotal + percentSurcharge;
+  const discountAmount = subtotalWithSurcharge * (discount / 100);
+  const total = subtotalWithSurcharge - discountAmount;
 
   // Convert logo to base64 for print window
   const getLogoBase64 = useCallback((): Promise<string> => {
@@ -205,7 +266,8 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       <table>
         <thead><tr><th>№</th><th>Позиция</th><th>Кол.</th><th>Ед.</th><th>Цена</th><th style="text-align:right">Сумма</th></tr></thead>
         <tbody>
-          ${items.map((it, idx) => `<tr><td>${idx + 1}</td><td>${it.name || "—"}</td><td>${it.quantity}</td><td>${it.unit}</td><td>${it.price.toLocaleString("ru")} ₽</td><td style="text-align:right">${(it.price * it.quantity).toLocaleString("ru")} ₽</td></tr>`).join("")}
+          ${items.filter(i => !i.isPercent).map((it, idx) => `<tr><td>${idx + 1}</td><td>${it.name || "—"}</td><td>${it.quantity}</td><td>${it.unit}</td><td>${it.price.toLocaleString("ru")} ₽</td><td style="text-align:right">${(it.price * it.quantity).toLocaleString("ru")} ₽</td></tr>`).join("")}
+          ${percentSurcharge > 0 ? `<tr><td colspan="5">Надбавка (${percentItems.map(i => "+" + i.percentValue + "%").join(", ")})</td><td style="text-align:right">+${percentSurcharge.toLocaleString("ru")} ₽</td></tr>` : ""}
           ${discount > 0 ? `<tr><td colspan="5">Скидка ${discount}%</td><td style="text-align:right">−${discountAmount.toLocaleString("ru")} ₽</td></tr>` : ""}
           <tr class="total-row"><td colspan="5">Итого</td><td style="text-align:right">${total.toLocaleString("ru")} ₽</td></tr>
         </tbody>
@@ -264,7 +326,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
 
               <div className="flex gap-1.5 flex-wrap">
                 {Object.entries(serviceTypeLabels)
-                  .filter(([key]) => !(city === "spb" && key === "entrance"))
+                  .filter(([key]) => key !== "reclamation" && !(city === "spb" && key === "entrance"))
                   .map(([key, label]) => (
                   <button
                     key={key}
@@ -284,18 +346,13 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                   className="w-full pl-8 pr-3 py-2.5 rounded-xl border border-border bg-background text-xs focus:outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
 
-              {activeCategory === "reclamation" && (
-                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
-                  <p className="text-xs text-emerald-700 font-medium">Рекламация — бесплатная услуга</p>
-                </div>
-              )}
 
               <div className="max-h-[70vh] overflow-auto space-y-1">
                 {filteredPriceList.map((item, i) => {
                   const price = item[city];
-                  const isReclamation = activeCategory === "reclamation";
-                  const showPrice = isReclamation ? "Бесплатно" : price;
-                  const existingItem = items.find(it => it.name === item.name);
+                  const isPct = isPercentPrice(price) || hasPercentVariants(price);
+                  const showPrice = price;
+                  const existingItem = items.find(it => it.name === item.name || it.name.startsWith(item.name));
                   return (
                     <motion.button
                       key={i}
@@ -315,9 +372,9 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                       </div>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-[10px] text-muted-foreground">{item.unit}</span>
-                        <span className={`text-xs font-medium ${isReclamation ? "text-emerald-600" : "text-primary"}`}>
-                          {showPrice}{!isReclamation && parsePrice(price) > 0 && !price.startsWith("+") ? " ₽" : ""}
-                          {hasVariants(price) && !isReclamation && <span className="ml-1 text-[10px] text-muted-foreground">▾</span>}
+                        <span className={`text-xs font-medium text-primary`}>
+                          {showPrice}{!isPct && parsePrice(price) > 0 && !price.startsWith("+") ? " ₽" : ""}
+                          {hasVariants(price) && <span className="ml-1 text-[10px] text-muted-foreground">▾</span>}
                         </span>
                       </div>
                     </motion.button>
@@ -375,11 +432,14 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                         <div className="flex items-start justify-between gap-3">
                           <input type="text" value={item.name} onChange={(e) => updateItem(item.id, "name", e.target.value)}
                             placeholder="Название" className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-1 focus:ring-primary/30" />
-                          <span className="text-sm font-semibold text-primary whitespace-nowrap pt-2">{(item.price * item.quantity).toLocaleString("ru")} ₽</span>
+                          <span className="text-sm font-semibold text-primary whitespace-nowrap pt-2">
+                            {item.isPercent ? `+${item.percentValue}%` : `${(item.price * item.quantity).toLocaleString("ru")} ₽`}
+                          </span>
                           <button onClick={() => removeItem(item.id)} className="text-muted-foreground hover:text-destructive transition-colors p-2 rounded-lg hover:bg-destructive/10 shrink-0">
                             <Trash2 size={18} />
                           </button>
                         </div>
+                        {!item.isPercent && (
                         <div className="flex items-center gap-3">
                           <input type="number" min={1} value={item.quantity} onChange={(e) => updateItem(item.id, "quantity", Number(e.target.value))}
                             className="w-16 px-3 py-2 rounded-lg border border-border bg-background text-sm text-center focus:outline-none" />
@@ -389,6 +449,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                             className="w-24 px-3 py-2 rounded-lg border border-border bg-background text-sm text-center focus:outline-none" />
                           <span className="text-xs text-muted-foreground">₽</span>
                         </div>
+                        )}
                       </motion.div>
                     ))}
                   </div>
@@ -400,6 +461,12 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
                       <span className="text-muted-foreground">Подитог</span>
                       <span>{subtotal.toLocaleString("ru")} ₽</span>
                     </div>
+                    {percentSurcharge > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Надбавка ({percentItems.map(i => `+${i.percentValue}%`).join(", ")})</span>
+                        <span>+{percentSurcharge.toLocaleString("ru")} ₽</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <span className="text-muted-foreground">Скидка</span>
