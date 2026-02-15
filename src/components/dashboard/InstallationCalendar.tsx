@@ -146,28 +146,28 @@ const InstallationCalendar = () => {
 
       {/* Dark modal */}
       <Dialog open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-[#1a1a1a] border-[#333] text-white [&>button]:text-white">
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-white">
+            <DialogTitle className="flex items-center gap-2">
               <Wrench size={18} className="text-primary" />
               Монтажи на {selectedDate && format(selectedDate, "d MMMM yyyy", { locale: ru })}
             </DialogTitle>
           </DialogHeader>
 
           {selectedDateRequests.length === 0 ? (
-            <p className="text-sm text-gray-400 py-6 text-center">Нет запланированных монтажей на этот день</p>
+            <p className="text-sm text-muted-foreground py-6 text-center">Нет запланированных монтажей на этот день</p>
           ) : (
             <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
               {selectedDateRequests.map((r) => (
                 <div
                   key={r.id}
-                  className="border border-[#333] rounded-xl p-3 space-y-2 bg-[#222] hover:bg-[#2a2a2a] transition-colors"
+                  className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono text-gray-400">{r.number}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{r.number}</span>
                     <span
                       className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                        statusColors[r.status as RequestStatus] || "bg-gray-700 text-gray-300"
+                        statusColors[r.status as RequestStatus] || "bg-muted text-muted-foreground"
                       }`}
                     >
                       {statusLabels[r.status as RequestStatus] || r.status}
@@ -176,48 +176,48 @@ const InstallationCalendar = () => {
 
                   <div className="space-y-1.5">
                     <div className="flex items-center gap-2 text-sm">
-                      <User size={14} className="text-gray-400 shrink-0" />
-                      <span className="font-medium">{r.client_name}</span>
+                      <User size={14} className="text-muted-foreground shrink-0" />
+                      <span className="font-medium text-foreground">{r.client_name}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Phone size={14} className="shrink-0" />
                       <a href={`tel:${r.client_phone}`} className="hover:text-primary">{r.client_phone}</a>
                     </div>
                     {r.extra_name && (
-                      <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <User size={14} className="shrink-0" />
                         <span>{r.extra_name}{r.extra_phone ? ` · ${r.extra_phone}` : ""}</span>
                       </div>
                     )}
-                    <div className="flex items-start gap-2 text-sm text-gray-300">
+                    <div className="flex items-start gap-2 text-sm text-muted-foreground">
                       <MapPin size={14} className="shrink-0 mt-0.5" />
                       <span>{r.client_address}{r.city ? `, ${r.city}` : ""}</span>
                     </div>
                   </div>
 
                   {r.work_description && (
-                    <div className="flex items-start gap-2 text-xs text-gray-300 pt-1 border-t border-[#333]">
+                    <div className="flex items-start gap-2 text-xs text-muted-foreground pt-1 border-t border-border/30">
                       <FileText size={12} className="shrink-0 mt-0.5" />
                       <span>{r.work_description}</span>
                     </div>
                   )}
 
                   {r.notes && (
-                    <div className="flex items-start gap-2 text-xs text-gray-400 pt-1 border-t border-[#333]">
+                    <div className="flex items-start gap-2 text-xs text-muted-foreground pt-1 border-t border-border/30">
                       <MessageSquare size={12} className="shrink-0 mt-0.5" />
                       <span>{r.notes}</span>
                     </div>
                   )}
 
                   {r.installer_id && (
-                    <div className="flex items-center gap-2 text-xs text-gray-400 pt-1 border-t border-[#333]">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1 border-t border-border/30">
                       <Wrench size={12} />
                       <span>{getUserName(r.installer_id) || "Назначен"}</span>
                     </div>
                   )}
 
                   {r.status_comment && (
-                    <div className="text-xs bg-amber-900/30 text-amber-300 rounded-lg px-2 py-1.5">
+                    <div className="text-xs bg-amber-50 text-amber-700 rounded-lg px-2 py-1.5">
                       💬 {r.status_comment}
                     </div>
                   )}
