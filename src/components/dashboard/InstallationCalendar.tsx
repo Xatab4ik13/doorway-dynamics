@@ -3,7 +3,7 @@ import { useRequests, useUsers } from "@/hooks/useRequests";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus, Check, Loader2 } from "lucide-react";
 import {
   format,
   startOfMonth,
@@ -20,6 +20,59 @@ import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 
 const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled"];
+
+// Sub-component for installer assignment with confirm button
+import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
+
+const CalendarInstallerAssign = ({ request, installers, getUserName, onAssign }: {
+  request: ApiRequest;
+  installers: ApiUser[];
+  getUserName: (id?: string) => string | undefined;
+  onAssign: (requestId: string, installerId: string) => Promise<void>;
+}) => {
+  const [selectedId, setSelectedId] = useState(request.installer_id || "");
+  const [saving, setSaving] = useState(false);
+  const hasChanged = selectedId !== (request.installer_id || "");
+
+  const handleConfirm = async () => {
+    if (!selectedId || !hasChanged) return;
+    setSaving(true);
+    try {
+      await onAssign(request.id, selectedId);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 text-xs pt-1 border-t border-border/30">
+      <UserPlus size={12} className="text-muted-foreground shrink-0" />
+      {request.installer_id && !hasChanged ? (
+        <span className="text-muted-foreground">{getUserName(request.installer_id) || "Назначен"}</span>
+      ) : null}
+      <Select value={selectedId} onValueChange={setSelectedId}>
+        <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
+          <SelectValue placeholder={request.installer_id ? "Сменить" : "Назначить монтажника"} />
+        </SelectTrigger>
+        <SelectContent className="dashboard-theme">
+          {installers.map((u) => (
+            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {hasChanged && (
+        <button
+          onClick={handleConfirm}
+          disabled={saving}
+          className="shrink-0 h-7 px-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1"
+        >
+          {saving ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+          OK
+        </button>
+      )}
+    </div>
+  );
+};
 
 interface InstallationCalendarProps {
   cityFilter?: string;
@@ -235,25 +288,12 @@ const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-xs pt-1 border-t border-border/30">
-                    <UserPlus size={12} className="text-muted-foreground shrink-0" />
-                    {r.installer_id ? (
-                      <span className="text-muted-foreground">{getUserName(r.installer_id) || "Назначен"}</span>
-                    ) : null}
-                    <Select
-                      value={r.installer_id || ""}
-                      onValueChange={(val) => handleAssignInstaller(r.id, val)}
-                    >
-                      <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
-                        <SelectValue placeholder={r.installer_id ? "Сменить" : "Назначить монтажника"} />
-                      </SelectTrigger>
-                      <SelectContent className="dashboard-theme">
-                        {installers.map((u) => (
-                          <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <CalendarInstallerAssign
+                    request={r}
+                    installers={installers}
+                    getUserName={getUserName}
+                    onAssign={handleAssignInstaller}
+                  />
 
                   {r.status_comment && (
                     <div className="text-xs bg-amber-50 text-amber-700 rounded-lg px-2 py-1.5">
