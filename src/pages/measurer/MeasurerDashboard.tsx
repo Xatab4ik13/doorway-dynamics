@@ -13,10 +13,8 @@ const MeasurerDashboard = () => {
   const { requests, loading, updateRequest } = useRequests();
   const [selected, setSelected] = useState<ApiRequest | null>(null);
 
-  const [roomCount, setRoomCount] = useState("");
-  const [doorSizes, setDoorSizes] = useState("");
-  const [wallMaterial, setWallMaterial] = useState("");
-  const [notes, setNotes] = useState("");
+  const [measurementNotes, setMeasurementNotes] = useState("");
+  
   const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
   const [agreedDate, setAgreedDate] = useState("");
   const [dateConfirmed, setDateConfirmed] = useState(false);
@@ -26,10 +24,8 @@ const MeasurerDashboard = () => {
 
   const handleSelectRequest = (r: ApiRequest) => {
     setSelected(r);
-    setRoomCount("");
-    setDoorSizes("");
-    setWallMaterial("");
-    setNotes(r.notes || "");
+    setMeasurementNotes("");
+    setMeasurementNotes(r.notes || "");
     setUploadedFiles([]);
     setAgreedDate(r.agreed_date?.split("T")[0] || "");
     setDateConfirmed(!!r.agreed_date);
@@ -63,7 +59,7 @@ const MeasurerDashboard = () => {
     } catch {}
   };
 
-  const canComplete = dateConfirmed && roomCount.trim() && doorSizes.trim() && wallMaterial.trim() && uploadedFiles.length > 0;
+  const canComplete = dateConfirmed && measurementNotes.trim() && uploadedFiles.length > 0;
 
   const handleComplete = async () => {
     if (!selected || !canComplete) return;
@@ -72,7 +68,7 @@ const MeasurerDashboard = () => {
       const existingPhotos = selected.photos || [];
       await updateRequest(selected.id, {
         status: "measurement_done" as any,
-        notes: `Проёмов: ${roomCount}, Размеры: ${doorSizes}, Стены: ${wallMaterial}. ${notes}`,
+        notes: measurementNotes,
         photos: [...existingPhotos, ...newPhotos] as any,
       });
       setSelected(null);
@@ -207,34 +203,15 @@ const MeasurerDashboard = () => {
 
                   <div className="border-t border-border pt-4">
                     <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText size={16} /> Данные замера</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Количество проёмов <span className="text-destructive">*</span></label>
-                        <input type="number" value={roomCount} onChange={(e) => setRoomCount(e.target.value)} placeholder="3"
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Размеры проёмов <span className="text-destructive">*</span></label>
-                        <input type="text" value={doorSizes} onChange={(e) => setDoorSizes(e.target.value)} placeholder="800x2000, 900x2100..."
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Материал стен <span className="text-destructive">*</span></label>
-                        <select value={wallMaterial} onChange={(e) => setWallMaterial(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                          <option value="">Выберите</option>
-                          <option value="brick">Кирпич</option>
-                          <option value="concrete">Бетон</option>
-                          <option value="gas_block">Газоблок</option>
-                          <option value="wood">Дерево</option>
-                          <option value="drywall">Гипсокартон</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Примечания</label>
-                        <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Особенности объекта..."
-                          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                      </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Заметки по замеру <span className="text-destructive">*</span></label>
+                      <textarea
+                        value={measurementNotes}
+                        onChange={(e) => setMeasurementNotes(e.target.value)}
+                        rows={5}
+                        placeholder="Опишите результаты замера: количество проёмов, размеры, материал стен, особенности объекта..."
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                      />
                     </div>
                   </div>
 
