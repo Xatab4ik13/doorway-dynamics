@@ -484,9 +484,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
                 </button>
               )}
-              <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
-                Отмена
-              </button>
+              {viewerRole !== "partner" && (
+                <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
+                  Отмена
+                </button>
+              )}
               {(canEdit || canChangeDateInstaller) && (
                 <button
                   onClick={handleSave}
