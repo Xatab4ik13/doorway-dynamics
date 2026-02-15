@@ -133,6 +133,58 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "details" && (
             <div className="p-5 space-y-5">
+              {/* Progress tracker for partner */}
+              {viewerRole === "partner" && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Прогресс заявки</p>
+                  <div className="flex items-center gap-1">
+                    {(statusFlows[request.type as RequestType] || []).map((step, i, arr) => {
+                      const flow = statusFlows[request.type as RequestType] || [];
+                      const currentIdx = flow.indexOf(request.status as RequestStatus);
+                      const stepIdx = i;
+                      const isCompleted = stepIdx < currentIdx || request.status === "closed";
+                      const isCurrent = stepIdx === currentIdx && request.status !== "closed";
+                      const isCancelled = request.status === "cancelled" || request.status === "client_refused";
+
+                      return (
+                        <div key={step} className="flex items-center flex-1">
+                          <div className="flex flex-col items-center flex-1">
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                                isCancelled
+                                  ? "bg-destructive/10 text-destructive"
+                                  : isCompleted
+                                  ? "bg-emerald-500 text-white"
+                                  : isCurrent
+                                  ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
+                                  : "bg-accent text-muted-foreground"
+                              }`}
+                            >
+                              {isCompleted ? "✓" : stepIdx + 1}
+                            </div>
+                            <p className={`text-[9px] mt-1 text-center leading-tight max-w-[70px] ${
+                              isCurrent ? "text-primary font-medium" : isCompleted ? "text-emerald-600" : "text-muted-foreground"
+                            }`}>
+                              {getStatusLabel(step, request.type as RequestType)}
+                            </p>
+                          </div>
+                          {i < arr.length - 1 && (
+                            <div className={`h-0.5 flex-1 mx-0.5 mt-[-16px] ${
+                              isCompleted ? "bg-emerald-400" : "bg-border"
+                            }`} />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {(request.status === "cancelled" || request.status === "client_refused") && (
+                    <p className="text-xs text-destructive font-medium text-center mt-1">
+                      {statusLabels[request.status as RequestStatus]}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Info grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
