@@ -198,6 +198,22 @@ const InstallerDashboard = () => {
                 <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
               </div>
 
+              {/* Notes from admin/manager */}
+              {selected.notes && (
+                <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
+                  <p className="text-sm leading-relaxed">{selected.notes}</p>
+                </div>
+              )}
+
+              {/* Work description */}
+              {selected.work_description && (
+                <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
+                  <p className="text-sm leading-relaxed">{selected.work_description}</p>
+                </div>
+              )}
+
               {/* Existing files from request */}
               <div className="border border-border rounded-xl p-4">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
