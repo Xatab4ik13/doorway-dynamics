@@ -35,6 +35,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
     if (filters.search) params.set("search", filters.search);
     if (filters.status !== "all") params.set("status", filters.status);
     if (filters.type !== "all") params.set("type", filters.type);
+    if (filters.city && filters.city !== "all") params.set("city", filters.city);
     if (filters.measurerId !== "all") params.set("measurer_id", filters.measurerId);
     if (filters.installerId !== "all") params.set("installer_id", filters.installerId);
     if (filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
@@ -70,6 +71,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         }
         if (filters.status !== "all") filtered = filtered.filter(r => r.status === filters.status);
         if (filters.type !== "all") filtered = filtered.filter(r => r.type === filters.type);
+        if (filters.city && filters.city !== "all") filtered = filtered.filter(r => (r.city || "") === filters.city);
         if (filters.measurerId !== "all") filtered = filtered.filter(r => r.measurer_id === filters.measurerId);
         if (filters.installerId !== "all") filtered = filtered.filter(r => r.installer_id === filters.installerId);
         if (filters.partnerId !== "all") filtered = filtered.filter(r => r.partner_id === filters.partnerId);
