@@ -25,12 +25,12 @@ const ManagerAssign = () => {
     const executor = [...measurers, ...installers].find(u => u.id === selectedExecutorId);
     if (!executor) return;
 
-    const updates: Partial<ApiRequest> = {
-      status: (executor.role === "measurer" ? "measurer_assigned" : "installer_assigned") as any,
-    };
+    const updates: Partial<ApiRequest> = {};
     if (executor.role === "measurer") {
+      (updates as any).status = "measurer_assigned";
       (updates as any).measurer_id = executor.id;
     } else {
+      // For installers, just assign without changing status
       (updates as any).installer_id = executor.id;
     }
 

@@ -19,7 +19,7 @@ import {
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 
-const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled", "installer_assigned"];
+const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled"];
 
 const InstallationCalendar = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
