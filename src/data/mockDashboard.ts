@@ -4,7 +4,6 @@ export type RequestStatus =
   | "new"
   | "pending"
   | "measurer_assigned"
-  | "installer_assigned"
   | "date_agreed"
   | "installation_rescheduled"
   | "measurement_done"
@@ -28,7 +27,6 @@ export const statusLabels: Record<RequestStatus, string> = {
   new: "Новая",
   pending: "В ожидании",
   measurer_assigned: "Замерщик назначен",
-  installer_assigned: "Монтажник назначен",
   date_agreed: "Дата согласована",
   installation_rescheduled: "Монтаж перенесён",
   measurement_done: "Замер выполнен",
@@ -41,7 +39,6 @@ export const statusColors: Record<RequestStatus, string> = {
   new: "bg-blue-100 text-blue-700",
   pending: "bg-yellow-100 text-yellow-700",
   measurer_assigned: "bg-amber-100 text-amber-700",
-  installer_assigned: "bg-orange-100 text-orange-700",
   date_agreed: "bg-cyan-100 text-cyan-700",
   installation_rescheduled: "bg-rose-100 text-rose-700",
   measurement_done: "bg-purple-100 text-purple-700",
@@ -53,7 +50,7 @@ export const statusColors: Record<RequestStatus, string> = {
 // Valid status flows per request type
 export const statusFlows: Record<RequestType, RequestStatus[]> = {
   measurement: ["new", "pending", "measurer_assigned", "date_agreed", "measurement_done", "closed"],
-  installation: ["new", "pending", "installer_assigned", "date_agreed", "installation_rescheduled", "closed"],
+  installation: ["new", "pending", "date_agreed", "installation_rescheduled", "closed"],
   reclamation: ["new", "pending", "date_agreed", "closed"],
 };
 
@@ -69,9 +66,11 @@ export const getNextStatuses = (currentStatus: RequestStatus, type: RequestType)
     options.push(flow[currentIndex + 1]);
   }
   
-  // Special: after measurement_done, can refuse
-  if (type === "measurement" && currentStatus === "measurement_done") {
-    // measurement_done is terminal for measurement type, but admin can close
+  // Special: admin/manager can revert installation_rescheduled → date_agreed
+  if (type === "installation" && currentStatus === "installation_rescheduled") {
+    if (!options.includes("date_agreed")) {
+      options.unshift("date_agreed");
+    }
   }
   
   // Can always cancel (except if already closed/cancelled/refused)
@@ -128,7 +127,7 @@ export const mockRequests: ServiceRequest[] = [
   { id: "REQ-003", type: "measurement", status: "date_agreed", clientName: "Лебедев Виктор Геннадьевич", clientPhone: "+7 900 999 00 11", address: "пр. Космонавтов, 55, кв. 17", city: "Санкт-Петербург", workDescription: "Замер входной и 2 межкомнатных дверей", date: "2026-02-12", assignedTo: "Морозов А.И.", assignedRole: "measurer", agreedDate: "2026-02-16", source: "site" },
   { id: "REQ-004", type: "measurement", status: "closed", clientName: "Кузнецов Павел Петрович", clientPhone: "+7 900 777 88 99", address: "ул. Лесная, 7, кв. 2", city: "Москва", workDescription: "Замер для 5 межкомнатных дверей в новостройке", date: "2026-01-28", assignedTo: "Сидоров К.В.", assignedRole: "measurer", source: "site" },
   { id: "REQ-005", type: "installation", status: "new", clientName: "Егорова Татьяна Леонидовна", clientPhone: "+7 900 000 11 22", address: "ул. Центральная, 1, кв. 99", city: "Москва", workDescription: "Монтаж 3 межкомнатных дверей", date: "2026-02-12", source: "partner", partnerName: "ООО РемонтПро" },
-  { id: "REQ-006", type: "installation", status: "installer_assigned", clientName: "Михайлова Елена Владимировна", clientPhone: "+7 900 444 55 66", address: "ул. Пушкина, 22, кв. 5", city: "Москва", workDescription: "Монтаж входной двери с электрозамком", date: "2026-02-07", assignedTo: "Бригада №3", assignedRole: "installer", agreedDate: "2026-02-15", source: "partner", partnerName: "ИП Строев" },
+  { id: "REQ-006", type: "installation", status: "date_agreed", clientName: "Михайлова Елена Владимировна", clientPhone: "+7 900 444 55 66", address: "ул. Пушкина, 22, кв. 5", city: "Москва", workDescription: "Монтаж входной двери с электрозамком", date: "2026-02-07", assignedTo: "Бригада №3", assignedRole: "installer", agreedDate: "2026-02-15", source: "partner", partnerName: "ИП Строев" },
   { id: "REQ-007", type: "installation", status: "closed", clientName: "Новиков Алексей Александрович", clientPhone: "+7 900 555 66 77", address: "пр. Победы, 10, кв. 33", city: "Москва", workDescription: "Монтаж 4 межкомнатных дверей", date: "2026-02-05", assignedTo: "Бригада №1", assignedRole: "installer", executorFiles: ["до_монтажа_1.jpg", "после_монтажа_1.jpg"], source: "site" },
   { id: "REQ-008", type: "reclamation", status: "new", clientName: "Волкова Марина Игоревна", clientPhone: "+7 900 666 77 88", address: "ул. Советская, 44, кв. 12", city: "Санкт-Петербург", workDescription: "Скрипит дверь после монтажа, не закрывается плотно", date: "2026-02-11", source: "site" },
   { id: "REQ-009", type: "reclamation", status: "date_agreed", clientName: "Козлов Дмитрий Михайлович", clientPhone: "+7 900 333 44 55", address: "ул. Гагарина, 3, кв. 101", city: "Санкт-Петербург", workDescription: "Замок заедает", date: "2026-02-08", agreedDate: "2026-02-18", source: "site" },
