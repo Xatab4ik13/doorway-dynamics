@@ -146,7 +146,7 @@ const InstallationCalendar = () => {
 
       {/* Dark modal */}
       <Dialog open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto bg-card border-border">
+        <DialogContent className="dashboard-theme max-w-lg max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Wrench size={18} className="text-primary" />
