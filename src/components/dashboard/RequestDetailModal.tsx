@@ -16,7 +16,8 @@ interface RequestDetailModalProps {
 }
 
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
-  const { getByRole } = useUsers();
+  const canEdit = viewerRole === "admin" || viewerRole === "manager";
+  const { getByRole } = useUsers(!canEdit);
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
   const [installerId, setInstallerId] = useState(request.installer_id || "");
@@ -33,7 +34,6 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
 
-  const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canChangeDateInstaller = viewerRole === "installer" && !!request.agreed_date;
   const canChangeDate = canEdit || canChangeDateInstaller;
 

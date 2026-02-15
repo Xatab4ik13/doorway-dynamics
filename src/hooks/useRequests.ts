@@ -118,16 +118,17 @@ export function useRequests() {
   return { requests, loading, fetchRequests, updateRequest, createRequest, deleteRequest, setRequests };
 }
 
-export function useUsers() {
+export function useUsers(skip = false) {
   const [users, setUsers] = useState<ApiUser[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!skip);
 
   useEffect(() => {
+    if (skip) return;
     api<ApiUser[]>("/api/users", { auth: true })
       .then(setUsers)
-      .catch((err) => toast.error(err.message || "Ошибка загрузки пользователей"))
+      .catch(() => {}) // silently fail for roles without access
       .finally(() => setLoading(false));
-  }, []);
+  }, [skip]);
 
   const getUserName = useCallback((id?: string) => {
     if (!id) return undefined;
