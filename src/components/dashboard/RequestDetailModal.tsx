@@ -59,7 +59,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
         if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
         if (showInstallerField && installerId) updates.installer_id = installerId;
       }
-      if (canChangeDate && agreedDate) updates.agreed_date = agreedDate;
+      // Only send agreed_date if it actually changed
+      const originalDate = request.agreed_date?.split("T")[0] || "";
+      if (canChangeDate && agreedDate && agreedDate !== originalDate) {
+        updates.agreed_date = agreedDate;
+      }
       await onSave(request.id, updates);
       toast.success("Заявка обновлена");
     } catch {
