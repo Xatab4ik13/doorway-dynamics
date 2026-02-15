@@ -169,6 +169,13 @@ const PartnerDashboard = () => {
                       </p>
                     </div>
 
+                    {selected.notes && (
+                      <div className="bg-accent/50 rounded-lg p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Заметки:</p>
+                        <p className="text-sm">{selected.notes}</p>
+                      </div>
+                    )}
+
                     {selected.work_description && (
                       <div className="bg-accent/50 rounded-lg p-3">
                         <p className="text-xs text-muted-foreground mb-1">Описание:</p>
