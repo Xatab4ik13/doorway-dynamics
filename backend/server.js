@@ -1,0 +1,715 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg');
+const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const multer = require('multer');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
+
+// === Telegram уведомления ===
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const SITE_URL = 'https://primedoor.ru';
+
+async function sendTelegram(telegramId, message) {
+  if (!telegramId || !TELEGRAM_BOT_TOKEN) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: telegramId, text: message, parse_mode: 'HTML' }),
+    });
+  } catch (err) {
+    console.error('Telegram notify error:', err.message);
+  }
+}
+
+// Уведомить всех менеджеров и админов
+async function notifyManagersAndAdmins(pool, message) {
+  try {
+    const { rows } = await pool.query(
+      "SELECT telegram_id FROM users WHERE role IN ('manager', 'admin') AND active = true AND telegram_id IS NOT NULL"
+    );
+    for (const row of rows) {
+      await sendTelegram(row.telegram_id, message);
+    }
+  } catch (err) {
+    console.error('Notify managers error:', err.message);
+  }
+}
+
+// Уведомить партнёра заявки
+async function notifyPartner(pool, partnerId, message) {
+  if (!partnerId) return;
+  try {
+    const { rows } = await pool.query(
+      'SELECT telegram_id FROM users WHERE id = $1 AND active = true AND telegram_id IS NOT NULL',
+      [partnerId]
+    );
+    if (rows[0]) await sendTelegram(rows[0].telegram_id, message);
+  } catch (err) {
+    console.error('Notify partner error:', err.message);
+  }
+}
+
+const statusLabels = {
+  new: 'Новая',
+  pending: 'В ожидании',
+  measurer_assigned: 'Замерщик назначен',
+  installer_assigned: 'Монтажник назначен',
+  date_agreed: 'Дата согласована',
+  installation_rescheduled: 'Монтаж перенесён',
+  measurement_done: 'Замер выполнен',
+  closed: 'Закрыта',
+  cancelled: 'Отменена',
+};
+
+const typeLabels = {
+  measurement: 'Замер',
+  installation: 'Монтаж',
+  reclamation: 'Рекламация',
+};
+
+// === Status flow validation ===
+const statusFlows = {
+  measurement: ['new', 'pending', 'measurer_assigned', 'date_agreed', 'measurement_done', 'closed', 'cancelled'],
+  installation: ['new', 'pending', 'date_agreed', 'installation_rescheduled', 'closed', 'cancelled'],
+  reclamation: ['new', 'pending', 'date_agreed', 'closed', 'cancelled'],
+};
+
+function isValidTransition(type, fromStatus, toStatus) {
+  const flow = statusFlows[type] || statusFlows.measurement;
+  if (toStatus === 'cancelled') return true;
+  const fromIdx = flow.indexOf(fromStatus);
+  const toIdx = flow.indexOf(toStatus);
+  if (fromIdx === -1 || toIdx === -1) return false;
+  if (fromStatus === 'installation_rescheduled' && toStatus === 'date_agreed') return true;
+  return toIdx >= fromIdx;
+}
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+app.use(cors({
+  origin: ['https://primedoor.ru', 'https://www.primedoor.ru', 'https://id-preview--f5673e60-b138-4f14-a569-af8be198fbe7.lovable.app'],
+  credentials: true,
+}));
+app.use(express.json());
+
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+
+const s3 = new S3Client({
+  endpoint: process.env.S3_ENDPOINT,
+  region: process.env.S3_REGION || 'ru-1',
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY,
+    secretAccessKey: process.env.S3_SECRET_KEY,
+  },
+  forcePathStyle: true,
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+});
+
+const auth = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'Нет токена' });
+  try {
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch {
+    res.status(401).json({ error: 'Невалидный токен' });
+  }
+};
+
+app.get('/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', db: 'connected', s3: process.env.S3_ENDPOINT });
+  } catch (err) {
+    res.status(500).json({ status: 'error', db: err.message });
+  }
+});
+
+// === Upload / Delete files ===
+app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Файл не передан' });
+    const ext = req.file.originalname.split('.').pop();
+    const folder = req.body.folder || 'uploads';
+    const key = folder + '/' + crypto.randomUUID() + '.' + ext;
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype,
+      ACL: 'public-read',
+    }));
+    const url = process.env.S3_ENDPOINT + '/' + process.env.S3_BUCKET + '/' + key;
+    res.json({ url, key });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
+app.delete('/api/files', auth, async (req, res) => {
+  try {
+    const key = req.query.key;
+    if (!key) return res.status(400).json({ error: 'Key не указан' });
+    await s3.send(new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }));
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ error: 'Ошибка удаления' });
+  }
+});
+
+// === Auth ===
+app.post('/api/auth/admin', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND role = 'admin' AND active = true",
+      [email]
+    );
+    if (rows.length === 0) return res.status(403).json({ error: 'Неверные данные' });
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password_hash);
+    if (!match) return res.status(403).json({ error: 'Неверный пароль' });
+    const token = jwt.sign(
+      { id: user.id, role: user.role, name: user.name },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
+  } catch (err) {
+    console.error('Admin auth error:', err);
+    res.status(500).json({ error: 'Ошибка авторизации' });
+  }
+});
+
+// Telegram auth sessions
+const telegramSessions = new Map();
+
+app.post('/api/auth/telegram/session', (req, res) => {
+  const code = crypto.randomUUID().slice(0, 8);
+  telegramSessions.set(code, { status: 'pending', createdAt: Date.now() });
+  setTimeout(() => telegramSessions.delete(code), 5 * 60 * 1000);
+  res.json({ code });
+});
+
+app.post('/api/auth/telegram/confirm', async (req, res) => {
+  const { code, telegramId } = req.body;
+  const session = telegramSessions.get(code);
+  if (!session) return res.status(404).json({ error: 'Сессия не найдена' });
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM users WHERE telegram_id = $1 AND active = true',
+      [telegramId]
+    );
+    if (rows.length === 0) return res.status(403).json({ error: 'Пользователь не найден' });
+    const user = rows[0];
+    const token = jwt.sign(
+      { id: user.id, role: user.role, name: user.name },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    telegramSessions.set(code, {
+      status: 'confirmed',
+      token,
+      user: { id: user.id, name: user.name, role: user.role },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Confirm error:', err);
+    res.status(500).json({ error: 'Ошибка' });
+  }
+});
+
+app.get('/api/auth/telegram/check/:code', (req, res) => {
+  const session = telegramSessions.get(req.params.code);
+  if (!session) return res.json({ status: 'expired' });
+  if (session.status === 'confirmed') {
+    telegramSessions.delete(req.params.code);
+    return res.json({ status: 'confirmed', token: session.token, user: session.user });
+  }
+  res.json({ status: 'pending' });
+});
+
+// === Users ===
+
+app.get('/api/users', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, name, role, telegram_id, phone, email, notes, active, created_at FROM users ORDER BY created_at DESC'
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Get users error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
+app.post('/api/users', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  const { name, role, telegramId, phone, email, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'INSERT INTO users (name, role, telegram_id, phone, email, notes, active) VALUES ($1, $2, $3, $4, $5, $6, true) RETURNING *',
+      [name, role, telegramId, phone || null, email || null, notes || null]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Create user error:', err);
+    res.status(500).json({ error: 'Ошибка создания' });
+  }
+});
+
+app.put('/api/users/:id', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    const { id } = req.params;
+    const { name, phone, email, notes } = req.body;
+    const { rows } = await pool.query(
+      'UPDATE users SET name = COALESCE($1, name), phone = $2, email = $3, notes = $4 WHERE id = $5 RETURNING *',
+      [name, phone || null, email || null, notes || null, id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Не найден' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update user error:', err);
+    res.status(500).json({ error: 'Ошибка обновления' });
+  }
+});
+
+app.delete('/api/users/:id', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    const check = await pool.query('SELECT role FROM users WHERE id = $1', [req.params.id]);
+    if (check.rows[0]?.role === 'admin') {
+      return res.status(403).json({ error: 'Нельзя удалить администратора' });
+    }
+    await pool.query('DELETE FROM users WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete user error:', err);
+    res.status(500).json({ error: 'Ошибка удаления' });
+  }
+});
+
+
+
+// === Requests ===
+
+app.get('/api/requests', auth, async (req, res) => {
+  try {
+    const {
+      page = 1, limit = 30,
+      search, status, type, city,
+      measurer_id, installer_id, partner_id,
+      date_from, date_to, quick
+    } = req.query;
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    const conds = [];
+    const params = [];
+    let idx = 1;
+
+    if (req.user.role === 'partner') {
+      conds.push(`partner_id = $${idx++}`); params.push(req.user.id);
+    } else if (req.user.role === 'measurer') {
+      conds.push(`measurer_id = $${idx++}`); params.push(req.user.id);
+    } else if (req.user.role === 'installer') {
+      conds.push(`installer_id = $${idx++}`); params.push(req.user.id);
+    }
+
+    const baseConds = [...conds];
+    const baseParams = [...params];
+
+    if (search) {
+      conds.push(`(client_name ILIKE $${idx} OR number ILIKE $${idx} OR client_address ILIKE $${idx} OR client_phone ILIKE $${idx} OR city ILIKE $${idx})`);
+      params.push(`%${search}%`); idx++;
+    }
+    if (status && status !== 'all') { conds.push(`status = $${idx++}`); params.push(status); }
+    if (type && type !== 'all') { conds.push(`type = $${idx++}`); params.push(type); }
+    if (measurer_id && measurer_id !== 'all') { conds.push(`measurer_id = $${idx++}`); params.push(measurer_id); }
+    if (installer_id && installer_id !== 'all') { conds.push(`installer_id = $${idx++}`); params.push(installer_id); }
+    if (city && city !== 'all') { conds.push(`city = $${idx++}`); params.push(city); }
+    if (partner_id && partner_id !== 'all') { conds.push(`partner_id = $${idx++}`); params.push(partner_id); }
+    if (date_from) { conds.push(`created_at >= $${idx++}`); params.push(date_from); }
+    if (date_to) { conds.push(`created_at <= $${idx++}::date + interval '1 day'`); params.push(date_to); }
+
+    if (quick === 'new') conds.push(`status = 'new'`);
+    else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
+    else if (quick === 'reclamation') conds.push(`type = 'reclamation'`);
+
+    const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
+    const baseWhere = baseConds.length ? 'WHERE ' + baseConds.join(' AND ') : '';
+
+    const [dataRes, countRes, countsRes] = await Promise.all([
+      pool.query(`SELECT * FROM requests ${where} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx+1}`, [...params, parseInt(limit), offset]),
+      pool.query(`SELECT COUNT(*)::int as total FROM requests ${where}`, params),
+      pool.query(`SELECT COUNT(*)::int as "all", COUNT(*) FILTER (WHERE status='new')::int as "new", COUNT(*) FILTER (WHERE status NOT IN ('new','closed','cancelled'))::int as "in_progress", COUNT(*) FILTER (WHERE type='reclamation')::int as "reclamation" FROM requests ${baseWhere}`, baseParams)
+    ]);
+
+    res.json({
+      data: dataRes.rows,
+      total: countRes.rows[0].total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      counts: countsRes.rows[0]
+    });
+  } catch (err) {
+    console.error('Get requests error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки заявок' });
+  }
+});
+// Публичная заявка с сайта
+app.post('/api/requests/public', async (req, res) => {
+  try {
+    const { client_name, client_phone, client_address, city, type, work_description, extra_name, extra_phone, source } = req.body;
+    if (!client_name || !client_phone || !client_address) {
+      return res.status(400).json({ error: 'Заполните обязательные поля' });
+    }
+    const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
+    const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
+
+    const { rows } = await pool.query(
+      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, work_description, extra_name, extra_phone, source, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'new') RETURNING *`,
+      [number, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, extra_name || null, extra_phone || null, source || 'site']
+    );
+
+    const req_data = rows[0];
+    // Уведомление менеджерам и админам о новой заявке
+    await notifyManagersAndAdmins(pool,
+      `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: Сайт\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+    );
+
+    res.json(req_data);
+  } catch (err) {
+    console.error('Public request error:', err);
+    res.status(500).json({ error: 'Ошибка создания заявки' });
+  }
+});
+
+// Создать заявку (из кабинета)
+app.post('/api/requests', auth, async (req, res) => {
+  try {
+    const { client_name, client_phone, client_address, city, type, work_description, source, comment, extra_name, extra_phone, photos } = req.body;
+    const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
+    const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
+
+    const { rows } = await pool.query(
+      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, 'new') RETURNING *`,
+      [number, req.user.id, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]']
+    );
+
+    const req_data = rows[0];
+    const sourceName = req.user.role === 'partner' ? `Партнёр (${req.user.name})` : req.user.name;
+    // Уведомление менеджерам и админам
+    await notifyManagersAndAdmins(pool,
+      `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: ${sourceName}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+    );
+
+    res.json(req_data);
+  } catch (err) {
+    console.error('Create request error:', err);
+    res.status(500).json({ error: 'Ошибка создания заявки' });
+  }
+});
+
+// Обновить заявку (с валидацией и уведомлениями)
+app.put('/api/requests/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const role = req.user.role;
+
+    // Загружаем текущую заявку
+    const current = await pool.query('SELECT * FROM requests WHERE id = $1', [id]);
+    if (current.rows.length === 0) return res.status(404).json({ error: 'Заявка не найдена' });
+    const request = current.rows[0];
+
+    // Ограничение: партнёры не могут редактировать
+    if (role === 'partner') {
+      return res.status(403).json({ error: 'Партнёры не могут редактировать заявки' });
+    }
+
+    // Ограничение: исполнители могут менять только agreed_date, status_comment, photos
+    const executorAllowed = ['agreed_date', 'status_comment', 'photos', 'status', 'notes'];
+    if (['measurer', 'installer'].includes(role)) {
+      const forbidden = Object.keys(updates).filter(k => !executorAllowed.includes(k));
+      if (forbidden.length > 0) {
+        return res.status(403).json({ error: `Вам недоступно изменение: ${forbidden.join(', ')}` });
+      }
+    }
+
+    // Автоматизация: назначение исполнителя → смена статуса
+    if (updates.measurer_id && !request.measurer_id && ['new', 'pending'].includes(request.status)) {
+      updates.status = 'measurer_assigned';
+    }
+
+
+    // Автоматизация: установка даты → date_agreed
+    if (updates.agreed_date && ['measurer_assigned', 'new', 'pending'].includes(request.status)) {
+      updates.status = 'date_agreed';
+    }
+
+    // Автоматизация: перенос даты монтажа → installation_rescheduled
+    if (updates.agreed_date && ["date_agreed", "installation_rescheduled"].includes(request.status) && request.type === "installation" && ["installer", "admin", "manager"].includes(role)) {
+      updates.status = "installation_rescheduled";
+    }
+
+    // Валидация перехода статуса
+    if (updates.status && updates.status !== request.status) {
+      if (['admin', 'manager'].includes(role) || ['measurer', 'installer'].includes(role)) {
+        if (!isValidTransition(request.type, request.status, updates.status)) {
+          return res.status(400).json({
+            error: `Невозможен переход из "${statusLabels[request.status]}" в "${statusLabels[updates.status]}" для типа "${typeLabels[request.type]}"`
+          });
+        }
+      }
+    }
+
+    // Собираем UPDATE запрос
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    for (const [key, value] of Object.entries(updates)) {
+      if (key === 'photos') {
+        fields.push(`${key} = $${idx}::jsonb`);
+        values.push(JSON.stringify(value));
+      } else {
+        fields.push(`${key} = $${idx}`);
+        values.push(value);
+      }
+      idx++;
+    }
+    if (fields.length === 0) return res.status(400).json({ error: 'Нет данных для обновления' });
+
+    values.push(id);
+    const result = await pool.query(
+      `UPDATE requests SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    const updated = result.rows[0];
+
+    // === УВЕДОМЛЕНИЯ ===
+
+    // 1. Назначение замерщика
+    if (updates.measurer_id && updates.measurer_id !== request.measurer_id) {
+      const executor = await pool.query('SELECT telegram_id, name FROM users WHERE id = $1', [updates.measurer_id]);
+      if (executor.rows[0]?.telegram_id) {
+        await sendTelegram(executor.rows[0].telegram_id,
+          `🔔 <b>Новая заявка на замер</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\n\nПерейдите в личный кабинет, чтобы согласовать дату замера с клиентом.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+        );
+      }
+      // Если был предыдущий замерщик — уведомить о снятии
+      if (request.measurer_id && request.measurer_id !== updates.measurer_id) {
+        const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.measurer_id]);
+        if (prev.rows[0]?.telegram_id) {
+          await sendTelegram(prev.rows[0].telegram_id,
+            `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
+          );
+        }
+      }
+    }
+
+    // 2. Назначение монтажника
+    if (updates.installer_id && updates.installer_id !== request.installer_id) {
+      const executor = await pool.query('SELECT telegram_id, name FROM users WHERE id = $1', [updates.installer_id]);
+      const dateStr = updated.agreed_date ? new Date(updated.agreed_date).toLocaleDateString('ru-RU') : 'не назначена';
+      if (executor.rows[0]?.telegram_id) {
+        await sendTelegram(executor.rows[0].telegram_id,
+          `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\nПодробнее — в личном кабинете.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+        );
+      }
+      // Если был предыдущий монтажник — уведомить о снятии
+      if (request.installer_id && request.installer_id !== updates.installer_id) {
+        const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.installer_id]);
+        if (prev.rows[0]?.telegram_id) {
+          await sendTelegram(prev.rows[0].telegram_id,
+            `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
+          );
+        }
+      }
+    }
+
+    // 3. Дата согласована/перенесена → менеджерам
+    if (updates.agreed_date && updates.agreed_date !== request.agreed_date) {
+      const action = request.agreed_date ? 'перенесена' : 'согласована';
+      const comment = updates.status_comment ? `\nКомментарий: ${updates.status_comment}` : '';
+      await notifyManagersAndAdmins(pool,
+        `📅 <b>Дата ${action}</b>\n\nЗаявка: ${updated.number}\nНовая дата: ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}${comment}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+      );
+    }
+
+    // 4. Работа завершена (measurement_done или closed) → менеджерам
+    if (updates.status && ['measurement_done', 'closed'].includes(updates.status) && request.status !== updates.status) {
+      await notifyManagersAndAdmins(pool,
+        `✅ <b>Работа завершена</b>\n\nЗаявка: ${updated.number}\nТип: ${typeLabels[updated.type] || updated.type}\nСтатус: ${statusLabels[updates.status]}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+      );
+    }
+
+    // 5. Заявка отменена → уведомить исполнителей
+    if (updates.status === 'cancelled' && request.status !== 'cancelled') {
+      const executorIds = [updated.measurer_id, updated.installer_id].filter(Boolean);
+      for (const execId of executorIds) {
+        const exec = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [execId]);
+        if (exec.rows[0]?.telegram_id) {
+          await sendTelegram(exec.rows[0].telegram_id,
+            `❌ <b>Заявка отменена</b>\n\nЗаявка ${updated.number} была отменена.`
+          );
+        }
+      }
+    }
+
+    // 6. Смена статуса → партнёру
+    if (updates.status && updates.status !== request.status && updated.partner_id) {
+      await notifyPartner(pool, updated.partner_id,
+        `📌 <b>Статус заявки ${updated.number} изменён</b>\n\nНовый статус: ${statusLabels[updates.status] || updates.status}\n\n👉 <a href="${SITE_URL}/login">Подробнее в кабинете</a>`
+      );
+    }
+
+    res.json(updated);
+  } catch (err) {
+    console.error('Update request error:', err);
+    res.status(500).json({ error: 'Ошибка обновления заявки' });
+  }
+});
+
+// === Articles ===
+app.get('/api/articles', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    console.error('Get articles error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки статей' });
+  }
+});
+
+app.post('/api/articles', auth, async (req, res) => {
+  try {
+    const { title, slug, excerpt, image, content, read_time } = req.body;
+    const { rows } = await pool.query(
+      `INSERT INTO articles (title, slug, excerpt, image, content, read_time)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [title, slug, excerpt || '', image || '', content || '', read_time || '5 мин']
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Create article error:', err);
+    res.status(500).json({ error: 'Ошибка создания статьи' });
+  }
+});
+
+app.put('/api/articles/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    for (const [key, value] of Object.entries(updates)) {
+      fields.push(`${key} = $${idx}`);
+      values.push(value);
+      idx++;
+    }
+    fields.push(`updated_at = NOW()`);
+    values.push(id);
+    const { rows } = await pool.query(
+      `UPDATE articles SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Статья не найдена' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update article error:', err);
+    res.status(500).json({ error: 'Ошибка обновления' });
+  }
+});
+
+app.delete('/api/articles/:id', auth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM articles WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete article error:', err);
+    res.status(500).json({ error: 'Ошибка удаления' });
+  }
+});
+
+// === Estimates ===
+app.get('/api/estimates', auth, async (req, res) => {
+  try {
+    let query = 'SELECT * FROM estimates';
+    const params = [];
+    if (req.user.role === 'measurer' || req.user.role === 'installer') {
+      query += ' WHERE created_by = $1';
+      params.push(req.user.id);
+    }
+    query += ' ORDER BY created_at DESC';
+    const { rows } = await pool.query(query, params);
+    res.json(rows);
+  } catch (err) {
+    console.error('Get estimates error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки смет' });
+  }
+});
+
+app.post('/api/estimates', auth, async (req, res) => {
+  try {
+    const { client_name, client_address, city, items, discount, total, request_id } = req.body;
+    const countResult = await pool.query('SELECT COUNT(*) FROM estimates');
+    const number = 'EST-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
+    const { rows } = await pool.query(
+      `INSERT INTO estimates (number, client_name, client_address, city, items, discount, total, created_by, request_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [number, client_name, client_address || null, city || null, JSON.stringify(items || []), discount || 0, total || 0, req.user.id, request_id || null]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Create estimate error:', err);
+    res.status(500).json({ error: 'Ошибка сохранения сметы' });
+  }
+});
+
+app.delete('/api/estimates/:id', auth, async (req, res) => {
+  try {
+    await pool.query('DELETE FROM estimates WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete estimate error:', err);
+    res.status(500).json({ error: 'Ошибка удаления' });
+  }
+});
+
+
+// DELETE request (admin only)
+app.delete("/api/requests/:id", auth, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ error: "Только администратор может удалять заявки" });
+    }
+    const { id } = req.params;
+    const result = await pool.query("DELETE FROM requests WHERE id = $1 RETURNING id", [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Заявка не найдена" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Delete request error:", err);
+    res.status(500).json({ error: "Ошибка удаления заявки" });
+  }
+});
+app.listen(PORT, () => {
+  console.log('PrimeDoor API running on port ' + PORT);
+});
