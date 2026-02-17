@@ -24,6 +24,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [notes, setNotes] = useState(request.notes || "");
   const [agreedDate, setAgreedDate] = useState(request.agreed_date?.split("T")[0] || "");
   const [amount, setAmount] = useState<string>(request.amount != null ? String(request.amount) : "");
+  const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
+  const [entranceDoors, setEntranceDoors] = useState<string>(request.entrance_doors != null ? String(request.entrance_doors) : "");
+  const [partitions, setPartitions] = useState<string>(request.partitions != null ? String(request.partitions) : "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -61,6 +64,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
         if (showInstallerField && installerId) updates.installer_id = installerId;
         if (request.type === "installation") {
           updates.amount = amount ? parseFloat(amount) : null;
+          updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
+          updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
+          updates.partitions = partitions ? parseInt(partitions) : null;
         }
       }
       // Only send agreed_date if it actually changed
@@ -337,15 +343,58 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
               {/* Amount — only for installation, only admin/manager */}
               {request.type === "installation" && canEdit && (
-                <div>
-                  <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Сумма (₽)</label>
-                  <input
-                    type="number"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="Укажите сумму..."
-                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Сумма (₽)</label>
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="Укажите сумму..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Межкомнатные</label>
+                        <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные</label>
+                        <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородки</label>
+                        <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Door counts read-only for non-editors */}
+              {request.type === "installation" && !canEdit && (request.interior_doors || request.entrance_doors || request.partitions) && (
+                <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                  <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
+                  <div className="grid grid-cols-3 gap-2 text-sm text-center">
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Межкомнатные</p>
+                      <p className="font-semibold">{request.interior_doors || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Входные</p>
+                      <p className="font-semibold">{request.entrance_doors || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Перегородки</p>
+                      <p className="font-semibold">{request.partitions || 0}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 

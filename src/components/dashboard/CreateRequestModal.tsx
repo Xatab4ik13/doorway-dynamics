@@ -22,6 +22,9 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   const [extraName, setExtraName] = useState("");
   const [extraPhone, setExtraPhone] = useState("");
   const [workDescription, setWorkDescription] = useState("");
+  const [interiorDoors, setInteriorDoors] = useState("");
+  const [entranceDoors, setEntranceDoors] = useState("");
+  const [partitions, setPartitions] = useState("");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<{ file: File; preview?: string }[]>([]);
@@ -84,6 +87,11 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
         extra_phone: extraPhone || undefined,
         work_description: workDescription || undefined,
         source: "site",
+        ...(type === "installation" ? {
+          interior_doors: interiorDoors ? parseInt(interiorDoors) : undefined,
+          entrance_doors: entranceDoors ? parseInt(entranceDoors) : undefined,
+          partitions: partitions ? parseInt(partitions) : undefined,
+        } : {}),
         ...(photos ? { photos } : {}),
       });
       onClose();
@@ -197,6 +205,27 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
                 <input type="tel" value={extraPhone} onChange={(e) => setExtraPhone(formatPhone(e.target.value))} className={inputClass("")} placeholder="+7 ..." />
               </div>
             </div>
+
+            {/* Door quantities — only for installation */}
+            {type === "installation" && (
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">Количество изделий</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-[10px] text-muted-foreground mb-1 block text-center">Межкомнатные</label>
+                    <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные</label>
+                    <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородки</label>
+                    <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Description */}
             <div>
