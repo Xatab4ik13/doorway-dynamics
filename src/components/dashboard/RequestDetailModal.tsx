@@ -487,7 +487,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             </div>
             <div className="flex gap-3 flex-wrap">
               {/* Send to installation button — for measurement requests */}
-              {request.type === "measurement" && canEdit && onSendToInstallation && (
+              {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
                 <button
                   onClick={async () => {
                     setSendingToInstall(true);
