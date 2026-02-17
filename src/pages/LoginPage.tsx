@@ -199,11 +199,14 @@ const LoginPage = () => {
                     Продолжить
                   </button>
                 </div>
-                <p className="text-center text-xs text-muted-foreground mt-6">
-                  <Link to="/register" className="hover:text-foreground transition-colors">
+                <div className="pt-6">
+                  <Link
+                    to="/register"
+                    className="block w-full text-center py-3 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+                  >
                     Нет аккаунта? Зарегистрироваться
                   </Link>
-                </p>
+                </div>
               </motion.form>
             ) : (
               <motion.div
