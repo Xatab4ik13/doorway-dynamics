@@ -343,7 +343,7 @@ const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
 
       {/* Modal with tabs per category */}
       <Dialog open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
-        <DialogContent className="dashboard-theme max-w-lg max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground">
+        <DialogContent className="dashboard-theme max-w-5xl max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon size={18} className="text-primary" />
@@ -352,7 +352,7 @@ const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
           </DialogHeader>
 
           {selectedDayData && (
-            <div className="space-y-4 max-h-[65vh] overflow-y-auto pr-1">
+            <div className="flex gap-4 max-h-[65vh] overflow-x-auto pr-1">
               {/* Interior installations */}
               {selectedDayData.interiorInstalls.length > 0 && (
                 <Section title="Межкомнатные двери" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
@@ -401,13 +401,13 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
   onAssign: (id: string, iid: string) => Promise<void>;
   onRestore: (id: string) => Promise<void>;
 }) => (
-  <div>
-    <div className={`flex items-center gap-2 mb-2 font-semibold text-sm ${color}`}>
+  <div className="flex-1 min-w-[300px]">
+    <div className={`flex items-center gap-2 mb-2 font-semibold text-sm ${color} sticky top-0 bg-card py-1`}>
       {icon}
       {title}
       <span className="text-xs font-normal text-muted-foreground">({requests.length})</span>
     </div>
-    <div className="space-y-2">
+    <div className="space-y-2 overflow-y-auto max-h-[55vh] pr-1">
       {requests.map((r) => (
         <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} />
       ))}
