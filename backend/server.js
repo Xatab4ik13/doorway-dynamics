@@ -66,6 +66,14 @@ const statusLabels = {
   cancelled: 'Отменена',
 };
 
+const roleLabels = {
+  admin: 'Администратор',
+  manager: 'Менеджер',
+  measurer: 'Замерщик',
+  installer: 'Монтажник',
+  partner: 'Партнёр',
+};
+
 const typeLabels = {
   measurement: 'Замер',
   installation: 'Монтаж',
