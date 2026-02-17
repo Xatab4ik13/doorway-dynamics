@@ -23,6 +23,7 @@ export interface ApiRequest {
   installer_id?: string;
   manager_id?: string;
   agreed_date?: string;
+  amount?: number;
   created_at: string;
   updated_at?: string;
 }

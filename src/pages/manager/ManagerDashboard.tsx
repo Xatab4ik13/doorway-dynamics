@@ -119,6 +119,7 @@ const ManagerDashboard = () => {
                       <th className="pb-3 pr-4">Статус</th>
                       <th className="pb-3 pr-4">Источник</th>
                       <th className="pb-3 pr-4">Исполнитель</th>
+                      <th className="pb-3 pr-4">Сумма</th>
                       <th className="pb-3">Дата</th>
                     </tr>
                   </thead>
@@ -160,6 +161,9 @@ const ManagerDashboard = () => {
                         </td>
                         <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                           {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
+                        </td>
+                        <td className="py-3.5 pr-4 text-xs text-muted-foreground">
+                          {r.amount != null ? `${r.amount.toLocaleString("ru-RU")} ₽` : "—"}
                         </td>
                         <td className="py-3.5 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
                       </motion.tr>

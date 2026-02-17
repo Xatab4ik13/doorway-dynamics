@@ -14,6 +14,7 @@ const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Замерщик": getUserName(r.measurer_id) || "",
   "Монтажник": getUserName(r.installer_id) || "",
   "Партнёр": getUserName(r.partner_id) || "",
+  "Сумма": r.amount != null ? r.amount : "",
   "Дата создания": r.created_at?.split("T")[0] || "",
   "Согласованная дата": r.agreed_date?.split("T")[0] || "",
 });

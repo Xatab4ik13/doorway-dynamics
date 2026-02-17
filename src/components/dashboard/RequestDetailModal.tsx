@@ -23,6 +23,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [installerId, setInstallerId] = useState(request.installer_id || "");
   const [notes, setNotes] = useState(request.notes || "");
   const [agreedDate, setAgreedDate] = useState(request.agreed_date?.split("T")[0] || "");
+  const [amount, setAmount] = useState<string>(request.amount != null ? String(request.amount) : "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -58,6 +59,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       if (canEdit) {
         if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
         if (showInstallerField && installerId) updates.installer_id = installerId;
+        if (request.type === "installation") {
+          updates.amount = amount ? parseFloat(amount) : null;
+        }
       }
       // Only send agreed_date if it actually changed
       const originalDate = request.agreed_date?.split("T")[0] || "";
@@ -328,6 +332,20 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       </select>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Amount — only for installation, only admin/manager */}
+              {request.type === "installation" && canEdit && (
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Сумма (₽)</label>
+                  <input
+                    type="number"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    placeholder="Укажите сумму..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  />
                 </div>
               )}
 
