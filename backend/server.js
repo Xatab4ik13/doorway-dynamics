@@ -562,7 +562,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     }
 
     // Ограничение: исполнители могут менять только agreed_date, status_comment, photos
-    const executorAllowed = ['agreed_date', 'status_comment', 'photos', 'status', 'notes'];
+    const executorAllowed = ['agreed_date', 'status_comment', 'photos', 'status', 'notes', 'amount'];
     if (['measurer', 'installer'].includes(role)) {
       const forbidden = Object.keys(updates).filter(k => !executorAllowed.includes(k));
       if (forbidden.length > 0) {
