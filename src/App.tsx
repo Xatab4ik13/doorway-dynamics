@@ -20,6 +20,7 @@ const ServicesPage = lazy(() => import("./pages/ServicesPage"));
 const ContactsPage = lazy(() => import("./pages/ContactsPage"));
 const RequestPage = lazy(() => import("./pages/RequestPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));
+const RegisterPage = lazy(() => import("./pages/RegisterPage"));
 const NewsPage = lazy(() => import("./pages/NewsPage"));
 const ArticlePage = lazy(() => import("./pages/ArticlePage"));
 const ReclamationPage = lazy(() => import("./pages/ReclamationPage"));
@@ -52,7 +53,7 @@ const queryClient = new QueryClient();
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner", "/login"].some(
+  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner", "/login", "/register"].some(
     (p) => location.pathname.startsWith(p)
   );
 
@@ -80,7 +81,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const SuspenseFallback = () => {
   const location = useLocation();
-  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner", "/login"].some(
+  const isDashboard = ["/admin", "/manager", "/measurer", "/installer", "/partner", "/login", "/register"].some(
     (p) => location.pathname.startsWith(p)
   );
   return (
@@ -102,6 +103,7 @@ const AppRoutes = () => (
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/request" element={<RequestPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
         <Route path="/news" element={<NewsPage />} />
         <Route path="/news/:slug" element={<ArticlePage />} />
         <Route path="/reclamation" element={<ReclamationPage />} />
