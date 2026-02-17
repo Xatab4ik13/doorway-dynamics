@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { roleLabels, type UserRole } from "@/data/mockDashboard";
-import { UserPlus, Trash2, Search, Loader2 } from "lucide-react";
+import { UserPlus, Trash2, Search, Loader2, CheckCircle } from "lucide-react";
 import CreateAccountModal from "@/components/dashboard/CreateAccountModal";
 import AccountDetailModal from "@/components/dashboard/AccountDetailModal";
 import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
@@ -18,6 +18,7 @@ interface UserAccount {
   phone?: string;
   email?: string;
   notes?: string;
+  pin?: string;
   active: boolean;
   created_at: string;
 }
@@ -105,6 +106,13 @@ const AdminAccounts = () => {
     }
   };
 
+  const handleActivate = async (u: UserAccount) => {
+    try {
+      await handleUpdate(u.id, { active: true });
+      toast.success(`Аккаунт "${u.name}" активирован`);
+    } catch {}
+  };
+
   return (
     <DashboardLayout role="admin" userName={authUser?.name || "Админ"}>
       <div className="space-y-6">
@@ -146,36 +154,43 @@ const AdminAccounts = () => {
             <div className="overflow-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                    <th className="pb-3 pr-4">ID</th>
-                    <th className="pb-3 pr-4">Имя</th>
-                    <th className="pb-3 pr-4">Telegram ID</th>
-                    <th className="pb-3 pr-4">Роль</th>
-                    <th className="pb-3 pr-4">Статус</th>
-                    <th className="pb-3 pr-4">Создан</th>
-                    <th className="pb-3"></th>
-                  </tr>
+                   <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                     <th className="pb-3 pr-4">Имя</th>
+                     <th className="pb-3 pr-4">Телефон</th>
+                     <th className="pb-3 pr-4">Роль</th>
+                     <th className="pb-3 pr-4">Статус</th>
+                     <th className="pb-3 pr-4">Создан</th>
+                     <th className="pb-3"></th>
+                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((u) => (
-                    <tr key={u.id} className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => setDetailTarget(u)}>
-                      <td className="py-3 pr-4 font-mono text-xs">{u.id}</td>
+                    <tr key={u.id} className={`border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer ${!u.active ? "bg-amber-50/50" : ""}`} onClick={() => setDetailTarget(u)}>
                       <td className="py-3 pr-4 font-medium">{u.name}</td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.telegram_id || "—"}</td>
+                      <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.phone || "—"}</td>
                       <td className="py-3 pr-4">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleColorMap[u.role]}`}>
                           {roleLabels[u.role]}
                         </span>
                       </td>
                       <td className="py-3 pr-4">
-                        <span className={`inline-block w-2 h-2 rounded-full ${u.active ? "bg-green-500" : "bg-gray-300"}`} />
-                        <span className="ml-2 text-xs">{u.active ? "Активен" : "Неактивен"}</span>
+                        <span className={`inline-block w-2 h-2 rounded-full ${u.active ? "bg-green-500" : "bg-amber-400"}`} />
+                        <span className="ml-2 text-xs">{u.active ? "Активен" : "Ожидает"}</span>
                       </td>
                       <td className="py-3 pr-4 text-xs text-muted-foreground">{u.created_at?.split("T")[0]}</td>
-                      <td className="py-3">
+                      <td className="py-3 flex items-center gap-1">
+                        {!u.active && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleActivate(u); }}
+                            className="text-green-600 hover:text-green-700 transition-colors p-1"
+                            title="Активировать"
+                          >
+                            <CheckCircle size={16} />
+                          </button>
+                        )}
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(u); }}
-                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
                         >
                           <Trash2 size={16} />
                         </button>

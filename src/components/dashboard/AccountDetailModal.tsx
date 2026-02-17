@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Save, Loader2, Phone, Mail, StickyNote, Send } from "lucide-react";
+import { X, Save, Loader2, Phone, Mail, StickyNote, Send, Lock, Eye, EyeOff, Power } from "lucide-react";
 import { roleLabels, type UserRole } from "@/data/mockDashboard";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -11,6 +11,7 @@ interface UserAccount {
   phone?: string;
   email?: string;
   notes?: string;
+  pin?: string;
   active: boolean;
   created_at: string;
 }
@@ -29,11 +30,18 @@ const roleColorMap: Record<UserRole, string> = {
   partner: "bg-green-50 text-green-700",
 };
 
+const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
+
 const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) => {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || "");
   const [email, setEmail] = useState(user.email || "");
   const [notes, setNotes] = useState(user.notes || "");
+  const [telegramId, setTelegramId] = useState(user.telegram_id || "");
+  const [pin, setPin] = useState(user.pin || "");
+  const [role, setRole] = useState<UserRole>(user.role);
+  const [active, setActive] = useState(user.active);
+  const [showPin, setShowPin] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 hover:border-primary/40 transition-all";
@@ -41,7 +49,16 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await onSave(user.id, { name, phone: phone || undefined, email: email || undefined, notes: notes || undefined });
+      await onSave(user.id, {
+        name,
+        phone: phone || undefined,
+        email: email || undefined,
+        notes: notes || undefined,
+        telegram_id: telegramId || undefined,
+        pin: pin || undefined,
+        role,
+        active,
+      });
       onClose();
     } catch {} finally {
       setSaving(false);
@@ -57,7 +74,7 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.97 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
-          className="relative bg-card rounded-2xl shadow-2xl w-full max-w-md"
+          className="relative bg-card rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
         >
           <div className="flex items-center justify-between p-5 border-b border-border">
             <div>
@@ -66,7 +83,10 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleColorMap[user.role]}`}>
                   {roleLabels[user.role]}
                 </span>
-                <span className="text-[10px] text-muted-foreground font-mono">ID: {user.id}</span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${active ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${active ? "bg-green-500" : "bg-amber-500"}`} />
+                  {active ? "Активен" : "Ожидает"}
+                </span>
               </div>
             </div>
             <button onClick={onClose} className="p-2 rounded-xl hover:bg-accent transition-colors text-muted-foreground">
@@ -80,19 +100,68 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
             </div>
 
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-              <Send size={14} className="text-primary mt-0.5 shrink-0" />
+            {user.role !== "admin" && (
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Telegram ID</p>
-                <p className="text-sm font-medium font-mono">{user.telegram_id || "—"}</p>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Роль</label>
+                <div className="flex flex-wrap gap-2">
+                  {roles.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setRole(r)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        role === r ? "bg-primary text-primary-foreground" : "bg-accent text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {roleLabels[r]}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
                 <Phone size={12} /> Телефон
               </label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="+7 999 999 99 99" />
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Lock size={12} /> ПИН-код
+              </label>
+              <div className="relative">
+                <input
+                  type={showPin ? "text" : "password"}
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  className={inputClass + " pr-10 tracking-[0.5em]"}
+                  placeholder="••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(!showPin)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPin ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Send size={12} /> Telegram ID <span className="text-[10px] text-muted-foreground">(для уведомлений)</span>
+              </label>
+              <input
+                type="text"
+                value={telegramId}
+                onChange={(e) => setTelegramId(e.target.value)}
+                className={inputClass}
+                placeholder="123456789"
+              />
             </div>
 
             <div>
@@ -109,8 +178,28 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
               <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={inputClass + " resize-none"} placeholder="Любая информация..." />
             </div>
 
+            {/* Active toggle */}
+            {user.role !== "admin" && (
+              <div
+                onClick={() => setActive(!active)}
+                className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${
+                  active ? "bg-green-50 hover:bg-green-100" : "bg-amber-50 hover:bg-amber-100"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Power size={14} className={active ? "text-green-600" : "text-amber-600"} />
+                  <span className={`text-sm font-medium ${active ? "text-green-700" : "text-amber-700"}`}>
+                    {active ? "Аккаунт активен" : "Аккаунт неактивен (ожидает активации)"}
+                  </span>
+                </div>
+                <div className={`w-10 h-6 rounded-full relative transition-colors ${active ? "bg-green-500" : "bg-gray-300"}`}>
+                  <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${active ? "left-5" : "left-1"}`} />
+                </div>
+              </div>
+            )}
+
             <div className="text-[10px] text-muted-foreground">
-              Создан: {user.created_at?.split("T")[0]} · Статус: {user.active ? "Активен" : "Неактивен"}
+              Создан: {user.created_at?.split("T")[0]} · ID: {user.id}
             </div>
           </div>
 

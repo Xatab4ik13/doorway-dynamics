@@ -170,6 +170,8 @@ app.delete('/api/files', auth, async (req, res) => {
 });
 
 // === Auth ===
+
+// Admin login (email + password)
 app.post('/api/auth/admin', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -184,7 +186,7 @@ app.post('/api/auth/admin', async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role, name: user.name },
       process.env.JWT_SECRET,
-      { expiresIn: '24h' }
+      { expiresIn: '30d' }
     );
     res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
   } catch (err) {
@@ -193,7 +195,58 @@ app.post('/api/auth/admin', async (req, res) => {
   }
 });
 
-// Telegram auth sessions
+// Registration (public) — phone + PIN + name + role
+app.post('/api/auth/register', async (req, res) => {
+  const { name, phone, pin, role } = req.body;
+  if (!name || !phone || !pin || !role) {
+    return res.status(400).json({ error: 'Заполните все обязательные поля' });
+  }
+  if (!/^\d{4}$/.test(pin)) {
+    return res.status(400).json({ error: 'ПИН-код должен быть 4 цифры' });
+  }
+  if (!['manager', 'measurer', 'installer', 'partner'].includes(role)) {
+    return res.status(400).json({ error: 'Недопустимая роль' });
+  }
+  try {
+    // Check if phone already exists
+    const existing = await pool.query('SELECT id FROM users WHERE phone = $1', [phone]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Аккаунт с таким номером уже существует' });
+    }
+    const { rows } = await pool.query(
+      'INSERT INTO users (name, phone, pin, role, active) VALUES ($1, $2, $3, $4, false) RETURNING id, name, role, active',
+      [name, phone, pin, role]
+    );
+    res.json({ success: true, message: 'Регистрация отправлена на одобрение администратору', user: rows[0] });
+  } catch (err) {
+    console.error('Register error:', err);
+    res.status(500).json({ error: 'Ошибка регистрации' });
+  }
+});
+
+// Login by phone + PIN
+app.post('/api/auth/pin', async (req, res) => {
+  const { phone, pin } = req.body;
+  if (!phone || !pin) return res.status(400).json({ error: 'Введите телефон и ПИН-код' });
+  try {
+    const { rows } = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
+    if (rows.length === 0) return res.status(403).json({ error: 'Аккаунт не найден' });
+    const user = rows[0];
+    if (user.pin !== pin) return res.status(403).json({ error: 'Неверный ПИН-код' });
+    if (!user.active) return res.status(403).json({ error: 'Аккаунт ожидает активации администратором' });
+    const token = jwt.sign(
+      { id: user.id, role: user.role, name: user.name },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
+  } catch (err) {
+    console.error('PIN auth error:', err);
+    res.status(500).json({ error: 'Ошибка авторизации' });
+  }
+});
+
+// Telegram auth sessions (kept for bot notifications)
 const telegramSessions = new Map();
 
 app.post('/api/auth/telegram/session', (req, res) => {
@@ -217,7 +270,7 @@ app.post('/api/auth/telegram/confirm', async (req, res) => {
     const token = jwt.sign(
       { id: user.id, role: user.role, name: user.name },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '30d' }
     );
     telegramSessions.set(code, {
       status: 'confirmed',
@@ -247,7 +300,7 @@ app.get('/api/users', auth, async (req, res) => {
   if (!['admin', 'manager'].includes(req.user.role)) return res.status(403).json({ error: 'Доступ запрещён' });
   try {
     const { rows } = await pool.query(
-      'SELECT id, name, role, telegram_id, phone, email, notes, active, created_at FROM users ORDER BY created_at DESC'
+      'SELECT id, name, role, telegram_id, phone, email, notes, pin, active, created_at FROM users ORDER BY created_at DESC'
     );
     res.json(rows);
   } catch (err) {
@@ -275,10 +328,23 @@ app.put('/api/users/:id', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
   try {
     const { id } = req.params;
-    const { name, phone, email, notes } = req.body;
+    const { name, phone, email, notes, telegram_id, pin, active, role } = req.body;
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name); }
+    if (phone !== undefined) { fields.push(`phone = $${idx++}`); values.push(phone || null); }
+    if (email !== undefined) { fields.push(`email = $${idx++}`); values.push(email || null); }
+    if (notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(notes || null); }
+    if (telegram_id !== undefined) { fields.push(`telegram_id = $${idx++}`); values.push(telegram_id || null); }
+    if (pin !== undefined) { fields.push(`pin = $${idx++}`); values.push(pin || null); }
+    if (active !== undefined) { fields.push(`active = $${idx++}`); values.push(active); }
+    if (role !== undefined) { fields.push(`role = $${idx++}`); values.push(role); }
+    if (fields.length === 0) return res.status(400).json({ error: 'Нет данных' });
+    values.push(id);
     const { rows } = await pool.query(
-      'UPDATE users SET name = COALESCE($1, name), phone = $2, email = $3, notes = $4 WHERE id = $5 RETURNING *',
-      [name, phone || null, email || null, notes || null, id]
+      `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
     );
     if (!rows.length) return res.status(404).json({ error: 'Не найден' });
     res.json(rows[0]);

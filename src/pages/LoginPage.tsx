@@ -1,15 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { Send, Shield, Lock, Loader2, X } from "lucide-react";
+import { Shield, Lock, Loader2, Phone } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 
-type LoginMode = "telegram" | "admin";
-
-const telegramBotUrl = "https://t.me/primedoor_bot";
+type LoginMode = "pin" | "admin";
 
 const roleRoutes: Record<string, string> = {
   admin: "/admin",
@@ -20,96 +18,40 @@ const roleRoutes: Record<string, string> = {
 };
 
 const LoginPage = () => {
-  const [mode, setMode] = useState<LoginMode>("telegram");
+  const [mode, setMode] = useState<LoginMode>("pin");
+  const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [waitingTelegram, setWaitingTelegram] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const sessionCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
     document.title = "Вход в кабинет — PrimeDoor Service";
   }, []);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
       navigate(roleRoutes[user.role] || "/");
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, []);
-
-  const stopPolling = useCallback(() => {
-    if (pollingRef.current) {
-      clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-    sessionCodeRef.current = null;
-    setWaitingTelegram(false);
-  }, []);
-
-  const handleTelegramLogin = async () => {
-    setWaitingTelegram(true);
-
-    // Open window synchronously (before await) so Safari doesn't block it
-    const botWindow = window.open("about:blank", "_blank");
-
+  const handlePinLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
     try {
-      // Create session
-      const { code } = await api<{ code: string }>("/api/auth/telegram/session", {
+      const data = await api("/api/auth/pin", {
         method: "POST",
+        body: { phone, pin },
       });
-      sessionCodeRef.current = code;
-
-      // Navigate the pre-opened window to bot URL
-      if (botWindow) {
-        botWindow.location.href = `${telegramBotUrl}?start=${code}`;
-      } else {
-        // Fallback: direct navigation (e.g. if popup was still blocked)
-        window.location.href = `${telegramBotUrl}?start=${code}`;
-      }
-
-      // Poll for confirmation every 2 seconds
-      pollingRef.current = setInterval(async () => {
-        try {
-          const result = await api<{ status: string; token?: string; user?: any }>(
-            `/api/auth/telegram/check/${code}`
-          );
-
-          if (result.status === "confirmed" && result.token && result.user) {
-            stopPolling();
-            login(result.token, result.user);
-            toast.success(`Добро пожаловать, ${result.user.name}!`);
-            navigate(roleRoutes[result.user.role] || "/", { replace: true });
-          } else if (result.status === "expired") {
-            stopPolling();
-            toast.error("Сессия истекла. Попробуйте ещё раз.");
-          }
-        } catch {
-          // Silent retry
-        }
-      }, 2000);
-
-      // Auto-stop after 5 minutes
-      setTimeout(() => {
-        if (pollingRef.current) {
-          stopPolling();
-          toast.error("Время ожидания истекло. Попробуйте ещё раз.");
-        }
-      }, 5 * 60 * 1000);
-
+      login(data.token, data.user);
+      toast.success(`Добро пожаловать, ${data.user.name}!`);
+      navigate(roleRoutes[data.user.role] || "/", { replace: true });
     } catch (err: any) {
-      setWaitingTelegram(false);
-      toast.error(err.message || "Ошибка создания сессии");
+      toast.error(err.message || "Ошибка авторизации");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -152,17 +94,17 @@ const LoginPage = () => {
         {/* Mode tabs */}
         <div className="flex gap-2 mb-8">
           <button
-            onClick={() => { setMode("telegram"); stopPolling(); }}
+            onClick={() => setMode("pin")}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-              mode === "telegram"
+              mode === "pin"
                 ? "bg-foreground text-background"
                 : "bg-accent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Send size={16} /> Через Telegram
+            <Phone size={16} /> По телефону
           </button>
           <button
-            onClick={() => { setMode("admin"); stopPolling(); }}
+            onClick={() => setMode("admin")}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "admin"
                 ? "bg-foreground text-background"
@@ -173,53 +115,46 @@ const LoginPage = () => {
           </button>
         </div>
 
-        {mode === "telegram" ? (
-          <div className="space-y-6">
-            <div className="text-center space-y-3">
-              <div className="w-16 h-16 rounded-full bg-[#229ED9]/10 flex items-center justify-center mx-auto">
-                {waitingTelegram ? (
-                  <Loader2 size={28} className="text-[#229ED9] animate-spin" />
-                ) : (
-                  <Send size={28} className="text-[#229ED9]" />
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {waitingTelegram
-                  ? "Откройте бота в Telegram и нажмите Start. Ожидаем подтверждение..."
-                  : "Нажмите кнопку ниже — вас перенаправит в Telegram-бот. После нажатия Start вход произойдёт автоматически."}
-              </p>
-            </div>
-
-            <button
-              onClick={waitingTelegram ? stopPolling : handleTelegramLogin}
-              className={`w-full py-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
-                waitingTelegram
-                  ? "bg-accent text-foreground hover:bg-accent/80"
-                  : "bg-[#229ED9] text-white hover:bg-[#1a8abf]"
-              }`}
-            >
-              {waitingTelegram ? (
-                <><X size={18} /> Отменить</>
-              ) : (
-                <><Send size={18} /> Войти через Telegram</>
-              )}
-            </button>
-
-            <div className="text-center space-y-2">
+        {mode === "pin" ? (
+          <form onSubmit={handlePinLogin} className="space-y-0">
+            <div className="flex items-center gap-2 mb-4 px-1">
+              <Phone size={14} className="text-muted-foreground" />
               <p className="text-xs text-muted-foreground">
-                Нет доступа? Обратитесь к администратору для добавления вашего Telegram ID.
+                Введите номер телефона и ПИН-код
               </p>
-              <a
-                href="https://t.me/primedoor_bot?start=myid"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-xs text-[#229ED9] hover:text-[#1a8abf] transition-colors"
-              >
-                <Send size={12} />
-                Узнать свой Telegram ID
-              </a>
             </div>
-          </div>
+            <input
+              type="tel"
+              placeholder="Номер телефона"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className={inputClass}
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="ПИН-код (4 цифры)"
+              required
+              value={pin}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                setPin(val);
+              }}
+              className={inputClass + " tracking-[0.5em]"}
+            />
+            <div className="pt-10">
+              <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2" disabled={loading}>
+                {loading ? <><Loader2 size={16} className="animate-spin" /> Вход...</> : "Войти"}
+              </button>
+            </div>
+            <p className="text-center text-xs text-muted-foreground mt-6">
+              <Link to="/register" className="hover:text-foreground transition-colors">
+                Нет аккаунта? Зарегистрироваться
+              </Link>
+            </p>
+          </form>
         ) : (
           <form onSubmit={handleAdminLogin} className="space-y-0">
             <div className="flex items-center gap-2 mb-4 px-1">
