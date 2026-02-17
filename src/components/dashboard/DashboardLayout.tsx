@@ -36,7 +36,6 @@ const navByRole: Record<UserRole, NavItem[]> = {
   ],
   measurer: [
     { label: "Мои заявки", href: "/measurer", icon: <Ruler size={20} /> },
-    { label: "Сметы", href: "/measurer/estimates", icon: <Calculator size={20} /> },
     { label: "История", href: "/measurer/history", icon: <History size={20} /> },
   ],
   installer: [
