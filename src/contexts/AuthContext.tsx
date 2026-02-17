@@ -40,6 +40,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("device_token");
+    localStorage.removeItem("device_phone");
     setToken(null);
     setUser(null);
   };

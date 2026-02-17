@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { Shield, Lock, Loader2, Phone } from "lucide-react";
+import { Shield, Lock, Loader2, Phone, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 type LoginMode = "pin" | "admin";
+type PinStep = "phone" | "code";
 
 const roleRoutes: Record<string, string> = {
   admin: "/admin",
@@ -19,11 +21,13 @@ const roleRoutes: Record<string, string> = {
 
 const LoginPage = () => {
   const [mode, setMode] = useState<LoginMode>("pin");
+  const [step, setStep] = useState<PinStep>("phone");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [autoLogging, setAutoLogging] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
 
@@ -37,23 +41,60 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  const handlePinLogin = async (e: React.FormEvent) => {
+  // Try auto-login with device token on mount
+  useEffect(() => {
+    const deviceToken = localStorage.getItem("device_token");
+    const savedPhone = localStorage.getItem("device_phone");
+    if (deviceToken && savedPhone) {
+      setAutoLogging(true);
+      api("/api/auth/pin", {
+        method: "POST",
+        body: { phone: savedPhone, device_token: deviceToken },
+      })
+        .then((data: any) => {
+          if (data.device_token) localStorage.setItem("device_token", data.device_token);
+          login(data.token, data.user);
+          toast.success(`С возвращением, ${data.user.name}!`);
+          navigate(roleRoutes[data.user.role] || "/", { replace: true });
+        })
+        .catch(() => {
+          localStorage.removeItem("device_token");
+          localStorage.removeItem("device_phone");
+          setAutoLogging(false);
+        });
+    }
+  }, []);
+
+  const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phone.trim()) return;
+    setStep("code");
+    setPin("");
+  };
+
+  const handlePinComplete = useCallback(async (value: string) => {
+    if (value.length !== 4) return;
     setLoading(true);
     try {
       const data = await api("/api/auth/pin", {
         method: "POST",
-        body: { phone, pin },
+        body: { phone, pin: value },
       });
+      // Save device token for "remember device"
+      if (data.device_token) {
+        localStorage.setItem("device_token", data.device_token);
+        localStorage.setItem("device_phone", phone);
+      }
       login(data.token, data.user);
       toast.success(`Добро пожаловать, ${data.user.name}!`);
       navigate(roleRoutes[data.user.role] || "/", { replace: true });
     } catch (err: any) {
       toast.error(err.message || "Ошибка авторизации");
+      setPin("");
     } finally {
       setLoading(false);
     }
-  };
+  }, [phone, login, navigate]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +117,17 @@ const LoginPage = () => {
   const inputClass =
     "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
 
+  if (autoLogging) {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-6 bg-background">
+        <div className="text-center space-y-4">
+          <Loader2 size={32} className="animate-spin mx-auto text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Выполняется вход...</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center px-6 bg-background">
       <motion.div
@@ -94,7 +146,7 @@ const LoginPage = () => {
         {/* Mode tabs */}
         <div className="flex gap-2 mb-8">
           <button
-            onClick={() => setMode("pin")}
+            onClick={() => { setMode("pin"); setStep("phone"); setPin(""); }}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "pin"
                 ? "bg-foreground text-background"
@@ -104,7 +156,7 @@ const LoginPage = () => {
             <Phone size={16} /> По телефону
           </button>
           <button
-            onClick={() => setMode("admin")}
+            onClick={() => { setMode("admin"); setStep("phone"); }}
             className={`flex-1 py-3 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
               mode === "admin"
                 ? "bg-foreground text-background"
@@ -116,45 +168,96 @@ const LoginPage = () => {
         </div>
 
         {mode === "pin" ? (
-          <form onSubmit={handlePinLogin} className="space-y-0">
-            <div className="flex items-center gap-2 mb-4 px-1">
-              <Phone size={14} className="text-muted-foreground" />
-              <p className="text-xs text-muted-foreground">
-                Введите номер телефона и ПИН-код
-              </p>
-            </div>
-            <input
-              type="tel"
-              placeholder="Номер телефона"
-              required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className={inputClass}
-            />
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="ПИН-код (4 цифры)"
-              required
-              value={pin}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                setPin(val);
-              }}
-              className={inputClass + " tracking-[0.5em]"}
-            />
-            <div className="pt-10">
-              <button type="submit" className="btn-primary w-full flex items-center justify-center gap-2" disabled={loading}>
-                {loading ? <><Loader2 size={16} className="animate-spin" /> Вход...</> : "Войти"}
-              </button>
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-6">
-              <Link to="/register" className="hover:text-foreground transition-colors">
-                Нет аккаунта? Зарегистрироваться
-              </Link>
-            </p>
-          </form>
+          <AnimatePresence mode="wait">
+            {step === "phone" ? (
+              <motion.form
+                key="phone-step"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={handlePhoneSubmit}
+                className="space-y-0"
+              >
+                <div className="flex items-center gap-2 mb-4 px-1">
+                  <Phone size={14} className="text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    Введите номер телефона, указанный при регистрации
+                  </p>
+                </div>
+                <input
+                  type="tel"
+                  placeholder="Номер телефона"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className={inputClass}
+                  autoFocus
+                />
+                <div className="pt-10">
+                  <button type="submit" className="btn-primary w-full">
+                    Продолжить
+                  </button>
+                </div>
+                <p className="text-center text-xs text-muted-foreground mt-6">
+                  <Link to="/register" className="hover:text-foreground transition-colors">
+                    Нет аккаунта? Зарегистрироваться
+                  </Link>
+                </p>
+              </motion.form>
+            ) : (
+              <motion.div
+                key="code-step"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <button
+                  onClick={() => { setStep("phone"); setPin(""); }}
+                  className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ArrowLeft size={14} /> Изменить номер
+                </button>
+
+                <div className="text-center space-y-2">
+                  <div className="w-14 h-14 rounded-full bg-accent flex items-center justify-center mx-auto">
+                    <Lock size={24} className="text-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Введите ПИН-код для <span className="text-foreground font-medium">{phone}</span>
+                  </p>
+                </div>
+
+                <div className="flex justify-center">
+                  <InputOTP
+                    maxLength={4}
+                    value={pin}
+                    onChange={(value) => {
+                      setPin(value);
+                      if (value.length === 4) handlePinComplete(value);
+                    }}
+                    autoFocus
+                    disabled={loading}
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                      <InputOTPSlot index={1} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                      <InputOTPSlot index={2} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                      <InputOTPSlot index={3} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+
+                {loading && (
+                  <div className="flex justify-center">
+                    <Loader2 size={20} className="animate-spin text-muted-foreground" />
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         ) : (
           <form onSubmit={handleAdminLogin} className="space-y-0">
             <div className="flex items-center gap-2 mb-4 px-1">

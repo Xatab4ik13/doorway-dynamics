@@ -195,8 +195,19 @@ app.post('/api/auth/admin', async (req, res) => {
   }
 });
 
+// === Rate limiting for registration ===
+const registerAttempts = new Map();
+setInterval(() => registerAttempts.clear(), 15 * 60 * 1000);
+
 // Registration (public) — phone + PIN + name + role
 app.post('/api/auth/register', async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const attempts = registerAttempts.get(ip) || 0;
+  if (attempts >= 5) {
+    return res.status(429).json({ error: 'Слишком много попыток. Попробуйте через 15 минут.' });
+  }
+  registerAttempts.set(ip, attempts + 1);
+
   const { name, phone, pin, role } = req.body;
   if (!name || !phone || !pin || !role) {
     return res.status(400).json({ error: 'Заполните все обязательные поля' });
@@ -208,7 +219,6 @@ app.post('/api/auth/register', async (req, res) => {
     return res.status(400).json({ error: 'Недопустимая роль' });
   }
   try {
-    // Check if phone already exists
     const existing = await pool.query('SELECT id FROM users WHERE phone = $1', [phone]);
     if (existing.rows.length > 0) {
       return res.status(409).json({ error: 'Аккаунт с таким номером уже существует' });
@@ -217,6 +227,10 @@ app.post('/api/auth/register', async (req, res) => {
       'INSERT INTO users (name, phone, pin, role, active) VALUES ($1, $2, $3, $4, false) RETURNING id, name, role, active',
       [name, phone, pin, role]
     );
+    // Notify admins about new registration
+    await notifyManagersAndAdmins(pool,
+      `👤 <b>Новая регистрация</b>\n\nИмя: ${name}\nТелефон: ${phone}\nРоль: ${roleLabels[role] || role}\n\nАккаунт ожидает активации.\n\n👉 <a href="${SITE_URL}/admin/accounts">Открыть аккаунты</a>`
+    );
     res.json({ success: true, message: 'Регистрация отправлена на одобрение администратору', user: rows[0] });
   } catch (err) {
     console.error('Register error:', err);
@@ -224,22 +238,52 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// Login by phone + PIN
+// Login by phone + PIN (with device token support)
 app.post('/api/auth/pin', async (req, res) => {
-  const { phone, pin } = req.body;
-  if (!phone || !pin) return res.status(400).json({ error: 'Введите телефон и ПИН-код' });
+  const { phone, pin, device_token } = req.body;
+  if (!phone) return res.status(400).json({ error: 'Введите телефон' });
   try {
     const { rows } = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
     if (rows.length === 0) return res.status(403).json({ error: 'Аккаунт не найден' });
     const user = rows[0];
-    if (user.pin !== pin) return res.status(403).json({ error: 'Неверный ПИН-код' });
     if (!user.active) return res.status(403).json({ error: 'Аккаунт ожидает активации администратором' });
+
+    // Check device token (skip PIN if trusted device)
+    if (device_token) {
+      try {
+        const decoded = jwt.verify(device_token, process.env.JWT_SECRET);
+        if (decoded.phone === phone && decoded.type === 'device') {
+          const token = jwt.sign(
+            { id: user.id, role: user.role, name: user.name },
+            process.env.JWT_SECRET,
+            { expiresIn: '30d' }
+          );
+          const newDeviceToken = jwt.sign(
+            { phone, type: 'device' },
+            process.env.JWT_SECRET,
+            { expiresIn: '365d' }
+          );
+          return res.json({ token, user: { id: user.id, name: user.name, role: user.role }, device_token: newDeviceToken });
+        }
+      } catch {
+        // Invalid device token, fall through to PIN
+      }
+    }
+
+    if (!pin) return res.status(400).json({ error: 'Введите ПИН-код' });
+    if (user.pin !== pin) return res.status(403).json({ error: 'Неверный ПИН-код' });
+
     const token = jwt.sign(
       { id: user.id, role: user.role, name: user.name },
       process.env.JWT_SECRET,
       { expiresIn: '30d' }
     );
-    res.json({ token, user: { id: user.id, name: user.name, role: user.role } });
+    const newDeviceToken = jwt.sign(
+      { phone, type: 'device' },
+      process.env.JWT_SECRET,
+      { expiresIn: '365d' }
+    );
+    res.json({ token, user: { id: user.id, name: user.name, role: user.role }, device_token: newDeviceToken });
   } catch (err) {
     console.error('PIN auth error:', err);
     res.status(500).json({ error: 'Ошибка авторизации' });
