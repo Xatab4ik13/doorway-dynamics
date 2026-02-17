@@ -15,6 +15,9 @@ const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Монтажник": getUserName(r.installer_id) || "",
   "Партнёр": getUserName(r.partner_id) || "",
   "Сумма": r.amount != null ? r.amount : "",
+  "Межкомнатные": r.interior_doors != null ? r.interior_doors : "",
+  "Входные": r.entrance_doors != null ? r.entrance_doors : "",
+  "Перегородки": r.partitions != null ? r.partitions : "",
   "Дата создания": r.created_at?.split("T")[0] || "",
   "Согласованная дата": r.agreed_date?.split("T")[0] || "",
 });

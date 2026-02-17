@@ -17,6 +17,9 @@ export interface ApiRequest {
   work_description?: string;
   notes?: string;
   photos?: { url: string; type: string; stage: string; uploaded_at: string }[];
+  interior_doors?: number;
+  entrance_doors?: number;
+  partitions?: number;
   source: "site" | "partner";
   partner_id?: string;
   measurer_id?: string;

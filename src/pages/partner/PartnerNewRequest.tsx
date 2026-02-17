@@ -25,6 +25,9 @@ const PartnerNewRequest = () => {
   const [extraName, setExtraName] = useState("");
   const [extraPhone, setExtraPhone] = useState("");
   const [comment, setComment] = useState("");
+  const [interiorDoors, setInteriorDoors] = useState("");
+  const [entranceDoors, setEntranceDoors] = useState("");
+  const [partitions, setPartitions] = useState("");
   const [agree, setAgree] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -100,6 +103,11 @@ const PartnerNewRequest = () => {
           extra_name: extraName || undefined,
           extra_phone: extraPhone || undefined,
           source: "partner",
+          ...(type === "installation" ? {
+            interior_doors: interiorDoors ? parseInt(interiorDoors) : undefined,
+            entrance_doors: entranceDoors ? parseInt(entranceDoors) : undefined,
+            partitions: partitions ? parseInt(partitions) : undefined,
+          } : {}),
           ...(photos ? { photos } : {}),
         },
         auth: true,
@@ -122,6 +130,9 @@ const PartnerNewRequest = () => {
     setExtraName("");
     setExtraPhone("");
     setComment("");
+    setInteriorDoors("");
+    setEntranceDoors("");
+    setPartitions("");
     setAgree(false);
     setSubmitted(false);
     setErrors({});
@@ -239,6 +250,27 @@ const PartnerNewRequest = () => {
                   placeholder={type === "reclamation" ? "Опишите проблему подробно..." : "Дополнительная информация..."} />
                 {errors.comment && <p className="text-xs text-destructive mt-1">{errors.comment}</p>}
               </div>
+
+              {/* Door quantities — only for installation */}
+              {type === "installation" && (
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-2 block">Количество изделий</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Межкомнатные</label>
+                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные</label>
+                      <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородки</label>
+                      <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* File upload */}
               <div>
