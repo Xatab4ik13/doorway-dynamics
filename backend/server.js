@@ -491,7 +491,7 @@ app.get('/api/requests', auth, async (req, res) => {
 // Публичная заявка с сайта
 app.post('/api/requests/public', async (req, res) => {
   try {
-    const { client_name, client_phone, client_address, city, type, work_description, extra_name, extra_phone, source } = req.body;
+    const { client_name, client_phone, client_address, city, type, work_description, extra_name, extra_phone, source, photos } = req.body;
     if (!client_name || !client_phone || !client_address) {
       return res.status(400).json({ error: 'Заполните обязательные поля' });
     }
@@ -499,9 +499,9 @@ app.post('/api/requests/public', async (req, res) => {
     const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, work_description, extra_name, extra_phone, source, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'new') RETURNING *`,
-      [number, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, extra_name || null, extra_phone || null, source || 'site']
+      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, work_description, extra_name, extra_phone, source, photos, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, 'new') RETURNING *`,
+      [number, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, extra_name || null, extra_phone || null, source || 'site', photos ? JSON.stringify(photos) : '[]']
     );
 
     const req_data = rows[0];
