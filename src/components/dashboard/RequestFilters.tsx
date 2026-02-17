@@ -67,6 +67,7 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
+            autoComplete="off"
             placeholder="Поиск по имени, номеру, адресу, телефону..."
             value={filters.search}
             onChange={(e) => set("search", e.target.value)}

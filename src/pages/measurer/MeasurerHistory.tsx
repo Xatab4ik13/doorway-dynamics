@@ -30,7 +30,7 @@ const MeasurerHistory = () => {
           <h1 className="text-2xl font-heading font-bold">История заказов</h1>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск..."
+            <input type="text" autoComplete="off" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск..."
               className="pl-9 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring w-56" />
           </div>
         </div>
