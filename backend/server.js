@@ -520,14 +520,14 @@ app.post('/api/requests/public', async (req, res) => {
 // Создать заявку (из кабинета)
 app.post('/api/requests', auth, async (req, res) => {
   try {
-    const { client_name, client_phone, client_address, city, type, work_description, source, comment, extra_name, extra_phone, photos } = req.body;
+    const { client_name, client_phone, client_address, city, type, work_description, source, comment, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions } = req.body;
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
     const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, 'new') RETURNING *`,
-      [number, req.user.id, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]']
+      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, 'new') RETURNING *`,
+      [number, req.user.id, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null]
     );
 
     const req_data = rows[0];
