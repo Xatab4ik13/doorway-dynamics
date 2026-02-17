@@ -421,6 +421,29 @@ app.delete('/api/users/:id', auth, async (req, res) => {
   }
 });
 
+// Public upload for reclamation only (no auth)
+app.post('/api/upload/reclamation', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Файл не передан' });
+    if (req.file.size > 10 * 1024 * 1024) return res.status(400).json({ error: 'Максимум 10 МБ' });
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    if (!allowed.includes(req.file.mimetype)) return res.status(400).json({ error: 'Допустимы: JPG, PNG, WEBP, PDF' });
+    const ext = req.file.originalname.split('.').pop();
+    const key = 'reclamations/' + crypto.randomUUID() + '.' + ext;
+    await s3.send(new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype,
+      ACL: 'public-read',
+    }));
+    const url = process.env.S3_ENDPOINT + '/' + process.env.S3_BUCKET + '/' + key;
+    res.json({ url, key });
+  } catch (err) {
+    console.error('Public reclamation upload error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
 
 
 // === Requests ===

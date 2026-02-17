@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ShieldCheck, Clock, CheckCircle, Phone, Upload, Trash2, Loader2 } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
-import { uploadFile } from "@/lib/api";
 
 const formatPhone = (value: string): string => {
   const digits = value.replace(/\D/g, "");
@@ -60,7 +59,11 @@ const ReclamationPage = () => {
       if (files.length > 0) {
         const uploaded = await Promise.all(
           files.map(async (f) => {
-            const result = await uploadFile(f.file, "requests");
+            const formData = new FormData();
+            formData.append("file", f.file);
+            const uploadRes = await fetch(`${API_URL}/api/upload/reclamation`, { method: "POST", body: formData });
+            const result = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(result.error || "Ошибка загрузки файла");
             return {
               url: result.url,
               type: f.file.type.startsWith("image/") ? "image" : "document",
