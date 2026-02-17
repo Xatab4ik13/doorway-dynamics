@@ -1,8 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { ShieldCheck, Clock, CheckCircle, Phone } from "lucide-react";
+import { ShieldCheck, Clock, CheckCircle, Phone, Upload, Trash2, Loader2 } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
+import { uploadFile } from "@/lib/api";
 
 const formatPhone = (value: string): string => {
   const digits = value.replace(/\D/g, "");
@@ -26,6 +27,7 @@ const ReclamationPage = () => {
   }, []);
 
   const formRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
@@ -33,6 +35,8 @@ const ReclamationPage = () => {
     address: "",
     description: "",
   });
+  const [files, setFiles] = useState<{ file: File; preview?: string }[]>([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const cityMap: Record<string, string> = { moscow: "Москва", spb: "Санкт-Петербург" };
 
@@ -40,15 +44,63 @@ const ReclamationPage = () => {
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const API_URL = import.meta.env.VITE_API_URL || "https://api.primedoor.ru";
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedCity) {
       toast.error("Пожалуйста, выберите город");
       return;
     }
-    toast.success("Заявка на рекламацию отправлена! Мы свяжемся с вами в ближайшее время.");
-    setForm({ name: "", phone: "", address: "", description: "" });
-    setSelectedCity(null);
+
+    setSubmitting(true);
+    try {
+      // Upload files if any
+      let photos: { url: string; type: string; stage: string; uploaded_at: string }[] | undefined;
+      if (files.length > 0) {
+        const uploaded = await Promise.all(
+          files.map(async (f) => {
+            const result = await uploadFile(f.file, "requests");
+            return {
+              url: result.url,
+              type: f.file.type.startsWith("image/") ? "image" : "document",
+              stage: "general",
+              uploaded_at: new Date().toISOString(),
+            };
+          })
+        );
+        photos = uploaded;
+      }
+
+      const res = await fetch(`${API_URL}/api/requests/public`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          client_name: form.name,
+          client_phone: form.phone,
+          client_address: form.address,
+          city: cityMap[selectedCity],
+          type: "reclamation",
+          work_description: form.description,
+          source: "site",
+          ...(photos ? { photos } : {}),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Ошибка сервера");
+      }
+
+      toast.success("Заявка на рекламацию отправлена! Мы свяжемся с вами в ближайшее время.");
+      setForm({ name: "", phone: "", address: "", description: "" });
+      setSelectedCity(null);
+      setFiles([]);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка отправки заявки");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const inputClass =
@@ -264,6 +316,46 @@ const ReclamationPage = () => {
                 className={`${selectedCity ? inputClass : disabledInputClass} resize-none`}
               />
 
+              {/* File upload */}
+              <div className="pt-6">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  disabled={!selectedCity}
+                  onChange={(e) => {
+                    const newFiles = Array.from(e.target.files || []).map(f => ({
+                      file: f,
+                      preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined,
+                    }));
+                    setFiles(prev => [...prev, ...newFiles]);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={!selectedCity}
+                  onClick={() => fileInputRef.current?.click()}
+                  className={`w-full py-4 border border-dashed border-border text-xs uppercase tracking-[0.15em] text-muted-foreground hover:border-foreground/50 hover:text-foreground transition-all duration-300 flex items-center justify-center gap-2 ${!selectedCity ? "opacity-30 cursor-not-allowed" : ""}`}
+                >
+                  <Upload size={14} />
+                  Прикрепить фото или документы
+                </button>
+                {files.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {files.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between px-3 py-2 border border-border/50 text-xs text-muted-foreground">
+                        <span className="truncate flex-1">{f.file.name}</span>
+                        <button type="button" onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-foreground ml-2">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <p className={`text-xs max-w-sm ${selectedCity ? "text-muted-foreground" : "text-muted-foreground/30"}`}>
                   Нажимая на кнопку, вы даете согласие на обработку{" "}
@@ -271,10 +363,11 @@ const ReclamationPage = () => {
                 </p>
                 <button
                   type="submit"
-                  disabled={!selectedCity}
-                  className={`text-xs uppercase tracking-[0.15em] font-medium px-8 py-4 bg-foreground text-background hover:bg-foreground/80 transition-colors duration-300 ${!selectedCity ? "opacity-30 cursor-not-allowed" : ""}`}
+                  disabled={!selectedCity || submitting}
+                  className={`text-xs uppercase tracking-[0.15em] font-medium px-8 py-4 bg-foreground text-background hover:bg-foreground/80 transition-colors duration-300 flex items-center gap-2 ${!selectedCity || submitting ? "opacity-30 cursor-not-allowed" : ""}`}
                 >
-                  Отправить заявку
+                  {submitting && <Loader2 size={14} className="animate-spin" />}
+                  {submitting ? "Отправка..." : "Отправить заявку"}
                 </button>
               </div>
             </form>
