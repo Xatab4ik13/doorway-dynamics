@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { UserPlus, Loader2, Phone, Lock, User } from "lucide-react";
+import { UserPlus, Loader2, Phone, Lock, User, ShieldCheck } from "lucide-react";
 import { roleLabels } from "@/data/mockDashboard";
 import api from "@/lib/api";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 const roles = [
   { value: "measurer", label: roleLabels.measurer },
@@ -14,6 +15,12 @@ const roles = [
   { value: "manager", label: roleLabels.manager },
 ] as const;
 
+function generateCaptcha() {
+  const a = Math.floor(Math.random() * 10) + 1;
+  const b = Math.floor(Math.random() * 10) + 1;
+  return { question: `${a} + ${b} = ?`, answer: String(a + b) };
+}
+
 const RegisterPage = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,15 +28,22 @@ const RegisterPage = () => {
   const [role, setRole] = useState("measurer");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const navigate = useNavigate();
+  const [captchaInput, setCaptchaInput] = useState("");
+  const [captcha, setCaptcha] = useState(generateCaptcha);
 
   const inputClass =
     "w-full bg-transparent border-b border-border py-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-foreground transition-colors duration-500";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!/^\d{4}$/.test(pin)) {
+    if (pin.length !== 4) {
       toast.error("ПИН-код должен содержать ровно 4 цифры");
+      return;
+    }
+    if (captchaInput !== captcha.answer) {
+      toast.error("Неверный ответ на проверку");
+      setCaptcha(generateCaptcha());
+      setCaptchaInput("");
       return;
     }
     setLoading(true);
@@ -42,6 +56,8 @@ const RegisterPage = () => {
       toast.success("Заявка на регистрацию отправлена!");
     } catch (err: any) {
       toast.error(err.message || "Ошибка регистрации");
+      setCaptcha(generateCaptcha());
+      setCaptchaInput("");
     } finally {
       setLoading(false);
     }
@@ -55,8 +71,8 @@ const RegisterPage = () => {
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md text-center space-y-6"
         >
-          <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto">
-            <UserPlus size={32} className="text-green-500" />
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <ShieldCheck size={32} className="text-primary" />
           </div>
           <h1 className="heading-md">Заявка отправлена!</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
@@ -114,24 +130,28 @@ const RegisterPage = () => {
               className={inputClass + " pl-7"}
             />
           </div>
-          <div className="relative">
-            <Lock size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={4}
-              placeholder="4-значный ПИН-код"
-              required
-              value={pin}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                setPin(val);
-              }}
-              className={inputClass + " pl-7 tracking-[0.5em]"}
-            />
-          </div>
 
           <div className="pt-6 pb-2">
+            <label className="text-xs font-medium text-muted-foreground mb-3 block flex items-center gap-1.5">
+              <Lock size={12} /> Придумайте 4-значный ПИН-код
+            </label>
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={4}
+                value={pin}
+                onChange={setPin}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                  <InputOTPSlot index={1} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                  <InputOTPSlot index={2} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                  <InputOTPSlot index={3} className="w-14 h-14 text-xl font-bold rounded-xl border" />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+          </div>
+
+          <div className="pt-4 pb-2">
             <label className="text-xs font-medium text-muted-foreground mb-3 block">Выберите роль</label>
             <div className="flex flex-wrap gap-2">
               {roles.map((r) => (
@@ -149,6 +169,22 @@ const RegisterPage = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Math captcha */}
+          <div className="pt-4">
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+              <ShieldCheck size={12} /> Проверка: {captcha.question}
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Ответ"
+              required
+              value={captchaInput}
+              onChange={(e) => setCaptchaInput(e.target.value)}
+              className={inputClass}
+            />
           </div>
 
           <div className="pt-8">
