@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Phone } from "lucide-react";
 import ContactFormComponent from "@/components/ContactForm";
+import PhoneMessengers from "@/components/PhoneMessengers";
 
 const contacts = [
   {
@@ -64,18 +65,20 @@ const ContactsPage = () => {
                       <p className="section-label mb-5">{dept.name}</p>
                       <div className="space-y-4">
                         {dept.phones.map((phone) => (
-                          <a
-                            key={phone}
-                            href={`tel:${phone.replace(/\s/g, "")}`}
-                            className="flex items-center gap-4 group"
-                          >
-                            <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center group-hover:bg-foreground group-hover:border-foreground transition-all duration-500">
-                              <Phone className="w-4 h-4 text-muted-foreground group-hover:text-background transition-colors duration-500" strokeWidth={1.5} />
-                            </div>
-                            <span className="text-lg md:text-xl font-medium text-foreground/80 group-hover:text-foreground transition-colors duration-300 tracking-wide">
-                              {phone}
-                            </span>
-                          </a>
+                          <div key={phone} className="flex items-center gap-4 group">
+                            <a
+                              href={`tel:${phone.replace(/\s/g, "")}`}
+                              className="flex items-center gap-4"
+                            >
+                              <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center group-hover:bg-foreground group-hover:border-foreground transition-all duration-500">
+                                <Phone className="w-4 h-4 text-muted-foreground group-hover:text-background transition-colors duration-500" strokeWidth={1.5} />
+                              </div>
+                              <span className="text-lg md:text-xl font-medium text-foreground/80 group-hover:text-foreground transition-colors duration-300 tracking-wide">
+                                {phone}
+                              </span>
+                            </a>
+                            <PhoneMessengers phone={phone} size="md" />
+                          </div>
                         ))}
                       </div>
                     </div>

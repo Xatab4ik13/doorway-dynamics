@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
+import PhoneMessengers from "@/components/PhoneMessengers";
 
 const Footer = () => {
   return (
@@ -66,16 +67,25 @@ const Footer = () => {
             <p className="section-label mb-6">Контакты</p>
             <div className="space-y-3 text-xs text-muted-foreground">
               <p className="text-foreground/50 uppercase tracking-[0.1em] text-[10px] mb-1">Москва</p>
-              <a href="tel:+79261663062" className="block hover:text-foreground transition-colors">
-                +7 926 166 30 62
-              </a>
-              <a href="tel:+79255700609" className="block hover:text-foreground transition-colors">
-                +7 925 570 06 09
-              </a>
+              <div className="flex items-center">
+                <a href="tel:+79261663062" className="hover:text-foreground transition-colors">
+                  +7 926 166 30 62
+                </a>
+                <PhoneMessengers phone="+79261663062" />
+              </div>
+              <div className="flex items-center">
+                <a href="tel:+79255700609" className="hover:text-foreground transition-colors">
+                  +7 925 570 06 09
+                </a>
+                <PhoneMessengers phone="+79255700609" />
+              </div>
               <p className="text-foreground/50 uppercase tracking-[0.1em] text-[10px] mt-4 mb-1">Санкт-Петербург</p>
-              <a href="tel:+79932663504" className="block hover:text-foreground transition-colors">
-                +7 993 266 35 04
-              </a>
+              <div className="flex items-center">
+                <a href="tel:+79932663504" className="hover:text-foreground transition-colors">
+                  +7 993 266 35 04
+                </a>
+                <PhoneMessengers phone="+79932663504" />
+              </div>
             </div>
           </div>
         </div>

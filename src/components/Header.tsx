@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, X } from "lucide-react";
+import PhoneMessengers from "@/components/PhoneMessengers";
 import logo from "@/assets/logo.png";
 import menuBg from "@/assets/menu-bg.jpg";
 
@@ -271,16 +272,25 @@ const Header = () => {
                   className="flex flex-col gap-4"
                 >
                   <p className="text-white/40 uppercase tracking-[0.1em] text-[10px] mb-2">Москва</p>
-                  <a href="tel:+79261663062" className="block text-white/60 text-sm tracking-wider hover:text-white transition-colors">
-                    +7 926 166 30 62
-                  </a>
-                  <a href="tel:+79255700609" className="block text-white/60 text-sm tracking-wider hover:text-white transition-colors mt-1">
-                    +7 925 570 06 09
-                  </a>
+                  <div className="flex items-center">
+                    <a href="tel:+79261663062" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
+                      +7 926 166 30 62
+                    </a>
+                    <PhoneMessengers phone="+79261663062" variant="light" />
+                  </div>
+                  <div className="flex items-center mt-1">
+                    <a href="tel:+79255700609" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
+                      +7 925 570 06 09
+                    </a>
+                    <PhoneMessengers phone="+79255700609" variant="light" />
+                  </div>
                   <p className="text-white/40 uppercase tracking-[0.1em] text-[10px] mt-4 mb-2">Санкт-Петербург</p>
-                  <a href="tel:+79932663504" className="block text-white/60 text-sm tracking-wider hover:text-white transition-colors">
-                    +7 993 266 35 04
-                  </a>
+                  <div className="flex items-center">
+                    <a href="tel:+79932663504" className="text-white/60 text-sm tracking-wider hover:text-white transition-colors">
+                      +7 993 266 35 04
+                    </a>
+                    <PhoneMessengers phone="+79932663504" variant="light" />
+                  </div>
                   <Link
                     to="/login"
                     onClick={closeMenu}
