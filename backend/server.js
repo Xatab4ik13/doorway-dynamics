@@ -877,10 +877,15 @@ const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.timeweb.ru',
   port: parseInt(process.env.SMTP_PORT || '465'),
   secure: true,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
   auth: {
     user: process.env.SMTP_USER || 'service@primedoor.ru',
     pass: process.env.SMTP_PASS,
   },
+  logger: true,
+  debug: true,
 });
 
 app.post('/api/partner-form', async (req, res) => {
