@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Phone } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import ContactFormComponent from "@/components/ContactForm";
 import PhoneMessengers from "@/components/PhoneMessengers";
 
@@ -87,6 +87,27 @@ const ContactsPage = () => {
               </motion.div>
             ))}
           </div>
+
+          {/* Email */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            className="md:col-span-2 border border-border p-8 md:p-12"
+          >
+            <h3 className="text-2xl md:text-3xl font-heading font-bold mb-8 tracking-tight">Электронная почта</h3>
+            <div className="flex items-center gap-4 group">
+              <a href="mailto:service@primedoor.ru" className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full border border-border flex items-center justify-center group-hover:bg-foreground group-hover:border-foreground transition-all duration-500">
+                  <Mail className="w-4 h-4 text-muted-foreground group-hover:text-background transition-colors duration-500" strokeWidth={1.5} />
+                </div>
+                <span className="text-lg md:text-xl font-medium text-foreground/80 group-hover:text-foreground transition-colors duration-300 tracking-wide">
+                  service@primedoor.ru
+                </span>
+              </a>
+            </div>
+          </motion.div>
         </div>
       </div>
 

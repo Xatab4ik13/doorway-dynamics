@@ -86,6 +86,10 @@ const Footer = () => {
                 </a>
                 <PhoneMessengers phone="+79932663504" />
               </div>
+              <p className="text-foreground/50 uppercase tracking-[0.1em] text-[10px] mt-4 mb-1">Почта</p>
+              <a href="mailto:service@primedoor.ru" className="hover:text-foreground transition-colors">
+                service@primedoor.ru
+              </a>
             </div>
           </div>
         </div>
