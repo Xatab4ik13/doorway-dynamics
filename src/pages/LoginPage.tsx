@@ -7,6 +7,7 @@ import { Shield, Lock, Loader2, Phone, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { formatPhone } from "@/lib/formatPhone";
 
 type LoginMode = "pin" | "admin";
 type PinStep = "phone" | "code";
@@ -187,10 +188,11 @@ const LoginPage = () => {
                 </div>
                 <input
                   type="tel"
-                  placeholder="Номер телефона"
+                  placeholder="+7 ___ ___ __ __"
                   required
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onFocus={(e) => { if (!e.target.value) setPhone("+7"); }}
+                  onChange={(e) => setPhone(formatPhone(e.target.value))}
                   className={inputClass}
                   autoFocus
                 />

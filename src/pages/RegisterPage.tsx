@@ -7,6 +7,7 @@ import { UserPlus, Loader2, Phone, Lock, User, ShieldCheck } from "lucide-react"
 import { roleLabels } from "@/data/mockDashboard";
 import api from "@/lib/api";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { formatPhone } from "@/lib/formatPhone";
 
 const roles = [
   { value: "measurer", label: roleLabels.measurer },
@@ -123,10 +124,11 @@ const RegisterPage = () => {
             <Phone size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="tel"
-              placeholder="Номер телефона"
+              placeholder="+7 ___ ___ __ __"
               required
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onFocus={(e) => { if (!e.target.value) setPhone("+7"); }}
+              onChange={(e) => setPhone(formatPhone(e.target.value))}
               className={inputClass + " pl-7"}
             />
           </div>

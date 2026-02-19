@@ -4,23 +4,13 @@ import { toast } from "sonner";
 import { Loader2, ShieldCheck } from "lucide-react";
 import api from "@/lib/api";
 import AddressInput from "@/components/AddressInput";
+import { formatPhone } from "@/lib/formatPhone";
 
 function generateCaptcha() {
   const a = Math.floor(Math.random() * 10) + 1;
   const b = Math.floor(Math.random() * 10) + 1;
   return { question: `${a} + ${b} = ?`, answer: String(a + b) };
 }
-
-const formatPhone = (value: string): string => {
-  const digits = value.replace(/\D/g, "");
-  const d = digits.startsWith("7") ? digits : digits.startsWith("8") ? "7" + digits.slice(1) : "7" + digits;
-  let result = "+7";
-  if (d.length > 1) result += " " + d.slice(1, 4);
-  if (d.length > 4) result += " " + d.slice(4, 7);
-  if (d.length > 7) result += " " + d.slice(7, 9);
-  if (d.length > 9) result += " " + d.slice(9, 11);
-  return result;
-};
 
 const cities = [
   { id: "moscow", label: "Москва" },
