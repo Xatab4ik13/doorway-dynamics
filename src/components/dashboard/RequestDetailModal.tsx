@@ -51,7 +51,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   // Determine which assignment fields to show based on request type
   const showMeasurerField = request.type === "measurement";
-  const showInstallerField = request.type === "installation";
+  const showInstallerField = request.type === "installation" || request.type === "reclamation";
   const showDateField = true; // All types have date agreement
 
   const handleSave = async () => {
@@ -62,7 +62,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       if (canEdit) {
         if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
         if (showInstallerField && installerId) updates.installer_id = installerId;
-        if (request.type === "installation") {
+        if (request.type === "installation" || request.type === "reclamation") {
           updates.amount = amount ? parseFloat(amount) : null;
           updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
           updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
