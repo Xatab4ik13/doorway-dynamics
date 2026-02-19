@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { Handshake, CheckCircle2, Users, Gift } from "lucide-react";
+import PartnerForm from "@/components/PartnerForm";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -161,7 +162,7 @@ const PartnerPage = () => {
           </motion.h2>
           <motion.p
             initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1}
-            className="text-white/60 text-sm md:text-base leading-relaxed mb-10"
+            className="text-white/60 text-sm md:text-base leading-relaxed"
           >
             PrimeDoor Service — это спокойная, профессиональная работа без лишних обещаний.
             Мы ценим партнёров, которые разделяют такой подход, и строим отношения,
@@ -169,6 +170,9 @@ const PartnerPage = () => {
           </motion.p>
         </div>
       </section>
+
+      {/* Partner Form */}
+      <PartnerForm />
     </main>
   );
 };

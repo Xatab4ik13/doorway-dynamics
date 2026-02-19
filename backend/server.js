@@ -1,5 +1,6 @@
 // Deploy test v3
 require('dotenv').config();
+const nodemailer = require('nodemailer');
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -867,6 +868,63 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
     res.status(500).json({ error: "Ошибка удаления заявки" });
   }
 });
+
+// === Partner form (public, sends email) ===
+const partnerFormAttempts = new Map();
+setInterval(() => partnerFormAttempts.clear(), 15 * 60 * 1000);
+
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.timeweb.ru',
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: true,
+  auth: {
+    user: process.env.SMTP_USER || 'service@primedoor.ru',
+    pass: process.env.SMTP_PASS,
+  },
+});
+
+app.post('/api/partner-form', async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  const attempts = partnerFormAttempts.get(ip) || 0;
+  if (attempts >= 5) {
+    return res.status(429).json({ error: 'Слишком много попыток. Попробуйте через 15 минут.' });
+  }
+  partnerFormAttempts.set(ip, attempts + 1);
+
+  const { name, store_name, store_address, phone, email } = req.body;
+  if (!name || !store_name || !store_address || !phone || !email) {
+    return res.status(400).json({ error: 'Заполните все поля' });
+  }
+
+  try {
+    await transporter.sendMail({
+      from: '"PrimeDoor Service" <service@primedoor.ru>',
+      to: 'service@primedoor.ru',
+      subject: `Заявка на партнёрство — ${store_name}`,
+      html: `
+        <h2>Новая заявка на партнёрство</h2>
+        <table style="border-collapse:collapse;font-family:sans-serif;">
+          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">ФИО:</td><td style="padding:8px 0;">${name}</td></tr>
+          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Магазин:</td><td style="padding:8px 0;">${store_name}</td></tr>
+          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Адрес:</td><td style="padding:8px 0;">${store_address}</td></tr>
+          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Телефон:</td><td style="padding:8px 0;">${phone}</td></tr>
+          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Почта:</td><td style="padding:8px 0;">${email}</td></tr>
+        </table>
+      `,
+    });
+
+    // Also notify via Telegram
+    await notifyManagersAndAdmins(pool,
+      `🤝 <b>Заявка на партнёрство</b>\n\nФИО: ${name}\nМагазин: ${store_name}\nАдрес: ${store_address}\nТелефон: ${phone}\nПочта: ${email}`
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Partner form error:', err);
+    res.status(500).json({ error: 'Ошибка отправки. Попробуйте позже.' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
 });
