@@ -1,6 +1,5 @@
 // Deploy test v3
-require('dotenv').config();
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer'); // TODO: enable when SMTP ports are unblocked
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
@@ -869,27 +868,9 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
   }
 });
 
-// === Partner form (public, sends email) ===
+// === Partner form (public, Telegram only for now) ===
 const partnerFormAttempts = new Map();
 setInterval(() => partnerFormAttempts.clear(), 15 * 60 * 1000);
-
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.timeweb.ru',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
-  auth: {
-    user: process.env.SMTP_USER || 'service@primedoor.ru',
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-  logger: true,
-  debug: true,
-});
 
 app.post('/api/partner-form', async (req, res) => {
   const ip = req.ip || req.connection.remoteAddress;
@@ -905,23 +886,6 @@ app.post('/api/partner-form', async (req, res) => {
   }
 
   try {
-    await transporter.sendMail({
-      from: '"PrimeDoor Service" <service@primedoor.ru>',
-      to: 'service@primedoor.ru',
-      subject: `Заявка на партнёрство — ${store_name}`,
-      html: `
-        <h2>Новая заявка на партнёрство</h2>
-        <table style="border-collapse:collapse;font-family:sans-serif;">
-          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">ФИО:</td><td style="padding:8px 0;">${name}</td></tr>
-          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Магазин:</td><td style="padding:8px 0;">${store_name}</td></tr>
-          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Адрес:</td><td style="padding:8px 0;">${store_address}</td></tr>
-          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Телефон:</td><td style="padding:8px 0;">${phone}</td></tr>
-          <tr><td style="padding:8px 16px 8px 0;font-weight:bold;">Почта:</td><td style="padding:8px 0;">${email}</td></tr>
-        </table>
-      `,
-    });
-
-    // Also notify via Telegram
     await notifyManagersAndAdmins(pool,
       `🤝 <b>Заявка на партнёрство</b>\n\nФИО: ${name}\nМагазин: ${store_name}\nАдрес: ${store_address}\nТелефон: ${phone}\nПочта: ${email}`
     );
