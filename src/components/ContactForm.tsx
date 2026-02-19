@@ -1,9 +1,15 @@
 import { useState, useRef, forwardRef, useImperativeHandle } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import api from "@/lib/api";
 import AddressInput from "@/components/AddressInput";
+
+function generateCaptcha() {
+  const a = Math.floor(Math.random() * 10) + 1;
+  const b = Math.floor(Math.random() * 10) + 1;
+  return { question: `${a} + ${b} = ?`, answer: String(a + b) };
+}
 
 const formatPhone = (value: string): string => {
   const digits = value.replace(/\D/g, "");
@@ -45,7 +51,8 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
+  const [captcha, setCaptcha] = useState(generateCaptcha);
+  const [captchaInput, setCaptchaInput] = useState("");
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -65,6 +72,12 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
     }
     if (form.phone.replace(/\D/g, "").length < 11) {
       toast.error("Введите корректный номер телефона");
+      return;
+    }
+    if (captchaInput !== captcha.answer) {
+      toast.error("Неверный ответ на проверку");
+      setCaptcha(generateCaptcha());
+      setCaptchaInput("");
       return;
     }
 
@@ -88,6 +101,8 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
       setForm({ name: "", phone: "", extraName: "", extraPhone: "", address: "", workDescription: "" });
       setSelectedCity(null);
       setSelectedType(null);
+      setCaptcha(generateCaptcha());
+      setCaptchaInput("");
     } catch (err: any) {
       toast.error(err.message || "Ошибка отправки заявки");
     } finally {
@@ -205,6 +220,22 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
             <textarea placeholder={actionLabel} required disabled={!filtersSelected} rows={3}
               value={form.workDescription} onChange={(e) => setForm({ ...form, workDescription: e.target.value })}
               className={`${filtersSelected ? inputClass : disabledInputClass} resize-none`} />
+
+            {/* Captcha */}
+            <div className="pt-6">
+              <label className={`text-xs font-medium flex items-center gap-1.5 mb-2 ${filtersSelected ? "text-muted-foreground" : "text-muted-foreground/30"}`}>
+                <ShieldCheck size={12} /> Проверка: {captcha.question}
+              </label>
+              <input
+                type="text"
+                placeholder="Ответ"
+                required
+                disabled={!filtersSelected}
+                value={captchaInput}
+                onChange={(e) => setCaptchaInput(e.target.value)}
+                className={filtersSelected ? inputClass : disabledInputClass}
+              />
+            </div>
 
             <div className="pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <p className={`text-xs max-w-sm ${filtersSelected ? "text-muted-foreground" : "text-muted-foreground/30"}`}>
