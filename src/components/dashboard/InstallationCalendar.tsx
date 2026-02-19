@@ -108,13 +108,24 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore }: {
     <div className="flex items-center justify-between">
       <span className="text-xs font-mono text-muted-foreground">{r.number}</span>
       <div className="flex items-center gap-1.5">
-        {r.type === "installation" && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-accent text-muted-foreground">
-            {(r.interior_doors ?? 0) > 0 && `МК:${r.interior_doors}`}
-            {(r.interior_doors ?? 0) > 0 && (r.entrance_doors ?? 0) > 0 && " "}
-            {(r.entrance_doors ?? 0) > 0 && `ВХ:${r.entrance_doors}`}
-            {(r.partitions ?? 0) > 0 && ` П:${r.partitions}`}
-          </span>
+        {r.type === "installation" && ((r.interior_doors ?? 0) > 0 || (r.entrance_doors ?? 0) > 0 || (r.partitions ?? 0) > 0) && (
+          <div className="flex flex-wrap gap-1">
+            {(r.interior_doors ?? 0) > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-green-100 text-green-700">
+                Межком. {r.interior_doors}
+              </span>
+            )}
+            {(r.entrance_doors ?? 0) > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-blue-100 text-blue-700">
+                Входные {r.entrance_doors}
+              </span>
+            )}
+            {(r.partitions ?? 0) > 0 && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700">
+                Перег. {r.partitions} ств.
+              </span>
+            )}
+          </div>
         )}
         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColors[r.status as RequestStatus] || "bg-muted text-muted-foreground"}`}>
           {statusLabels[r.status as RequestStatus] || r.status}
