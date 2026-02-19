@@ -202,7 +202,7 @@ const InstallerDashboard = () => {
                       )}
                       {selected.partitions != null && (
                         <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
-                          Перегородки: {selected.partitions}
+                          Перегородка (кол-во створок): {selected.partitions}
                         </span>
                       )}
                     </div>
