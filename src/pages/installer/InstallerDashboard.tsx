@@ -188,6 +188,25 @@ const InstallerDashboard = () => {
                   <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> {selected.client_address}</div>
                   <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> {selected.client_phone}</div>
+                  {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {selected.interior_doors != null && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
+                          Межкомнатные: {selected.interior_doors}
+                        </span>
+                      )}
+                      {selected.entrance_doors != null && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
+                          Входные: {selected.entrance_doors}
+                        </span>
+                      )}
+                      {selected.partitions != null && (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
+                          Перегородки: {selected.partitions}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   {selected.extra_name && (
                     <div className="mt-2 p-2 rounded-lg bg-accent/50">
                       <p className="text-xs text-muted-foreground">Доп. контакт</p>
