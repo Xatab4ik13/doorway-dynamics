@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Handshake, CheckCircle2, Users, Gift, ArrowRight } from "lucide-react";
+import { Handshake, CheckCircle2, Users, Gift } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -168,17 +167,6 @@ const PartnerPage = () => {
             Мы ценим партнёров, которые разделяют такой подход, и строим отношения,
             основанные на доверии и качестве.
           </motion.p>
-          <motion.div
-            initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={2}
-          >
-            <Link
-              to="/request"
-              className="inline-flex items-center gap-2 px-8 py-3 bg-white text-black font-medium text-sm uppercase tracking-widest hover:bg-white/90 transition-colors"
-            >
-              Оставить заявку
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
         </div>
       </section>
     </main>
