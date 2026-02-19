@@ -14,7 +14,7 @@ const serviceTypes = [
   { id: "entrance", label: "Установка входных дверей" },
 ];
 
-import { priceData, formatPrice, type PriceItem } from "@/data/priceData";
+import { priceData, measurementData, formatPrice, type PriceItem } from "@/data/priceData";
 
 const preparationItems = [
   {
@@ -201,6 +201,54 @@ const ServicesPage = () => {
                 </button>
               ))}
             </div>
+          </motion.div>
+
+          {/* Measurement pricing */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mb-16"
+          >
+            <p className="section-label mb-6">Стоимость замера</p>
+            {(() => {
+              const measurement = measurementData[cityKey];
+              const renderBlock = (block: typeof measurement.main) => (
+                <div className="mb-6">
+                  <h3
+                    className="text-lg md:text-xl font-bold mb-4 tracking-tight"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
+                    {block.title}
+                  </h3>
+                  <div className="border border-border">
+                    {block.items.map((item, i) => (
+                      <div
+                        key={i}
+                        className="grid grid-cols-[1fr_auto] border-b border-border last:border-b-0 hover:bg-secondary/30 transition-colors duration-300"
+                      >
+                        <div className="px-3 md:px-4 py-3 text-sm text-foreground/80">
+                          {item.label || ""}
+                        </div>
+                        <div className="px-3 md:px-4 py-3 text-sm font-medium text-foreground text-right">
+                          {item.value}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+              return (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div>
+                    {renderBlock(measurement.main)}
+                  </div>
+                  <div>
+                    {renderBlock(measurement.extra)}
+                  </div>
+                </div>
+              );
+            })()}
           </motion.div>
 
           {/* Price list */}
