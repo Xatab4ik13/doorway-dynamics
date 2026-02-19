@@ -22,6 +22,7 @@ const Footer = () => {
                 { label: "Услуги", path: "/services" },
                 { label: "Контакты", path: "/contacts" },
                 { label: "Новости", path: "/news" },
+                { label: "Стать партнёром", path: "/become-partner" },
               ].map((item) => (
                 <li key={item.path}>
                   <Link to={item.path} className="text-xs text-muted-foreground hover:text-foreground transition-colors duration-300">
