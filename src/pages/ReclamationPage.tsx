@@ -3,17 +3,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { ShieldCheck, Clock, CheckCircle, Phone, Upload, Trash2, Loader2 } from "lucide-react";
 import AddressInput from "@/components/AddressInput";
-
-const formatPhone = (value: string): string => {
-  const digits = value.replace(/\D/g, "");
-  const d = digits.startsWith("7") ? digits : digits.startsWith("8") ? "7" + digits.slice(1) : "7" + digits;
-  let result = "+7";
-  if (d.length > 1) result += " " + d.slice(1, 4);
-  if (d.length > 4) result += " " + d.slice(4, 7);
-  if (d.length > 7) result += " " + d.slice(7, 9);
-  if (d.length > 9) result += " " + d.slice(9, 11);
-  return result;
-};
+import { formatPhone } from "@/lib/formatPhone";
 
 const cities = [
   { id: "moscow", label: "Москва" },

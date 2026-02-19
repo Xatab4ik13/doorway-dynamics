@@ -5,6 +5,7 @@ import { requestTypeLabels } from "@/data/mockDashboard";
 import { motion, AnimatePresence } from "framer-motion";
 import AddressInput from "@/components/AddressInput";
 import { uploadFile } from "@/lib/api";
+import { formatPhone } from "@/lib/formatPhone";
 
 const cities = ["Москва", "Санкт-Петербург"];
 
@@ -30,17 +31,6 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   const [files, setFiles] = useState<{ file: File; preview?: string }[]>([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 11);
-    if (digits.length === 0) return "";
-    let formatted = "+7";
-    if (digits.length > 1) formatted += " " + digits.slice(1, 4);
-    if (digits.length > 4) formatted += " " + digits.slice(4, 7);
-    if (digits.length > 7) formatted += " " + digits.slice(7, 9);
-    if (digits.length > 9) formatted += " " + digits.slice(9, 11);
-    return formatted;
-  };
 
   const validate = () => {
     const e: Record<string, string> = {};
