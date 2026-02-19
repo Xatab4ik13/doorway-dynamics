@@ -13,7 +13,6 @@ const roles = [
   { value: "measurer", label: roleLabels.measurer },
   { value: "installer", label: roleLabels.installer },
   { value: "partner", label: roleLabels.partner },
-  { value: "manager", label: roleLabels.manager },
 ] as const;
 
 function generateCaptcha() {

@@ -168,7 +168,7 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore }: {
       </div>
     )}
 
-    {r.type === "installation" && (
+    {(r.type === "installation" || r.type === "reclamation") && (
       <CalendarInstallerAssign request={r} installers={installers} getUserName={getUserName} onAssign={onAssign} />
     )}
 
