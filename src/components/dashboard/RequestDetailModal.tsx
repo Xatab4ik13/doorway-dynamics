@@ -363,7 +363,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                       </div>
                       <div>
-                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородки</label>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородка (кол-во створок)</label>
                         <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                       </div>
@@ -386,7 +386,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="font-semibold">{request.entrance_doors || 0}</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-muted-foreground">Перегородки</p>
+                      <p className="text-[10px] text-muted-foreground">Перегородка (кол-во створок)</p>
                       <p className="font-semibold">{request.partitions || 0}</p>
                     </div>
                   </div>

@@ -210,7 +210,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
                     <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
                   </div>
                   <div>
-                    <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородки</label>
+                    <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородка (кол-во створок)</label>
                     <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
                   </div>
                 </div>
