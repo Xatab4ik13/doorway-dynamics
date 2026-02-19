@@ -103,6 +103,52 @@ export const priceData: Record<string, PriceItem[]> = {
   ],
 };
 
+export type MeasurementBlock = {
+  title: string;
+  items: { label: string; value: string }[];
+};
+
+export const measurementData: Record<"moscow" | "spb", { main: MeasurementBlock; extra: MeasurementBlock }> = {
+  moscow: {
+    main: {
+      title: "Замер дверей (Москва)",
+      items: [
+        { label: "До 10 дверей", value: "2 000 ₽" },
+        { label: "Каждый последующий бланк", value: "+500 ₽" },
+        { label: "Выезд за МКАД", value: "50 ₽ за каждый км" },
+        { label: "", value: "Расчёт производится в одну сторону" },
+      ],
+    },
+    extra: {
+      title: "Дополнительные замеры",
+      items: [
+        { label: "Панель на входную дверь (без разбора)", value: "2 000 ₽" },
+        { label: "Плинтуса (до 100 пог. м)", value: "2 000 ₽" },
+        { label: "Стеновые панели", value: "Индивидуальный просчёт" },
+      ],
+    },
+  },
+  spb: {
+    main: {
+      title: "Замер дверей (Санкт-Петербург)",
+      items: [
+        { label: "До 10 дверей", value: "1 500 ₽" },
+        { label: "Каждый последующий бланк", value: "+500 ₽" },
+        { label: "Выезд за КАД", value: "60 ₽ за каждый км" },
+        { label: "", value: "Расчёт производится в одну сторону" },
+      ],
+    },
+    extra: {
+      title: "Дополнительные замеры",
+      items: [
+        { label: "Панель на входную дверь (без разбора)", value: "1 500 ₽" },
+        { label: "Плинтуса (до 100 пог. м)", value: "1 500 ₽" },
+        { label: "Стеновые панели", value: "Индивидуальный просчёт" },
+      ],
+    },
+  },
+};
+
 export const serviceTypeLabels: Record<string, string> = {
   interior: "Межкомнатные двери",
   entrance: "Входные двери",
