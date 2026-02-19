@@ -875,14 +875,17 @@ setInterval(() => partnerFormAttempts.clear(), 15 * 60 * 1000);
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.timeweb.ru',
-  port: parseInt(process.env.SMTP_PORT || '465'),
-  secure: true,
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false,
   connectionTimeout: 10000,
   greetingTimeout: 10000,
   socketTimeout: 15000,
   auth: {
     user: process.env.SMTP_USER || 'service@primedoor.ru',
     pass: process.env.SMTP_PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
   },
   logger: true,
   debug: true,
