@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
+import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,7 +62,7 @@ const InstallerDashboard = () => {
   const handleConfirmDate = async () => {
     if (!agreedDate || !selected) return;
     if (!selected.agreed_date) {
-      toast.error("Дата монтажа назначается менеджером");
+      toast.error(selected.type === "reclamation" ? "Дата визита назначается менеджером" : "Дата монтажа назначается менеджером");
       return;
     }
     if (!rescheduleComment.trim()) {
@@ -73,7 +73,7 @@ const InstallerDashboard = () => {
       const updated = await updateRequest(selected.id, {
         agreed_date: agreedDate,
         status_comment: rescheduleComment.trim(),
-        status: "installation_rescheduled" as any,
+        status: (selected.type === "reclamation" ? "date_agreed" : "installation_rescheduled") as any,
       });
       setDateConfirmed(true);
       setRescheduleOpen(false);
@@ -82,7 +82,8 @@ const InstallerDashboard = () => {
     } catch {}
   };
 
-  const isComplete = dateConfirmed && doorsInstalled.trim() && hardwareInstalled.trim() && clientAccepted && uploadedFiles.length > 0;
+  const isReclamation = selected?.type === "reclamation";
+  const isComplete = dateConfirmed && doorsInstalled.trim() && (isReclamation || hardwareInstalled.trim()) && clientAccepted && uploadedFiles.length > 0;
 
   const handleComplete = async () => {
     if (!isComplete) { setValidationShown(true); return; }
@@ -92,11 +93,13 @@ const InstallerDashboard = () => {
       const existingPhotos = selected.photos || [];
       await updateRequest(selected.id, {
         status: "closed" as any,
-        notes: `Двери: ${doorsInstalled}, Фурнитура: ${hardwareInstalled}. ${defects ? `Дефекты: ${defects}` : ""}`,
+        notes: selected.type === "reclamation"
+          ? `Результат: ${doorsInstalled}. ${defects ? `Замечания: ${defects}` : ""}`
+          : `Двери: ${doorsInstalled}, Фурнитура: ${hardwareInstalled}. ${defects ? `Дефекты: ${defects}` : ""}`,
         photos: [...existingPhotos, ...allPhotos] as any,
       });
       setSelected(null);
-      toast.success("Монтаж завершён");
+      toast.success(selected.type === "reclamation" ? "Рекламация закрыта" : "Монтаж завершён");
     } catch {}
   };
 
@@ -108,8 +111,8 @@ const InstallerDashboard = () => {
   const missingFields: string[] = [];
   if (validationShown && !isComplete) {
     if (!dateConfirmed) missingFields.push("Согласованная дата");
-    if (!doorsInstalled.trim()) missingFields.push("Установленные двери");
-    if (!hardwareInstalled.trim()) missingFields.push("Фурнитура");
+    if (!doorsInstalled.trim()) missingFields.push(isReclamation ? "Описание работ" : "Установленные двери");
+    if (!isReclamation && !hardwareInstalled.trim()) missingFields.push("Фурнитура");
     if (!clientAccepted) missingFields.push("Подтверждение клиента");
     if (uploadedFiles.length === 0) missingFields.push("Фото / файлы");
   }
@@ -139,6 +142,9 @@ const InstallerDashboard = () => {
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
                           {statusLabels[r.status as RequestStatus] || r.status}
                         </span>
+                        <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent text-muted-foreground">
+                          {requestTypeLabels[r.type] || r.type}
+                        </span>
                       </div>
                       <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> {r.client_address}</div>
@@ -159,7 +165,7 @@ const InstallerDashboard = () => {
             {doneRequests.length > 0 && (
               <>
                 <h2 className="text-sm font-medium text-muted-foreground mt-4 flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-green-600" /> Монтаж выполнен
+                  <CheckCircle2 size={16} className="text-green-600" /> Выполнено
                 </h2>
                 {doneRequests.map((r) => (
                   <Card key={r.id} className="border-l-4 border-l-green-400 opacity-70">
@@ -270,7 +276,7 @@ const InstallerDashboard = () => {
                   <div className="flex items-start gap-2">
                     <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-sm font-medium text-amber-800">Ожидание даты монтажа</p>
+                      <p className="text-sm font-medium text-amber-800">{selected.type === "reclamation" ? "Ожидание даты визита" : "Ожидание даты монтажа"}</p>
                       <p className="text-xs text-amber-700">Дата будет назначена менеджером после согласования с клиентом.</p>
                     </div>
                   </div>
@@ -282,7 +288,7 @@ const InstallerDashboard = () => {
                   <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
                     <div className="flex items-center gap-2">
                       <Calendar size={14} className="text-primary" />
-                      <span className="text-sm font-medium text-primary">Дата монтажа: {selected.agreed_date.split("T")[0]}</span>
+                      <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}</span>
                     </div>
                     <button
                       onClick={() => setRescheduleOpen(!rescheduleOpen)}
@@ -327,19 +333,21 @@ const InstallerDashboard = () => {
 
               {dateConfirmed && (
                 <div className="border-t border-border pt-4 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2"><ClipboardCheck size={16} /> Отчёт о монтаже</h3>
+                  <h3 className="text-sm font-semibold flex items-center gap-2"><ClipboardCheck size={16} /> {isReclamation ? "Отчёт о рекламации" : "Отчёт о монтаже"}</h3>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Установленные двери <span className="text-destructive">*</span></label>
-                      <input type="text" value={doorsInstalled} onChange={(e) => setDoorsInstalled(e.target.value)} placeholder="3 шт. межкомнатные"
+                     <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">{isReclamation ? "Что сделано" : "Установленные двери"} <span className="text-destructive">*</span></label>
+                      <input type="text" value={doorsInstalled} onChange={(e) => setDoorsInstalled(e.target.value)} placeholder={isReclamation ? "Описание выполненных работ" : "3 шт. межкомнатные"}
                         className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
+                    {!isReclamation && (
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">Фурнитура <span className="text-destructive">*</span></label>
                       <input type="text" value={hardwareInstalled} onChange={(e) => setHardwareInstalled(e.target.value)} placeholder="Ручки, петли, замки..."
                         className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
+                    )}
                     <div className="sm:col-span-2">
                       <label className="text-xs font-medium text-muted-foreground mb-1 block">Дефекты / замечания</label>
                       <textarea value={defects} onChange={(e) => setDefects(e.target.value)} rows={2} placeholder="Если есть замечания..."
@@ -386,7 +394,7 @@ const InstallerDashboard = () => {
                     <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
                     <button onClick={handleComplete}
                       className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
-                      <CheckCircle2 size={16} /> Монтаж выполнен
+                      <CheckCircle2 size={16} /> {isReclamation ? "Рекламация закрыта" : "Монтаж выполнен"}
                     </button>
                   </div>
                 </div>
