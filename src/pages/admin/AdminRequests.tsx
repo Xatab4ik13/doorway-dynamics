@@ -116,9 +116,6 @@ const AdminRequests = () => {
                         <td className="py-3.5 pr-4 text-xs text-muted-foreground">{r.city || "—"}</td>
                         <td className="py-3.5 pr-4 text-xs">
                           {requestTypeLabels[r.type] || r.type}
-                          {r.type === "reclamation" && (
-                            <span className="ml-1 text-[10px] text-emerald-600 font-medium">Бесплатно</span>
-                          )}
                         </td>
                         <td className="py-3.5 pr-4">
                           <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
