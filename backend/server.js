@@ -9,6 +9,15 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 
+// === Нормализация телефона ===
+function normalizePhone(phone) {
+  if (!phone) return phone;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 10) return phone;
+  const d = digits.startsWith('7') ? digits : digits.startsWith('8') ? '7' + digits.slice(1) : '7' + digits;
+  return '+7' + d.slice(1, 11);
+}
+
 // === Telegram уведомления ===
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const SITE_URL = 'https://primedoor.ru';
@@ -216,7 +225,8 @@ app.post('/api/auth/register', async (req, res) => {
   }
   registerAttempts.set(ip, attempts + 1);
 
-  const { name, phone, pin, role } = req.body;
+  const { name, phone: rawPhone, pin, role } = req.body;
+  const phone = normalizePhone(rawPhone);
   if (!name || !phone || !pin || !role) {
     return res.status(400).json({ error: 'Заполните все обязательные поля' });
   }
@@ -248,7 +258,8 @@ app.post('/api/auth/register', async (req, res) => {
 
 // Login by phone + PIN (with device token support)
 app.post('/api/auth/pin', async (req, res) => {
-  const { phone, pin, device_token } = req.body;
+  const { phone: rawPhone, pin, device_token } = req.body;
+  const phone = normalizePhone(rawPhone);
   if (!phone) return res.status(400).json({ error: 'Введите телефон' });
   try {
     const { rows } = await pool.query('SELECT * FROM users WHERE phone = $1', [phone]);
@@ -514,7 +525,9 @@ app.get('/api/requests', auth, async (req, res) => {
 // Публичная заявка с сайта
 app.post('/api/requests/public', async (req, res) => {
   try {
-    const { client_name, client_phone, client_address, city, type, work_description, extra_name, extra_phone, source, photos } = req.body;
+    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, extra_name, extra_phone: rawExtraPhone, source, photos } = req.body;
+    const client_phone = normalizePhone(rawPhone) || rawPhone;
+    const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : undefined;
     if (!client_name || !client_phone || !client_address) {
       return res.status(400).json({ error: 'Заполните обязательные поля' });
     }
@@ -543,7 +556,9 @@ app.post('/api/requests/public', async (req, res) => {
 // Создать заявку (из кабинета)
 app.post('/api/requests', auth, async (req, res) => {
   try {
-    const { client_name, client_phone, client_address, city, type, work_description, source, comment, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions } = req.body;
+    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions } = req.body;
+    const client_phone = normalizePhone(rawPhone) || rawPhone;
+    const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
     const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
 
