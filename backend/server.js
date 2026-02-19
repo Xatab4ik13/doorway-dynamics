@@ -1,4 +1,5 @@
 // Deploy test v3
+require('dotenv').config();
 // const nodemailer = require('nodemailer'); // TODO: enable when SMTP ports are unblocked
 const express = require('express');
 const cors = require('cors');
