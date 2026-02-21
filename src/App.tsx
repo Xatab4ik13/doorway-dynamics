@@ -26,6 +26,7 @@ const ArticlePage = lazy(() => import("./pages/ArticlePage"));
 const ReclamationPage = lazy(() => import("./pages/ReclamationPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const PartnerInfoPage = lazy(() => import("./pages/PartnerPage"));
+const VacanciesPage = lazy(() => import("./pages/VacanciesPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Dashboard pages
@@ -110,6 +111,7 @@ const AppRoutes = () => (
         <Route path="/reclamation" element={<ReclamationPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/become-partner" element={<PartnerInfoPage />} />
+        <Route path="/vacancies" element={<VacanciesPage />} />
         {/* Admin */}
         <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminRequests /></DashboardErrorBoundary></ProtectedRoute>} />
