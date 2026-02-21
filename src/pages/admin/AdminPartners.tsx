@@ -177,7 +177,7 @@ const AdminPartners = () => {
 
       {/* Detail Modal */}
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-w-lg dashboard-theme">
+        <DialogContent className="max-w-lg dashboard-theme bg-white text-gray-900 border-gray-200">
           <DialogHeader>
             <DialogTitle>Заявка на партнёрство</DialogTitle>
           </DialogHeader>
