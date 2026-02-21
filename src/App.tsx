@@ -36,6 +36,7 @@ const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
 const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
 const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
 const AdminCalendar = lazy(() => import("./pages/admin/AdminCalendar"));
+const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
 const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
 const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
 const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
@@ -119,6 +120,7 @@ const AppRoutes = () => (
         <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminNews /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminPartners /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Manager */}
         <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAssign /></DashboardErrorBoundary></ProtectedRoute>} />
