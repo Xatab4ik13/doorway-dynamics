@@ -869,7 +869,28 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
   }
 });
 
-// === Partner form (public, Telegram only for now) ===
+// === Partner form ===
+// Auto-create partner_forms table
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS partner_forms (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        store_name TEXT NOT NULL,
+        store_address TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        email TEXT NOT NULL,
+        status TEXT DEFAULT 'new',
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+  } catch (err) {
+    console.error('partner_forms table creation error:', err.message);
+  }
+})();
+
 const partnerFormAttempts = new Map();
 setInterval(() => partnerFormAttempts.clear(), 15 * 60 * 1000);
 
@@ -887,6 +908,11 @@ app.post('/api/partner-form', async (req, res) => {
   }
 
   try {
+    await pool.query(
+      'INSERT INTO partner_forms (name, store_name, store_address, phone, email) VALUES ($1, $2, $3, $4, $5)',
+      [name, store_name, store_address, phone, email]
+    );
+
     await notifyManagersAndAdmins(pool,
       `🤝 <b>Заявка на партнёрство</b>\n\nФИО: ${name}\nМагазин: ${store_name}\nАдрес: ${store_address}\nТелефон: ${phone}\nПочта: ${email}`
     );
@@ -895,6 +921,47 @@ app.post('/api/partner-form', async (req, res) => {
   } catch (err) {
     console.error('Partner form error:', err);
     res.status(500).json({ error: 'Ошибка отправки. Попробуйте позже.' });
+  }
+});
+
+// GET partner forms (admin only)
+app.get('/api/partner-forms', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    const { rows } = await pool.query('SELECT * FROM partner_forms ORDER BY created_at DESC');
+    res.json(rows);
+  } catch (err) {
+    console.error('Get partner forms error:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// UPDATE partner form status/notes (admin only)
+app.patch('/api/partner-forms/:id', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  const { status, notes } = req.body;
+  try {
+    const { rows } = await pool.query(
+      'UPDATE partner_forms SET status = COALESCE($1, status), notes = COALESCE($2, notes) WHERE id = $3 RETURNING *',
+      [status, notes, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Не найдено' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update partner form error:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// DELETE partner form (admin only)
+app.delete('/api/partner-forms/:id', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    await pool.query('DELETE FROM partner_forms WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete partner form error:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
 
