@@ -93,6 +93,9 @@ const AdminRequests = () => {
                       <th className="pb-3 pr-4">Статус</th>
                       <th className="pb-3 pr-4">Источник</th>
                       <th className="pb-3 pr-4">Исполнитель</th>
+                      <th className="pb-3 pr-4">Межком.</th>
+                      <th className="pb-3 pr-4">Входные</th>
+                      <th className="pb-3 pr-4">Перег.</th>
                       <th className="pb-3 pr-4">Сумма</th>
                       <th className="pb-3">Дата</th>
                     </tr>
@@ -134,6 +137,9 @@ const AdminRequests = () => {
                         <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                           {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
                         </td>
+                        <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.interior_doors ?? "—"}</td>
+                        <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.entrance_doors ?? "—"}</td>
+                        <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.partitions ?? "—"}</td>
                         <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                           {r.amount != null ? `${r.amount.toLocaleString("ru-RU")} ₽` : "—"}
                         </td>
