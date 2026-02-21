@@ -375,11 +375,11 @@ app.get('/api/users', auth, async (req, res) => {
 
 app.post('/api/users', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
-  const { name, role, telegramId, phone, email, notes } = req.body;
+  const { name, role, telegramId, phone, email, notes, pin } = req.body;
   try {
     const { rows } = await pool.query(
-      'INSERT INTO users (name, role, telegram_id, phone, email, notes, active) VALUES ($1, $2, $3, $4, $5, $6, true) RETURNING *',
-      [name, role, telegramId, phone || null, email || null, notes || null]
+      'INSERT INTO users (name, role, telegram_id, phone, email, notes, pin, active) VALUES ($1, $2, $3, $4, $5, $6, $7, true) RETURNING *',
+      [name, role, telegramId, phone || null, email || null, notes || null, pin || null]
     );
     res.json(rows[0]);
   } catch (err) {
