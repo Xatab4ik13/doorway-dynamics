@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { UserPlus, Loader2, Phone, Lock, User, ShieldCheck } from "lucide-react";
+import { UserPlus, Loader2, Phone, Lock, User, ShieldCheck, Send, ExternalLink } from "lucide-react";
 import { roleLabels } from "@/data/mockDashboard";
 import api from "@/lib/api";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
@@ -25,6 +25,7 @@ const RegisterPage = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
+  const [telegramId, setTelegramId] = useState("");
   const [role, setRole] = useState("measurer");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -40,6 +41,10 @@ const RegisterPage = () => {
       toast.error("ПИН-код должен содержать ровно 4 цифры");
       return;
     }
+    if (!telegramId.trim() || !/^\d+$/.test(telegramId.trim())) {
+      toast.error("Введите корректный Telegram ID (только цифры)");
+      return;
+    }
     if (captchaInput !== captcha.answer) {
       toast.error("Неверный ответ на проверку");
       setCaptcha(generateCaptcha());
@@ -50,7 +55,7 @@ const RegisterPage = () => {
     try {
       await api("/api/auth/register", {
         method: "POST",
-        body: { name, phone, pin, role },
+        body: { name, phone, pin, role, telegram_id: telegramId.trim() },
       });
       setSuccess(true);
       toast.success("Заявка на регистрацию отправлена!");
@@ -150,6 +155,29 @@ const RegisterPage = () => {
                 </InputOTPGroup>
               </InputOTP>
             </div>
+          </div>
+
+          <div className="pt-4 pb-2">
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+              <Send size={12} /> Telegram ID <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="123456789"
+              required
+              value={telegramId}
+              onChange={(e) => setTelegramId(e.target.value.replace(/\D/g, ""))}
+              className={inputClass}
+            />
+            <a
+              href="https://t.me/PrimeDoorServiceBot?start=myid"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-1.5"
+            >
+              <ExternalLink size={10} /> Не знаете свой ID? Узнайте через нашего бота
+            </a>
           </div>
 
           <div className="pt-4 pb-2">
