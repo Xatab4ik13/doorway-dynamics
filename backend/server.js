@@ -226,13 +226,16 @@ app.post('/api/auth/register', async (req, res) => {
   }
   registerAttempts.set(ip, attempts + 1);
 
-  const { name, phone: rawPhone, pin, role } = req.body;
+  const { name, phone: rawPhone, pin, role, telegram_id } = req.body;
   const phone = normalizePhone(rawPhone);
-  if (!name || !phone || !pin || !role) {
+  if (!name || !phone || !pin || !role || !telegram_id) {
     return res.status(400).json({ error: 'Заполните все обязательные поля' });
   }
   if (!/^\d{4}$/.test(pin)) {
     return res.status(400).json({ error: 'ПИН-код должен быть 4 цифры' });
+  }
+  if (!/^\d+$/.test(telegram_id)) {
+    return res.status(400).json({ error: 'Telegram ID должен содержать только цифры' });
   }
   if (!['manager', 'measurer', 'installer', 'partner'].includes(role)) {
     return res.status(400).json({ error: 'Недопустимая роль' });
@@ -243,8 +246,8 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(409).json({ error: 'Аккаунт с таким номером уже существует' });
     }
     const { rows } = await pool.query(
-      'INSERT INTO users (name, phone, pin, role, active) VALUES ($1, $2, $3, $4, false) RETURNING id, name, role, active',
-      [name, phone, pin, role]
+      'INSERT INTO users (name, phone, pin, role, telegram_id, active) VALUES ($1, $2, $3, $4, $5, false) RETURNING id, name, role, active',
+      [name, phone, pin, role, telegram_id]
     );
     // Notify admins about new registration
     await notifyManagersAndAdmins(pool,
