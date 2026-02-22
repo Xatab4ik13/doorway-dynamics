@@ -171,7 +171,7 @@ const RegisterPage = () => {
               className={inputClass}
             />
             <a
-              href="https://t.me/PrimeDoorServiceBot?start=myid"
+              href="https://t.me/primedoor_bot?start=myid"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors mt-1.5"
