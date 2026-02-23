@@ -260,7 +260,15 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
           ${logoBase64 ? `<img src="${logoBase64}" alt="PrimeDoor" class="header-logo" />` : `<h1>PrimeDoor Service</h1>`}
           <p style="font-size:12px;color:#666;margin-top:4px;">Смета от ${new Date().toLocaleDateString("ru-RU")}</p>
         </div>
-        <div class="meta"><p>+7 926 166 30 62</p><p>info@primedoor.ru</p></div>
+        <div class="meta">
+          <p style="font-weight:600;margin-bottom:2px;">Москва</p>
+          <p>+7 926 166 30 62</p>
+          <p>+7 926 166 35 02</p>
+          <p>+7 925 570 06 09</p>
+          <p style="font-weight:600;margin-top:6px;margin-bottom:2px;">Санкт-Петербург</p>
+          <p>+7 993 266 35 04</p>
+          <p style="margin-top:6px;">service@primedoor.ru</p>
+        </div>
       </div>
       <div class="client"><p><strong>${clientName}</strong></p>${clientPhone ? `<p>Тел: ${clientPhone}</p>` : ""}${clientAddress ? `<p>${clientAddress}</p>` : ""}</div>
       <table>
@@ -286,7 +294,8 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       </div>
       <div class="footer">
         <p>ИП Корженевский М.А. · ИНН 971502093793</p>
-        <p>+7 926 166 30 62 · info@primedoor.ru</p>
+        <p>Москва: +7 926 166 30 62 · +7 926 166 35 02 · +7 925 570 06 09</p>
+        <p>Санкт-Петербург: +7 993 266 35 04 · service@primedoor.ru</p>
       </div>
       </body></html>
     `);
