@@ -1,11 +1,12 @@
 import { useState, useRef } from "react";
-import { X, Send, Loader2, MapPin, Phone, User, FileText, Building2, Upload, Trash2 } from "lucide-react";
-import { type ApiRequest } from "@/hooks/useRequests";
+import { X, Send, Loader2, MapPin, Phone, User, FileText, Building2, Upload, Trash2, Handshake } from "lucide-react";
+import { type ApiRequest, useUsers } from "@/hooks/useRequests";
 import { requestTypeLabels } from "@/data/mockDashboard";
 import { motion, AnimatePresence } from "framer-motion";
 import AddressInput from "@/components/AddressInput";
 import { uploadFile } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
+import SearchableUserSelect from "@/components/dashboard/SearchableUserSelect";
 
 const cities = ["Москва", "Санкт-Петербург"];
 
@@ -15,6 +16,9 @@ interface CreateRequestModalProps {
 }
 
 const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
+  const { getByRole } = useUsers();
+  const partners = getByRole("partner");
+  
   const [type, setType] = useState<"measurement" | "installation" | "reclamation">("measurement");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
@@ -26,6 +30,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   const [interiorDoors, setInteriorDoors] = useState("");
   const [entranceDoors, setEntranceDoors] = useState("");
   const [partitions, setPartitions] = useState("");
+  const [partnerId, setPartnerId] = useState("");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<{ file: File; preview?: string }[]>([]);
@@ -76,7 +81,8 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
         extra_name: extraName || undefined,
         extra_phone: extraPhone || undefined,
         work_description: workDescription || undefined,
-        source: "site",
+        source: partnerId ? "partner" : "site",
+        partner_id: partnerId || undefined,
         ...(type === "installation" ? {
           interior_doors: interiorDoors ? parseInt(interiorDoors) : undefined,
           entrance_doors: entranceDoors ? parseInt(entranceDoors) : undefined,
@@ -194,6 +200,19 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Доп. телефон</label>
                 <input type="tel" value={extraPhone} onChange={(e) => setExtraPhone(formatPhone(e.target.value))} className={inputClass("")} placeholder="+7 ..." />
               </div>
+            </div>
+
+            {/* Partner */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                <Handshake size={12} /> Партнёр
+              </label>
+              <SearchableUserSelect
+                value={partnerId}
+                onChange={setPartnerId}
+                users={partners}
+                placeholder="Без партнёра (заявка с сайта)"
+              />
             </div>
 
             {/* Door quantities — only for installation */}
