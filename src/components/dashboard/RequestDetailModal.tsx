@@ -436,8 +436,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Date field — always available for admin/manager */}
-              {canEdit && !isEditing && showDateField && (
+              {/* Date field — for admin/manager when in edit mode (date is already in the read-only grid above) */}
+              {canEdit && isEditing && showDateField && (
                 <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
                   <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
                   <div className="flex-1">
