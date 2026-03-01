@@ -48,6 +48,8 @@ const MeasurerEstimates = lazy(() => import("./pages/measurer/MeasurerEstimates"
 const InstallerDashboard = lazy(() => import("./pages/installer/InstallerDashboard"));
 const InstallerHistory = lazy(() => import("./pages/installer/InstallerHistory"));
 const InstallerEstimates = lazy(() => import("./pages/installer/InstallerEstimates"));
+const InstallerCalendar = lazy(() => import("./pages/installer/InstallerCalendar"));
+const MeasurerCalendar = lazy(() => import("./pages/measurer/MeasurerCalendar"));
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
 const PartnerNewRequest = lazy(() => import("./pages/partner/PartnerNewRequest"));
 const PartnerHistory = lazy(() => import("./pages/partner/PartnerHistory"));
@@ -131,10 +133,12 @@ const AppRoutes = () => (
         <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/measurer/estimates" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/measurer/calendar" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Installer */}
         <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/calendar" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Partner */}
         <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerNewRequest /></DashboardErrorBoundary></ProtectedRoute>} />

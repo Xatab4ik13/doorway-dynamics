@@ -109,10 +109,11 @@ const MeasurerDashboard = () => {
                       </div>
                       <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin size={12} /> {r.client_address}
+                        <MapPin size={12} /> 
+                        <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone size={12} /> {r.client_phone}
+                        <Phone size={12} /> <a href={`tel:${r.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{r.client_phone}</a>
                       </div>
                       {r.agreed_date && (
                         <div className="flex items-center gap-1 text-xs text-primary font-medium">
@@ -160,8 +161,12 @@ const MeasurerDashboard = () => {
                 <div>
                   <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
                   <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
-                  <p className="text-sm text-muted-foreground">{selected.client_address}</p>
-                  <p className="text-sm text-muted-foreground">{selected.client_phone}</p>
+                  <p className="text-sm text-muted-foreground">
+                    <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a>
+                  </p>
                   {selected.extra_name && (
                     <div className="mt-2 p-2 rounded-lg bg-accent/50">
                       <p className="text-xs text-muted-foreground">Доп. контакт</p>

@@ -24,6 +24,9 @@ export interface ApiRequest {
   partner_id?: string;
   measurer_id?: string;
   installer_id?: string;
+  installer_2_id?: string;
+  installer_3_id?: string;
+  installer_4_id?: string;
   manager_id?: string;
   agreed_date?: string;
   amount?: number;

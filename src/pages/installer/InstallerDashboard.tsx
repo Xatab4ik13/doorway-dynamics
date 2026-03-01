@@ -147,7 +147,7 @@ const InstallerDashboard = () => {
                         </span>
                       </div>
                       <p className="font-semibold">{r.client_name}</p>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> {r.client_address}</div>
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a></div>
                       {r.agreed_date && (
                         <div className="flex items-center gap-1 text-xs text-primary font-medium">
                           <Calendar size={12} /> Согласовано: {r.agreed_date.split("T")[0]}
@@ -192,8 +192,8 @@ const InstallerDashboard = () => {
                 <div>
                   <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
                   <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> {selected.client_address}</div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> {selected.client_phone}</div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a></div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
                   {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
                     <div className="mt-2 flex flex-wrap gap-2">
                       {selected.interior_doors != null && (

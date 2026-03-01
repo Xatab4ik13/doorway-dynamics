@@ -1,13 +1,14 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
-import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp, Loader2 } from "lucide-react";
+import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp, Loader2, Pause } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { format, subDays, parseISO, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
   { status: "new", fill: "hsl(217, 91%, 50%)" },
@@ -25,10 +26,11 @@ const DAY_NAMES = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 function computeStats(requests: ApiRequest[]) {
   const total = requests.length;
   const newCount = requests.filter(r => r.status === "new").length;
+  const pendingCount = requests.filter(r => r.status === "pending").length;
   const inProgress = requests.filter(r => IN_PROGRESS_STATUSES.includes(r.status as RequestStatus)).length;
   const completed = requests.filter(r => DONE_STATUSES.includes(r.status as RequestStatus)).length;
   const reclamations = requests.filter(r => r.type === "reclamation").length;
-  return { total, newCount, inProgress, completed, reclamations };
+  return { total, newCount, pendingCount, inProgress, completed, reclamations };
 }
 
 function computeWeeklyChart(requests: ApiRequest[]) {
@@ -50,13 +52,9 @@ function computeWeeklyChart(requests: ApiRequest[]) {
 }
 
 function computeFunnel(requests: ApiRequest[]) {
-  // Cumulative funnel: each stage shows requests that reached at least that stage
   const statusOrder: RequestStatus[] = FUNNEL_STAGES.map(s => s.status);
 
   return FUNNEL_STAGES.map((stage, idx) => {
-    const reachedStatuses = statusOrder.slice(idx);
-    const value = requests.filter(r => reachedStatuses.includes(r.status as RequestStatus)).length;
-    // For cumulative: count all requests for first stage, then progressively fewer
     const cumulativeValue = idx === 0 ? requests.length : requests.filter(r => {
       const rIdx = statusOrder.indexOf(r.status as RequestStatus);
       return rIdx >= idx;
@@ -89,6 +87,7 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const { requests, loading } = useRequests();
   const { getUserName } = useUsers();
+  const navigate = useNavigate();
 
   useEffect(() => { document.title = "Админ-панель — PrimeDoor Service"; }, []);
 
@@ -98,11 +97,12 @@ const AdminDashboard = () => {
   const topEmployees = useMemo(() => computeTopEmployees(requests, getUserName), [requests, getUserName]);
 
   const statCards = [
-    { label: "Всего заявок", value: stats.total, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50" },
-    { label: "Новые", value: stats.newCount, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50" },
-    { label: "В работе", value: stats.inProgress, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50" },
+    { label: "Всего заявок", value: stats.total, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50", onClick: () => navigate("/admin/requests") },
+    { label: "Новые", value: stats.newCount, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50", onClick: () => navigate("/admin/requests?quick=new") },
+    { label: "В ожидании", value: stats.pendingCount, icon: <Pause size={20} />, color: "text-yellow-600 bg-yellow-50", onClick: () => navigate("/admin/requests?quick=pending") },
+    { label: "В работе", value: stats.inProgress, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50", onClick: () => navigate("/admin/requests?quick=in_progress") },
     { label: "Выполнено", value: stats.completed, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50" },
-    { label: "Рекламации", value: stats.reclamations, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50" },
+    { label: "Рекламации", value: stats.reclamations, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50", onClick: () => navigate("/admin/requests?quick=reclamation") },
   ];
 
   if (loading) {
@@ -121,9 +121,9 @@ const AdminDashboard = () => {
         <h1 className="text-2xl font-heading font-bold">Дашборд</h1>
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {statCards.map((s) => (
-            <Card key={s.label}>
+            <Card key={s.label} className={s.onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""} onClick={s.onClick}>
               <CardContent className="p-4 flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${s.color}`}>{s.icon}</div>
                 <div>

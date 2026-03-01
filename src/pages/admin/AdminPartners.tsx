@@ -15,7 +15,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Trash2, Eye, Handshake } from "lucide-react";
+import { Loader2, Trash2, Eye, Handshake, UserPlus } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -53,6 +53,8 @@ const AdminPartners = () => {
   const [editNotes, setEditNotes] = useState("");
   const [editStatus, setEditStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [approving, setApproving] = useState(false);
+  const [approveResult, setApproveResult] = useState<{ pin: string; name: string } | null>(null);
 
   const fetchForms = async () => {
     try {
@@ -71,6 +73,7 @@ const AdminPartners = () => {
     setSelected(form);
     setEditNotes(form.notes || "");
     setEditStatus(form.status);
+    setApproveResult(null);
   };
 
   const handleSave = async () => {
@@ -89,6 +92,25 @@ const AdminPartners = () => {
       toast.error(err.message || "Ошибка");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!selected) return;
+    setApproving(true);
+    try {
+      const result = await api<{ success: boolean; pin: string; message: string }>(`/api/partner-forms/${selected.id}/approve`, {
+        method: "POST",
+        auth: true,
+      });
+      setApproveResult({ pin: result.pin, name: selected.name });
+      setEditStatus("done");
+      toast.success(result.message);
+      fetchForms();
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка создания аккаунта");
+    } finally {
+      setApproving(false);
     }
   };
 
@@ -214,6 +236,15 @@ const AdminPartners = () => {
                 </div>
               </div>
 
+              {approveResult && (
+                <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                  <p className="text-sm font-medium text-green-800 mb-1">✅ Аккаунт партнёра создан!</p>
+                  <p className="text-sm text-green-700">Имя: <strong>{approveResult.name}</strong></p>
+                  <p className="text-sm text-green-700">ПИН-код: <strong className="text-lg">{approveResult.pin}</strong></p>
+                  <p className="text-xs text-green-600 mt-2">Сообщите ПИН-код партнёру для входа в систему</p>
+                </div>
+              )}
+
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">Статус</label>
                 <Select value={editStatus} onValueChange={setEditStatus}>
@@ -239,12 +270,20 @@ const AdminPartners = () => {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <Button variant="outline" onClick={() => setSelected(null)}>Отмена</Button>
-                <Button onClick={handleSave} disabled={saving}>
-                  {saving && <Loader2 size={16} className="animate-spin mr-2" />}
-                  Сохранить
-                </Button>
+              <div className="flex justify-between gap-2 pt-2">
+                {selected.status !== "done" && !approveResult && (
+                  <Button variant="outline" onClick={handleApprove} disabled={approving} className="flex items-center gap-2">
+                    {approving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                    Одобрить и создать аккаунт
+                  </Button>
+                )}
+                <div className="flex gap-2 ml-auto">
+                  <Button variant="outline" onClick={() => setSelected(null)}>Отмена</Button>
+                  <Button onClick={handleSave} disabled={saving}>
+                    {saving && <Loader2 size={16} className="animate-spin mr-2" />}
+                    Сохранить
+                  </Button>
+                </div>
               </div>
             </div>
           )}
