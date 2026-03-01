@@ -248,10 +248,10 @@ const AdminPartners = () => {
               <div>
                 <label className="text-sm text-muted-foreground mb-1 block">Статус</label>
                 <Select value={editStatus} onValueChange={setEditStatus}>
-                  <SelectTrigger>
+                  <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white border-gray-200 text-gray-900 [&_[role=option]]:text-gray-900 [&_[role=option][data-highlighted]]:bg-gray-100 [&_[role=option][data-highlighted]]:text-gray-900">
                     <SelectItem value="new">Новая</SelectItem>
                     <SelectItem value="in_progress">В работе</SelectItem>
                     <SelectItem value="done">Завершена</SelectItem>
@@ -272,14 +272,14 @@ const AdminPartners = () => {
 
               <div className="flex justify-between gap-2 pt-2">
                 {editStatus !== "done" && !approveResult && (
-                  <Button variant="outline" onClick={handleApprove} disabled={approving} className="flex items-center gap-2">
+                  <Button variant="outline" onClick={handleApprove} disabled={approving} className="flex items-center gap-2 border-gray-300 text-gray-900 hover:bg-gray-100">
                     {approving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
                     Одобрить и создать аккаунт
                   </Button>
                 )}
                 <div className="flex gap-2 ml-auto">
-                  <Button variant="outline" onClick={() => setSelected(null)}>Отмена</Button>
-                  <Button onClick={handleSave} disabled={saving}>
+                  <Button variant="outline" onClick={() => setSelected(null)} className="border-gray-300 text-gray-900 hover:bg-gray-100">Отмена</Button>
+                  <Button onClick={handleSave} disabled={saving} className="bg-gray-900 text-white hover:bg-gray-800">
                     {saving && <Loader2 size={16} className="animate-spin mr-2" />}
                     Сохранить
                   </Button>
