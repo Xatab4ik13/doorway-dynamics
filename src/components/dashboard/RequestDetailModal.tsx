@@ -286,7 +286,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Editable Info grid for admin/manager/partner */}
+              {/* Editable client data — only with pencil for admin/manager, always for partner */}
               {((canEdit && isEditing) || canPartnerEdit) ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -343,24 +343,6 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Описание работ</label>
                     <textarea value={workDescription} onChange={(e) => setWorkDescription(e.target.value)} rows={2} className={inputClass + " resize-none"} placeholder="Описание работ..." />
                   </div>
-
-                  {/* Date field */}
-                  {showDateField && (
-                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-                      <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                          {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
-                        </p>
-                        <input
-                          type="date"
-                          value={agreedDate}
-                          onChange={(e) => setAgreedDate(e.target.value)}
-                          className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        />
-                      </div>
-                    </div>
-                  )}
                 </div>
               ) : (
                 /* Read-only Info grid */
@@ -454,75 +436,21 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Read-only status, assignment, amounts for admin/manager when not editing */}
-              {canEdit && !isEditing && (
-                <div className="space-y-4">
-                  <div className="p-3 rounded-xl bg-accent/50">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Статус</p>
-                    <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[request.status as RequestStatus] || "bg-accent text-muted-foreground"}`}>
-                      {getStatusLabel(request.status as RequestStatus, request.type as RequestType)}
-                    </span>
+              {/* Date field — always available for admin/manager */}
+              {canEdit && !isEditing && showDateField && (
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                  <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                      {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
+                    </p>
+                    <input
+                      type="date"
+                      value={agreedDate}
+                      onChange={(e) => setAgreedDate(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                    />
                   </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {showMeasurerField && (
-                      <div className="p-3 rounded-xl bg-accent/50">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Замерщик</p>
-                        <p className="text-sm font-medium">{getUserName(request.measurer_id) || "Не назначен"}</p>
-                      </div>
-                    )}
-                    {showInstallerField && (
-                      <>
-                        <div className="p-3 rounded-xl bg-accent/50">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 1</p>
-                          <p className="text-sm font-medium">{getUserName(request.installer_id) || "Не назначен"}</p>
-                        </div>
-                        {request.installer_2_id && (
-                          <div className="p-3 rounded-xl bg-accent/50">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 2</p>
-                            <p className="text-sm font-medium">{getUserName(request.installer_2_id)}</p>
-                          </div>
-                        )}
-                        {request.installer_3_id && (
-                          <div className="p-3 rounded-xl bg-accent/50">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 3</p>
-                            <p className="text-sm font-medium">{getUserName(request.installer_3_id)}</p>
-                          </div>
-                        )}
-                        {request.installer_4_id && (
-                          <div className="p-3 rounded-xl bg-accent/50">
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 4</p>
-                            <p className="text-sm font-medium">{getUserName(request.installer_4_id)}</p>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  {(request.amount != null || request.interior_doors || request.entrance_doors || request.partitions) && (
-                    <div className="p-4 rounded-xl bg-accent/30 border border-border">
-                      {request.amount != null && (
-                        <div className="mb-2">
-                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Сумма</p>
-                          <p className="text-sm font-semibold">{request.amount.toLocaleString("ru-RU")} ₽</p>
-                        </div>
-                      )}
-                      <div className="grid grid-cols-3 gap-2 text-sm text-center">
-                        <div>
-                          <p className="text-[10px] text-muted-foreground">Межкомнатные</p>
-                          <p className="font-semibold">{request.interior_doors || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-muted-foreground">Входные</p>
-                          <p className="font-semibold">{request.entrance_doors || 0}</p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-muted-foreground">Перегородки</p>
-                          <p className="font-semibold">{request.partitions || 0}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -537,7 +465,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Status change — only for admin/manager */}
-              {canEdit && isEditing && (
+              {canEdit && (
                 <div>
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Статус</label>
                   <div className="flex flex-wrap gap-1.5">
@@ -559,7 +487,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Assignment — context-dependent */}
-              {canEdit && isEditing && (
+              {canEdit && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {showMeasurerField && (
                     <div>
@@ -614,7 +542,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Amount & quantities — for admin/manager */}
-              {canEdit && isEditing && (
+              {canEdit && (
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Сумма (₽)</label>
@@ -847,7 +775,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   Отмена
                 </button>
               )}
-              {((canEdit && isEditing) || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
                 <button
                   onClick={handleSave}
                   disabled={saving}
