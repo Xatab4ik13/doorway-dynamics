@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil } from "lucide-react";
+import SearchableUserSelect from "./SearchableUserSelect";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
@@ -492,49 +493,26 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   {showMeasurerField && (
                     <div>
                       <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Замерщик</label>
-                      <select
-                        value={measurerId}
-                        onChange={(e) => setMeasurerId(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      >
-                        <option value="">Не назначен</option>
-                        {measurers.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-                      </select>
+                      <SearchableUserSelect value={measurerId} onChange={setMeasurerId} users={measurers} placeholder="Не назначен" />
                     </div>
                   )}
                   {showInstallerField && (
                     <>
                       <div>
                         <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 1</label>
-                        <select value={installerId} onChange={(e) => setInstallerId(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                          <option value="">Не назначен</option>
-                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                        </select>
+                        <SearchableUserSelect value={installerId} onChange={setInstallerId} users={installers} placeholder="Не назначен" />
                       </div>
                       <div>
                         <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 2</label>
-                        <select value={installer2Id} onChange={(e) => setInstaller2Id(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                          <option value="">Не назначен</option>
-                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                        </select>
+                        <SearchableUserSelect value={installer2Id} onChange={setInstaller2Id} users={installers} placeholder="Не назначен" />
                       </div>
                       <div>
                         <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 3</label>
-                        <select value={installer3Id} onChange={(e) => setInstaller3Id(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                          <option value="">Не назначен</option>
-                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                        </select>
+                        <SearchableUserSelect value={installer3Id} onChange={setInstaller3Id} users={installers} placeholder="Не назначен" />
                       </div>
                       <div>
                         <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 4</label>
-                        <select value={installer4Id} onChange={(e) => setInstaller4Id(e.target.value)}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
-                          <option value="">Не назначен</option>
-                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                        </select>
+                        <SearchableUserSelect value={installer4Id} onChange={setInstaller4Id} users={installers} placeholder="Не назначен" />
                       </div>
                     </>
                   )}
