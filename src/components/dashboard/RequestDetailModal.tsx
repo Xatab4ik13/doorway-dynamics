@@ -183,6 +183,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <Briefcase size={10} /> Партнёр
                   </span>
                 )}
+                {request.accepted_at && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
+                    ✓ Принято монтажником {new Date(request.accepted_at).toLocaleDateString("ru-RU")}
+                  </span>
+                )}
               </div>
               <h2 className="text-lg font-heading font-bold mt-1">{request.client_name}</h2>
             </div>
