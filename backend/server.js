@@ -638,7 +638,9 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     if (updates.measurer_id && !request.measurer_id && ['new', 'pending'].includes(request.status)) {
       updates.status = 'measurer_assigned';
     }
-
+    if (updates.installer_id && !request.installer_id && ['new', 'pending'].includes(request.status)) {
+      updates.status = 'installer_assigned';
+    }
 
     // Автоматизация: установка даты → date_agreed
     if (updates.agreed_date && ['measurer_assigned', 'new', 'pending'].includes(request.status)) {
