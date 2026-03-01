@@ -491,7 +491,7 @@ app.get('/api/requests', auth, async (req, res) => {
     } else if (req.user.role === 'measurer') {
       conds.push(`measurer_id = $${idx++}`); params.push(req.user.id);
     } else if (req.user.role === 'installer') {
-      conds.push(`installer_id = $${idx++}`); params.push(req.user.id);
+      conds.push(`(installer_id = $${idx} OR installer_2_id = $${idx} OR installer_3_id = $${idx} OR installer_4_id = $${idx})`); params.push(req.user.id); idx++;
     }
 
     const baseConds = [...conds];
