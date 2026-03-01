@@ -272,14 +272,14 @@ const AdminPartners = () => {
 
               <div className="flex justify-between gap-2 pt-2">
                 {editStatus !== "done" && !approveResult && (
-                  <Button variant="outline" onClick={handleApprove} disabled={approving} className="flex items-center gap-2 border-gray-300 text-gray-900 hover:bg-gray-100">
+                  <Button variant="outline" onClick={handleApprove} disabled={approving} className="flex items-center gap-2 !border-gray-300 !text-gray-900 !bg-white hover:!bg-gray-50">
                     {approving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
                     Одобрить и создать аккаунт
                   </Button>
                 )}
                 <div className="flex gap-2 ml-auto">
-                  <Button variant="outline" onClick={() => setSelected(null)} className="border-gray-300 text-gray-900 hover:bg-gray-100">Отмена</Button>
-                  <Button onClick={handleSave} disabled={saving} className="bg-gray-900 text-white hover:bg-gray-800">
+                  <Button variant="outline" onClick={() => setSelected(null)} className="!border-gray-300 !text-gray-900 !bg-white hover:!bg-gray-50">Отмена</Button>
+                  <Button onClick={handleSave} disabled={saving} className="!bg-blue-600 !text-white hover:!bg-blue-700 !border-blue-600">
                     {saving && <Loader2 size={16} className="animate-spin mr-2" />}
                     Сохранить
                   </Button>
