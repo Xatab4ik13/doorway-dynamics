@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil } from "lucide-react";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
@@ -19,7 +19,7 @@ interface RequestDetailModalProps {
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
-  const { getByRole } = useUsers(!canEdit);
+  const { getByRole, getUserName } = useUsers(!canEdit);
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
   const [installerId, setInstallerId] = useState(request.installer_id || "");
@@ -50,6 +50,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [workDescription, setWorkDescription] = useState(request.work_description || "");
   const [source, setSource] = useState<string>(request.source || "site");
   const [requestType, setRequestType] = useState<string>(request.type || "measurement");
+  
+  // Edit mode toggle for admin/manager
+  const [isEditing, setIsEditing] = useState(false);
   
   // Confirmation dialog
   const [showConfirm, setShowConfirm] = useState(false);
@@ -191,11 +194,21 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               </div>
               <h2 className="text-lg font-heading font-bold mt-1">{request.client_name}</h2>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-accent transition-colors text-muted-foreground">
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-1">
+              {canEdit && (
+                <button
+                  onClick={() => setIsEditing(!isEditing)}
+                  className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
+                  title={isEditing ? "Отключить редактирование" : "Редактировать"}
+                >
+                  <Pencil size={18} />
+                </button>
+              )}
+              <button onClick={onClose} className="p-2 rounded-xl hover:bg-accent transition-colors text-muted-foreground">
+                <X size={20} />
+              </button>
+            </div>
           </div>
-
           {/* Tabs */}
           <div className="flex border-b border-border px-5">
             <button
@@ -274,7 +287,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Editable Info grid for admin/manager/partner */}
-              {(canEdit || canPartnerEdit) ? (
+              {((canEdit && isEditing) || canPartnerEdit) ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
@@ -431,13 +444,85 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Work description (read-only for executors) */}
-              {!(canEdit || canPartnerEdit) && request.work_description && (
+              {/* Work description (read-only when not editing) */}
+              {(!(canEdit && isEditing) && !canPartnerEdit) && request.work_description && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider flex items-center gap-1">
                     <MessageSquare size={12} /> Описание работ
                   </label>
                   <p className="text-sm leading-relaxed">{request.work_description}</p>
+                </div>
+              )}
+
+              {/* Read-only status, assignment, amounts for admin/manager when not editing */}
+              {canEdit && !isEditing && (
+                <div className="space-y-4">
+                  <div className="p-3 rounded-xl bg-accent/50">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Статус</p>
+                    <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[request.status as RequestStatus] || "bg-accent text-muted-foreground"}`}>
+                      {getStatusLabel(request.status as RequestStatus, request.type as RequestType)}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {showMeasurerField && (
+                      <div className="p-3 rounded-xl bg-accent/50">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Замерщик</p>
+                        <p className="text-sm font-medium">{getUserName(request.measurer_id) || "Не назначен"}</p>
+                      </div>
+                    )}
+                    {showInstallerField && (
+                      <>
+                        <div className="p-3 rounded-xl bg-accent/50">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 1</p>
+                          <p className="text-sm font-medium">{getUserName(request.installer_id) || "Не назначен"}</p>
+                        </div>
+                        {request.installer_2_id && (
+                          <div className="p-3 rounded-xl bg-accent/50">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 2</p>
+                            <p className="text-sm font-medium">{getUserName(request.installer_2_id)}</p>
+                          </div>
+                        )}
+                        {request.installer_3_id && (
+                          <div className="p-3 rounded-xl bg-accent/50">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 3</p>
+                            <p className="text-sm font-medium">{getUserName(request.installer_3_id)}</p>
+                          </div>
+                        )}
+                        {request.installer_4_id && (
+                          <div className="p-3 rounded-xl bg-accent/50">
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Монтажник 4</p>
+                            <p className="text-sm font-medium">{getUserName(request.installer_4_id)}</p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {(request.amount != null || request.interior_doors || request.entrance_doors || request.partitions) && (
+                    <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                      {request.amount != null && (
+                        <div className="mb-2">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Сумма</p>
+                          <p className="text-sm font-semibold">{request.amount.toLocaleString("ru-RU")} ₽</p>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-3 gap-2 text-sm text-center">
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Межкомнатные</p>
+                          <p className="font-semibold">{request.interior_doors || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Входные</p>
+                          <p className="font-semibold">{request.entrance_doors || 0}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground">Перегородки</p>
+                          <p className="font-semibold">{request.partitions || 0}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -452,7 +537,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Status change — only for admin/manager */}
-              {canEdit && (
+              {canEdit && isEditing && (
                 <div>
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Статус</label>
                   <div className="flex flex-wrap gap-1.5">
@@ -474,7 +559,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Assignment — context-dependent */}
-              {canEdit && (
+              {canEdit && isEditing && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {showMeasurerField && (
                     <div>
@@ -529,7 +614,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Amount & quantities — for admin/manager */}
-              {canEdit && (
+              {canEdit && isEditing && (
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Сумма (₽)</label>
@@ -762,7 +847,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   Отмена
                 </button>
               )}
-              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+              {((canEdit && isEditing) || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
                 <button
                   onClick={handleSave}
                   disabled={saving}
