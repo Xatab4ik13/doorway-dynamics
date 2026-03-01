@@ -252,7 +252,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         .footer { margin-top: 30px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #999; }
         .print-btn { display: block; margin: 0 auto 30px; padding: 12px 40px; background: #3b82f6; color: white; border: none; border-radius: 10px; font-size: 16px; cursor: pointer; font-weight: 600; }
         .print-btn:hover { background: #2563eb; }
-        @media print { body { padding: 20px; } .print-btn { display: none !important; } }
+        @media print { body { padding: 20px; } .print-btn { display: none !important; } @page { margin: 10mm; size: auto; } }
       </style></head><body>
       <button class="print-btn" onclick="window.print()">📄 Скачать / Печать</button>
       <div class="header">
