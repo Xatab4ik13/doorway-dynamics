@@ -1,10 +1,11 @@
 import { useState, useRef } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle } from "lucide-react";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadFile } from "@/lib/api";
+import { formatPhone } from "@/lib/formatPhone";
 
 interface RequestDetailModalProps {
   request: ApiRequest;
@@ -17,10 +18,14 @@ interface RequestDetailModalProps {
 
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
+  const canPartnerEdit = viewerRole === "partner";
   const { getByRole } = useUsers(!canEdit);
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
   const [installerId, setInstallerId] = useState(request.installer_id || "");
+  const [installer2Id, setInstaller2Id] = useState(request.installer_2_id || "");
+  const [installer3Id, setInstaller3Id] = useState(request.installer_3_id || "");
+  const [installer4Id, setInstaller4Id] = useState(request.installer_4_id || "");
   const [notes, setNotes] = useState(request.notes || "");
   const [agreedDate, setAgreedDate] = useState(request.agreed_date?.split("T")[0] || "");
   const [amount, setAmount] = useState<string>(request.amount != null ? String(request.amount) : "");
@@ -34,17 +39,33 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [sendingToInstall, setSendingToInstall] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Editable client fields for admin/manager/partner
+  const [clientName, setClientName] = useState(request.client_name || "");
+  const [clientPhone, setClientPhone] = useState(request.client_phone || "");
+  const [clientAddress, setClientAddress] = useState(request.client_address || "");
+  const [city, setCity] = useState(request.city || "");
+  const [extraName, setExtraName] = useState(request.extra_name || "");
+  const [extraPhone, setExtraPhone] = useState(request.extra_phone || "");
+  const [workDescription, setWorkDescription] = useState(request.work_description || "");
+  const [source, setSource] = useState<string>(request.source || "site");
+  const [requestType, setRequestType] = useState<string>(request.type || "measurement");
+  
+  // Confirmation dialog
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingUpdates, setPendingUpdates] = useState<any>(null);
 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
 
   const canChangeDateInstaller = viewerRole === "installer" && !!request.agreed_date;
-  const canChangeDate = canEdit || canChangeDateInstaller;
+  const canChangeDateMeasurer = viewerRole === "measurer";
+  const canChangeDate = canEdit || canChangeDateInstaller || canChangeDateMeasurer;
 
   // Get valid statuses for this request type
   const validStatuses = statusFlows[request.type as RequestType] || Object.keys(statusLabels);
-  // Add terminal statuses
-  const allValidStatuses = [...new Set([...validStatuses, "cancelled", ...(request.type === "measurement" ? ["client_refused"] : [])])];
+  // Add terminal statuses + pending from any non-closed
+  const allValidStatuses = [...new Set([...validStatuses, "pending", "cancelled", ...(request.type === "measurement" ? ["client_refused"] : [])])];
 
   const photos = request.photos || [];
   const hasFiles = photos.length > 0;
@@ -52,36 +73,91 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   // Determine which assignment fields to show based on request type
   const showMeasurerField = request.type === "measurement";
   const showInstallerField = request.type === "installation" || request.type === "reclamation";
-  const showDateField = true; // All types have date agreement
+  const showDateField = true;
+
+  const buildUpdates = () => {
+    const updates: any = { status, notes };
+    
+    if (canEdit) {
+      // Admin/Manager can edit everything
+      updates.client_name = clientName;
+      updates.client_phone = clientPhone;
+      updates.client_address = clientAddress;
+      updates.city = city;
+      updates.extra_name = extraName || null;
+      updates.extra_phone = extraPhone || null;
+      updates.work_description = workDescription || null;
+      updates.source = source;
+      updates.type = requestType;
+      
+      if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
+      if (showInstallerField && installerId) updates.installer_id = installerId;
+      if (showInstallerField) {
+        updates.installer_2_id = installer2Id || null;
+        updates.installer_3_id = installer3Id || null;
+        updates.installer_4_id = installer4Id || null;
+      }
+      updates.amount = amount ? parseFloat(amount) : null;
+      updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
+      updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
+      updates.partitions = partitions ? parseInt(partitions) : null;
+    }
+    
+    if (canPartnerEdit) {
+      updates.client_name = clientName;
+      updates.client_phone = clientPhone;
+      updates.client_address = clientAddress;
+      updates.city = city;
+      updates.extra_name = extraName || null;
+      updates.extra_phone = extraPhone || null;
+      updates.work_description = workDescription || null;
+      updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
+      updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
+      updates.partitions = partitions ? parseInt(partitions) : null;
+      // Remove status/notes for partners
+      delete updates.status;
+      delete updates.notes;
+    }
+    
+    // Only send agreed_date if it actually changed
+    const originalDate = request.agreed_date?.split("T")[0] || "";
+    if (canChangeDate && agreedDate && agreedDate !== originalDate) {
+      updates.agreed_date = agreedDate;
+    }
+    
+    return updates;
+  };
 
   const handleSave = async () => {
     if (!onSave) { onClose(); return; }
+    
+    const updates = buildUpdates();
+    
+    // Show confirmation for admin/manager edits
+    if (canEdit) {
+      setPendingUpdates(updates);
+      setShowConfirm(true);
+      return;
+    }
+    
+    // Direct save for others
+    await executeSave(updates);
+  };
+  
+  const executeSave = async (updates: any) => {
     setSaving(true);
     try {
-      const updates: any = { status, notes };
-      if (canEdit) {
-        if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
-        if (showInstallerField && installerId) updates.installer_id = installerId;
-        if (request.type === "installation" || request.type === "reclamation") {
-          updates.amount = amount ? parseFloat(amount) : null;
-          updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
-          updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
-          updates.partitions = partitions ? parseInt(partitions) : null;
-        }
-      }
-      // Only send agreed_date if it actually changed
-      const originalDate = request.agreed_date?.split("T")[0] || "";
-      if (canChangeDate && agreedDate && agreedDate !== originalDate) {
-        updates.agreed_date = agreedDate;
-      }
-      await onSave(request.id, updates);
+      await onSave!(request.id, updates);
       toast.success("Заявка обновлена");
+      onClose();
     } catch {
     } finally {
       setSaving(false);
+      setShowConfirm(false);
     }
   };
 
+  const inputClass = "w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
   return (
     <AnimatePresence>
@@ -116,29 +192,27 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           </div>
 
           {/* Tabs */}
-          {(
-            <div className="flex border-b border-border px-5">
-              <button
-                onClick={() => setActiveTab("details")}
-                className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === "details" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                Детали
-              </button>
-              <button
-                onClick={() => setActiveTab("files")}
-                className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
-                  activeTab === "files" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Image size={14} /> Файлы
-                {hasFiles && (
-                  <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">{photos.length}</span>
-                )}
-              </button>
-            </div>
-          )}
+          <div className="flex border-b border-border px-5">
+            <button
+              onClick={() => setActiveTab("details")}
+              className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+                activeTab === "details" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Детали
+            </button>
+            <button
+              onClick={() => setActiveTab("files")}
+              className={`py-3 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${
+                activeTab === "files" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Image size={14} /> Файлы
+              {hasFiles && (
+                <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">{photos.length}</span>
+              )}
+            </button>
+          </div>
 
           {activeTab === "details" && (
             <div className="p-5 space-y-5">
@@ -194,76 +268,166 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Info grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-                  <Phone size={16} className="text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Телефон</p>
-                    <p className="text-sm font-medium">{request.client_phone}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-                  <MapPin size={16} className="text-primary mt-0.5 shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Адрес</p>
-                    <p className="text-sm font-medium">{request.client_address}</p>
-                    {request.city && <p className="text-xs text-muted-foreground">{request.city}</p>}
-                  </div>
-                </div>
-
-                {request.extra_name && (
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-                    <User size={16} className="text-primary mt-0.5 shrink-0" />
+              {/* Editable Info grid for admin/manager/partner */}
+              {(canEdit || canPartnerEdit) ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Доп. контакт</p>
-                      <p className="text-sm font-medium">{request.extra_name}</p>
-                      {request.extra_phone && <p className="text-xs text-muted-foreground">{request.extra_phone}</p>}
+                      <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Клиент</label>
+                      <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Телефон</label>
+                      <input type="tel" value={clientPhone} onChange={(e) => setClientPhone(formatPhone(e.target.value))} className={inputClass} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Адрес</label>
+                      <input type="text" value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Город</label>
+                      <select value={city} onChange={(e) => setCity(e.target.value)} className={inputClass}>
+                        <option value="">Не указан</option>
+                        <option value="Москва">Москва</option>
+                        <option value="Санкт-Петербург">Санкт-Петербург</option>
+                      </select>
+                    </div>
+                    {canEdit && (
+                      <>
+                        <div>
+                          <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Источник</label>
+                          <select value={source} onChange={(e) => setSource(e.target.value)} className={inputClass}>
+                            <option value="site">Сайт</option>
+                            <option value="partner">Партнёр</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Тип заявки</label>
+                          <select value={requestType} onChange={(e) => setRequestType(e.target.value)} className={inputClass}>
+                            <option value="measurement">Замер</option>
+                            <option value="installation">Монтаж</option>
+                            <option value="reclamation">Рекламация</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Доп. контакт</label>
+                      <input type="text" value={extraName} onChange={(e) => setExtraName(e.target.value)} className={inputClass} placeholder="ФИО" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Доп. телефон</label>
+                      <input type="tel" value={extraPhone} onChange={(e) => setExtraPhone(formatPhone(e.target.value))} className={inputClass} placeholder="+7 ..." />
                     </div>
                   </div>
-                )}
-
-                <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-                  <Calendar size={16} className="text-primary mt-0.5 shrink-0" />
+                  
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Создана</p>
-                    <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                    <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Описание работ</label>
+                    <textarea value={workDescription} onChange={(e) => setWorkDescription(e.target.value)} rows={2} className={inputClass + " resize-none"} placeholder="Описание работ..." />
                   </div>
-                </div>
-                <div className="p-3 rounded-xl bg-accent/50">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Тип</p>
-                  <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-card text-foreground border border-border">
-                    {requestTypeLabels[request.type] || request.type}
-                  </span>
-                </div>
-                {/* Agreed date */}
-                {showDateField && (
-                  <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
-                    <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                        {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
-                      </p>
-                      {canChangeDate ? (
+
+                  {/* Date field */}
+                  {showDateField && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                          {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
+                        </p>
                         <input
                           type="date"
                           value={agreedDate}
                           onChange={(e) => setAgreedDate(e.target.value)}
                           className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                         />
-                      ) : (
-                        <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
-                      )}
-                      {canChangeDateInstaller && !canEdit && (
-                        <p className="text-[10px] text-muted-foreground mt-1">Можно перенести по просьбе клиента</p>
-                      )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Read-only Info grid */
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                    <Phone size={16} className="text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Телефон</p>
+                      <a href={`tel:${request.client_phone?.replace(/\s/g, "")}`} className="text-sm font-medium text-primary hover:underline">{request.client_phone}</a>
                     </div>
                   </div>
-                )}
-              </div>
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                    <MapPin size={16} className="text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Адрес</p>
+                      <a 
+                        href={`https://yandex.ru/maps/?text=${encodeURIComponent((request.client_address || "") + (request.city ? ", " + request.city : ""))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-primary hover:underline"
+                      >
+                        {request.client_address}
+                      </a>
+                      {request.city && <p className="text-xs text-muted-foreground">{request.city}</p>}
+                    </div>
+                  </div>
 
-              {/* Work description */}
-              {request.work_description && (
+                  {request.extra_name && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <User size={16} className="text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Доп. контакт</p>
+                        <p className="text-sm font-medium">{request.extra_name}</p>
+                        {request.extra_phone && (
+                          <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary hover:underline">{request.extra_phone}</a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                    <Calendar size={16} className="text-primary mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Создана</p>
+                      <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-accent/50">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Тип</p>
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-card text-foreground border border-border">
+                      {requestTypeLabels[request.type] || request.type}
+                    </span>
+                  </div>
+                  {/* Agreed date */}
+                  {showDateField && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                          {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
+                        </p>
+                        {canChangeDate ? (
+                          <input
+                            type="date"
+                            value={agreedDate}
+                            onChange={(e) => setAgreedDate(e.target.value)}
+                            className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          />
+                        ) : (
+                          <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+                        )}
+                        {canChangeDateInstaller && !canEdit && (
+                          <p className="text-[10px] text-muted-foreground mt-1">Можно перенести по просьбе клиента</p>
+                        )}
+                        {canChangeDateMeasurer && !canEdit && (
+                          <p className="text-[10px] text-muted-foreground mt-1">Можно перенести дату замера</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Work description (read-only for executors) */}
+              {!(canEdit || canPartnerEdit) && request.work_description && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider flex items-center gap-1">
                     <MessageSquare size={12} /> Описание работ
@@ -272,7 +436,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Status comment (e.g. reason for date change) */}
+              {/* Status comment */}
               {request.status_comment && (
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
                   <label className="text-[10px] font-medium text-amber-700 mb-2 block uppercase tracking-wider flex items-center gap-1">
@@ -321,33 +485,51 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </div>
                   )}
                   {showInstallerField && (
-                    <div>
-                      <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник</label>
-                      <select
-                        value={installerId}
-                        onChange={(e) => setInstallerId(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                      >
-                        <option value="">Не назначен</option>
-                        {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                      </select>
-                    </div>
+                    <>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 1</label>
+                        <select value={installerId} onChange={(e) => setInstallerId(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                          <option value="">Не назначен</option>
+                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 2</label>
+                        <select value={installer2Id} onChange={(e) => setInstaller2Id(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                          <option value="">Не назначен</option>
+                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 3</label>
+                        <select value={installer3Id} onChange={(e) => setInstaller3Id(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                          <option value="">Не назначен</option>
+                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Монтажник 4</label>
+                        <select value={installer4Id} onChange={(e) => setInstaller4Id(e.target.value)}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+                          <option value="">Не назначен</option>
+                          {installers.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                        </select>
+                      </div>
+                    </>
                   )}
                 </div>
               )}
 
-              {/* Amount — only for installation, only admin/manager */}
-              {request.type === "installation" && canEdit && (
+              {/* Amount & quantities — for admin/manager */}
+              {canEdit && (
                 <div className="space-y-4">
                   <div>
                     <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Сумма (₽)</label>
-                    <input
-                      type="number"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="Укажите сумму..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                    />
+                    <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Укажите сумму..."
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                   </div>
                   <div>
                     <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
@@ -372,8 +554,32 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {/* Door counts read-only for non-editors */}
-              {request.type === "installation" && !canEdit && (request.interior_doors || request.entrance_doors || request.partitions) && (
+              {/* Partner editable quantities */}
+              {canPartnerEdit && request.type === "installation" && (
+                <div>
+                  <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Межкомнатные</label>
+                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные</label>
+                      <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородка</label>
+                      <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Door counts read-only for executors */}
+              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions) && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
                   <div className="grid grid-cols-3 gap-2 text-sm text-center">
@@ -404,7 +610,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   rows={3}
                   placeholder="Добавьте заметку к заявке..."
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  readOnly={!canEdit}
+                  readOnly={!canEdit && !canPartnerEdit}
                 />
               </div>
             </div>
@@ -412,7 +618,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "files" && (
             <div className="p-5 space-y-4">
-              {/* Upload button for admin/manager/partner */}
+              {/* Upload button */}
               {(canEdit || viewerRole === "partner") && onSave && (
                 <div>
                   <input
@@ -530,7 +736,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
             </div>
             <div className="flex gap-3 flex-wrap">
-              {/* Send to installation button — for measurement requests */}
+              {/* Send to installation button */}
               {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
                 <button
                   onClick={async () => {
@@ -551,7 +757,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   Отмена
                 </button>
               )}
-              {(canEdit || canChangeDateInstaller) && (
+              {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
                 <button
                   onClick={handleSave}
                   disabled={saving}
@@ -562,6 +768,31 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
             </div>
           </div>
+          
+          {/* Confirmation modal */}
+          {showConfirm && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20 rounded-2xl">
+              <div className="bg-card rounded-xl p-6 max-w-sm mx-4 shadow-2xl space-y-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle size={24} className="text-amber-500" />
+                  <h3 className="font-heading font-bold">Подтверждение</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Вы уверены, что хотите сохранить изменения в этой заявке?</p>
+                <div className="flex justify-end gap-3">
+                  <button onClick={() => setShowConfirm(false)} className="px-4 py-2 rounded-lg text-sm bg-accent text-foreground hover:bg-accent/80 transition-colors">
+                    Отмена
+                  </button>
+                  <button 
+                    onClick={() => executeSave(pendingUpdates)} 
+                    disabled={saving}
+                    className="px-4 py-2 rounded-lg text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

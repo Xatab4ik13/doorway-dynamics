@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
@@ -18,9 +19,11 @@ import { useRequests } from "@/hooks/useRequests";
 const AdminRequests = () => {
   const { user } = useAuth();
   const { users, getUserName } = useUsers();
+  const [searchParams] = useSearchParams();
+  const quickFromUrl = searchParams.get("quick") || undefined;
   const [city, setCity] = useState<CityFilter>("Москва");
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
-  const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters);
+  const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter: quickFromUrl });
   const { createRequest, deleteRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);

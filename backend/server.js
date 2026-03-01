@@ -97,7 +97,11 @@ const statusFlows = {
   reclamation: ['new', 'pending', 'date_agreed', 'closed', 'cancelled'],
 };
 
-function isValidTransition(type, fromStatus, toStatus) {
+function isValidTransition(type, fromStatus, toStatus, role) {
+  // Admin/manager can set pending from any non-closed status
+  if (['admin', 'manager'].includes(role) && toStatus === 'pending' && fromStatus !== 'closed') {
+    return true;
+  }
   const flow = statusFlows[type] || statusFlows.measurement;
   if (toStatus === 'cancelled') return true;
   const fromIdx = flow.indexOf(fromStatus);
@@ -105,6 +109,11 @@ function isValidTransition(type, fromStatus, toStatus) {
   if (fromIdx === -1 || toIdx === -1) return false;
   if (fromStatus === 'installation_rescheduled' && toStatus === 'date_agreed') return true;
   return toIdx >= fromIdx;
+}
+
+// Generate random 4-digit PIN
+function generatePin() {
+  return String(Math.floor(1000 + Math.random() * 9000));
 }
 
 const app = express();
@@ -503,6 +512,7 @@ app.get('/api/requests', auth, async (req, res) => {
 
     if (quick === 'new') conds.push(`status = 'new'`);
     else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
+    else if (quick === 'pending') conds.push(`status = 'pending'`);
     else if (quick === 'reclamation') conds.push(`type = 'reclamation'`);
 
     const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
@@ -511,7 +521,7 @@ app.get('/api/requests', auth, async (req, res) => {
     const [dataRes, countRes, countsRes] = await Promise.all([
       pool.query(`SELECT * FROM requests ${where} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx+1}`, [...params, parseInt(limit), offset]),
       pool.query(`SELECT COUNT(*)::int as total FROM requests ${where}`, params),
-      pool.query(`SELECT COUNT(*)::int as "all", COUNT(*) FILTER (WHERE status='new')::int as "new", COUNT(*) FILTER (WHERE status NOT IN ('new','closed','cancelled'))::int as "in_progress", COUNT(*) FILTER (WHERE type='reclamation')::int as "reclamation" FROM requests ${baseWhere}`, baseParams)
+      pool.query(`SELECT COUNT(*)::int as "all", COUNT(*) FILTER (WHERE status='new')::int as "new", COUNT(*) FILTER (WHERE status='pending')::int as "pending", COUNT(*) FILTER (WHERE status NOT IN ('new','closed','cancelled'))::int as "in_progress", COUNT(*) FILTER (WHERE type='reclamation')::int as "reclamation" FROM requests ${baseWhere}`, baseParams)
     ]);
 
     res.json({
@@ -566,10 +576,13 @@ app.post('/api/requests', auth, async (req, res) => {
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
     const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
 
+    // Determine partner_id: for partners, use their own id; for admin/manager creating on behalf, use provided partner_id
+    const partnerId = req.user.role === 'partner' ? req.user.id : (req.body.partner_id || null);
+
     const { rows } = await pool.query(
       `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, 'new') RETURNING *`,
-      [number, req.user.id, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null]
+      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null]
     );
 
     const req_data = rows[0];
@@ -598,9 +611,16 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     if (current.rows.length === 0) return res.status(404).json({ error: 'Заявка не найдена' });
     const request = current.rows[0];
 
-    // Ограничение: партнёры не могут редактировать
+    // Partners can edit their own requests (client info fields only)
     if (role === 'partner') {
-      return res.status(403).json({ error: 'Партнёры не могут редактировать заявки' });
+      if (request.partner_id !== req.user.id) {
+        return res.status(403).json({ error: 'Нет доступа к этой заявке' });
+      }
+      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'photos'];
+      const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
+      if (forbidden.length > 0) {
+        return res.status(403).json({ error: `Партнёрам недоступно изменение: ${forbidden.join(', ')}` });
+      }
     }
 
     // Ограничение: исполнители могут менять только agreed_date, status_comment, photos
@@ -611,6 +631,8 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         return res.status(403).json({ error: `Вам недоступно изменение: ${forbidden.join(', ')}` });
       }
     }
+
+    // Admin and manager can edit ALL fields without restriction
 
     // Автоматизация: назначение исполнителя → смена статуса
     if (updates.measurer_id && !request.measurer_id && ['new', 'pending'].includes(request.status)) {
@@ -628,15 +650,29 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       updates.status = "installation_rescheduled";
     }
 
+    // Замерщик может переносить дату замера
+    if (updates.agreed_date && role === 'measurer' && request.agreed_date && request.type === 'measurement' && request.status === 'date_agreed') {
+      // Allow measurer to reschedule measurement date - keep status as date_agreed
+      updates.status = 'date_agreed';
+    }
+
     // Валидация перехода статуса
     if (updates.status && updates.status !== request.status) {
       if (['admin', 'manager'].includes(role) || ['measurer', 'installer'].includes(role)) {
-        if (!isValidTransition(request.type, request.status, updates.status)) {
+        if (!isValidTransition(request.type, request.status, updates.status, role)) {
           return res.status(400).json({
             error: `Невозможен переход из "${statusLabels[request.status]}" в "${statusLabels[updates.status]}" для типа "${typeLabels[request.type]}"`
           });
         }
       }
+    }
+
+    // Normalize phone if being updated
+    if (updates.client_phone) {
+      updates.client_phone = normalizePhone(updates.client_phone) || updates.client_phone;
+    }
+    if (updates.extra_phone) {
+      updates.extra_phone = normalizePhone(updates.extra_phone) || updates.extra_phone;
     }
 
     // Собираем UPDATE запрос
@@ -953,6 +989,51 @@ app.patch('/api/partner-forms/:id', auth, async (req, res) => {
   } catch (err) {
     console.error('Update partner form error:', err);
     res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Approve partner form and create account
+app.post('/api/partner-forms/:id/approve', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    // Get the partner form
+    const formResult = await pool.query('SELECT * FROM partner_forms WHERE id = $1', [req.params.id]);
+    if (!formResult.rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+    const form = formResult.rows[0];
+
+    // Check if phone already exists
+    const normalizedPhone = normalizePhone(form.phone);
+    const existing = await pool.query('SELECT id FROM users WHERE phone = $1', [normalizedPhone]);
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ error: 'Аккаунт с таким номером уже существует' });
+    }
+
+    // Generate PIN
+    const pin = generatePin();
+
+    // Create user account
+    const { rows } = await pool.query(
+      'INSERT INTO users (name, phone, email, role, pin, active, notes) VALUES ($1, $2, $3, $4, $5, true, $6) RETURNING *',
+      [form.name, normalizedPhone, form.email || null, 'partner', pin, `Магазин: ${form.store_name}, Адрес: ${form.store_address}`]
+    );
+
+    // Update partner form status
+    await pool.query(
+      'UPDATE partner_forms SET status = $1, notes = COALESCE(notes, \'\') || $2 WHERE id = $3',
+      ['done', `\nАккаунт создан. ПИН: ${pin}`, req.params.id]
+    );
+
+    // Notify partner via Telegram if they have telegram_id (they won't at this point, but send SMS/manual notification)
+    // For now, return the PIN so admin can communicate it
+    res.json({ 
+      success: true, 
+      user: rows[0], 
+      pin,
+      message: `Аккаунт партнёра создан. ПИН-код: ${pin}` 
+    });
+  } catch (err) {
+    console.error('Approve partner error:', err);
+    res.status(500).json({ error: 'Ошибка создания аккаунта' });
   }
 });
 
