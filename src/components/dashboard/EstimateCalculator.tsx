@@ -241,7 +241,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
         body { font-family: Arial, sans-serif; padding: 40px; color: #1a1a1a; max-width: 800px; margin: 0 auto; }
         h1 { font-size: 20px; margin-bottom: 4px; }
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 24px; }
-        .header-logo { height: 48px; object-fit: contain; }
+        .header-logo { height: 80px; object-fit: contain; }
         .meta { font-size: 12px; color: #666; text-align: right; }
         .client { margin-bottom: 20px; }
         .client p { margin: 2px 0; font-size: 14px; }
@@ -260,23 +260,27 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
           ${logoBase64 ? `<img src="${logoBase64}" alt="PrimeDoor" class="header-logo" />` : `<h1>PrimeDoor Service</h1>`}
           <p style="font-size:12px;color:#666;margin-top:4px;">Смета от ${new Date().toLocaleDateString("ru-RU")}</p>
         </div>
-        <div class="meta">
-          <p style="font-weight:600;margin-bottom:2px;">Москва</p>
-          <p>+7 926 166 30 62</p>
-          <p>+7 926 166 35 02</p>
-          <p>+7 925 570 06 09</p>
-          <p style="font-weight:600;margin-top:6px;margin-bottom:2px;">Санкт-Петербург</p>
-          <p>+7 993 266 35 04</p>
-          <p style="margin-top:6px;">service@primedoor.ru</p>
+        <div class="meta" style="display:flex;gap:24px;">
+          <div>
+            <p style="font-weight:600;margin-bottom:2px;">Москва</p>
+            <p>+7 926 166 30 62</p>
+            <p>+7 926 166 35 02</p>
+            <p>+7 925 570 06 09</p>
+          </div>
+          <div>
+            <p style="font-weight:600;margin-bottom:2px;">Санкт-Петербург</p>
+            <p>+7 993 266 35 04</p>
+            <p style="margin-top:6px;">service@primedoor.ru</p>
+          </div>
         </div>
       </div>
       <div class="client"><p><strong>${clientName}</strong></p>${clientPhone ? `<p>Тел: ${clientPhone}</p>` : ""}${clientAddress ? `<p>${clientAddress}</p>` : ""}</div>
       <table>
-        <thead><tr><th>№</th><th>Позиция</th><th>Кол.</th><th>Ед.</th><th>Цена</th><th style="text-align:right">Сумма</th></tr></thead>
+        <thead><tr><th>№</th><th>Позиция</th><th>Кол.</th><th>Ед.</th><th>Цена, ₽</th><th style="text-align:right">Сумма, ₽</th></tr></thead>
         <tbody>
-          ${items.filter(i => !i.isPercent).map((it, idx) => `<tr><td>${idx + 1}</td><td>${it.name || "—"}</td><td>${it.quantity}</td><td>${it.unit}</td><td>${it.price.toLocaleString("ru")} ₽</td><td style="text-align:right">${(it.price * it.quantity).toLocaleString("ru")} ₽</td></tr>`).join("")}
-          ${percentSurcharge > 0 ? `<tr><td colspan="5">Надбавка (${percentItems.map(i => "+" + i.percentValue + "%").join(", ")})</td><td style="text-align:right">+${percentSurcharge.toLocaleString("ru")} ₽</td></tr>` : ""}
-          ${discount > 0 ? `<tr><td colspan="5">Скидка ${discount}%</td><td style="text-align:right">−${discountAmount.toLocaleString("ru")} ₽</td></tr>` : ""}
+          ${items.filter(i => !i.isPercent).map((it, idx) => `<tr><td>${idx + 1}</td><td>${it.name || "—"}</td><td>${it.quantity}</td><td>${it.unit}</td><td>${it.price.toLocaleString("ru")}</td><td style="text-align:right">${(it.price * it.quantity).toLocaleString("ru")}</td></tr>`).join("")}
+          ${percentSurcharge > 0 ? `<tr><td colspan="5">Надбавка (${percentItems.map(i => "+" + i.percentValue + "%").join(", ")})</td><td style="text-align:right">+${percentSurcharge.toLocaleString("ru")}</td></tr>` : ""}
+          ${discount > 0 ? `<tr><td colspan="5">Скидка ${discount}%</td><td style="text-align:right">−${discountAmount.toLocaleString("ru")}</td></tr>` : ""}
           <tr class="total-row"><td colspan="5">Итого</td><td style="text-align:right">${total.toLocaleString("ru")} ₽</td></tr>
         </tbody>
       </table>
@@ -294,8 +298,6 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       </div>
       <div class="footer">
         <p>ИП Корженевский М.А. · ИНН 971502093793</p>
-        <p>Москва: +7 926 166 30 62 · +7 926 166 35 02 · +7 925 570 06 09</p>
-        <p>Санкт-Петербург: +7 993 266 35 04 · service@primedoor.ru</p>
       </div>
       </body></html>
     `);
