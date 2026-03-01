@@ -145,6 +145,9 @@ const InstallerDashboard = () => {
                         <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent text-muted-foreground">
                           {requestTypeLabels[r.type] || r.type}
                         </span>
+                        {r.accepted_at && (
+                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">Принято</span>
+                        )}
                       </div>
                       <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a></div>
@@ -270,6 +273,40 @@ const InstallerDashboard = () => {
                   <p className="text-sm text-muted-foreground text-center py-4">Нет прикреплённых файлов</p>
                 )}
               </div>
+
+              {/* Accept button - only if not yet accepted */}
+              {!selected.accepted_at && selected.status !== "closed" && (
+                <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 size={16} className="text-blue-600 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-blue-800">Подтвердите принятие заявки</p>
+                        <p className="text-xs text-blue-600">Нажмите, чтобы подтвердить что вы приняли эту заявку в работу</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try {
+                          const updated = await updateRequest(selected.id, { accepted_at: new Date().toISOString() } as any);
+                          setSelected(updated);
+                          toast.success("Заявка принята");
+                        } catch {}
+                      }}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    >
+                      Принял
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {selected.accepted_at && (
+                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                  <CheckCircle2 size={14} className="text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700">Принято: {new Date(selected.accepted_at).toLocaleString("ru-RU")}</span>
+                </div>
+              )}
 
               {!selected.agreed_date && (
                 <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">

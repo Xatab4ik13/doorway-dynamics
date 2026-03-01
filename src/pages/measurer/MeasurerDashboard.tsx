@@ -19,6 +19,7 @@ const MeasurerDashboard = () => {
   const [agreedDate, setAgreedDate] = useState("");
   const [dateConfirmed, setDateConfirmed] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [rescheduleOpen, setRescheduleOpen] = useState(false);
 
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
@@ -29,6 +30,7 @@ const MeasurerDashboard = () => {
     setUploadedFiles([]);
     setAgreedDate(r.agreed_date?.split("T")[0] || "");
     setDateConfirmed(!!r.agreed_date);
+    setRescheduleOpen(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -217,10 +219,53 @@ const MeasurerDashboard = () => {
 
               {dateConfirmed && (
                 <>
-                  <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
-                    <Calendar size={14} className="text-primary" />
-                    <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
+                  <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2">
+                      <Calendar size={14} className="text-primary" />
+                      <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
+                    </div>
+                    {selected.status !== "measurement_done" && selected.status !== "closed" && (
+                      <button
+                        onClick={() => setRescheduleOpen(!rescheduleOpen)}
+                        className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+                      >
+                        {rescheduleOpen ? "Отменить" : "Перенести дату"}
+                      </button>
+                    )}
                   </div>
+
+                  {rescheduleOpen && (
+                    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">Перенос даты замера</p>
+                          <p className="text-xs text-amber-700">Укажите новую дату.</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
+                          min={new Date().toISOString().split("T")[0]}
+                          className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        <button
+                          onClick={async () => {
+                            if (!agreedDate || !selected) return;
+                            try {
+                              const updated = await updateRequest(selected.id, { agreed_date: agreedDate, status: "date_agreed" as any });
+                              setDateConfirmed(true);
+                              setRescheduleOpen(false);
+                              setSelected(updated);
+                              toast.success("Дата перенесена");
+                            } catch {}
+                          }}
+                          disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0]}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
+                        >
+                          Подтвердить
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="border-t border-border pt-4">
                     <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText size={16} /> Данные замера</h3>
