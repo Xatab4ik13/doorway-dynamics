@@ -199,7 +199,7 @@ const AdminPartners = () => {
 
       {/* Detail Modal */}
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
-        <DialogContent className="max-w-lg dashboard-theme bg-white text-gray-900 border-gray-200">
+        <DialogContent className="max-w-lg [&]:bg-white [&]:text-gray-900 [&]:border-gray-200 [&_*]:!text-gray-900 [&_a]:!text-blue-600 [&_.text-muted-foreground]:!text-gray-500 [&_button]:!text-gray-900 [&_[data-radix-select-viewport]]:!bg-white [&_[role=option]]:!text-gray-900 [&_[role=option][data-highlighted]]:!bg-gray-100 [&_textarea]:!bg-white [&_textarea]:!border-gray-300 [&_button[role=combobox]]:!bg-white [&_button[role=combobox]]:!border-gray-300">
           <DialogHeader>
             <DialogTitle>Заявка на партнёрство</DialogTitle>
           </DialogHeader>
@@ -271,7 +271,7 @@ const AdminPartners = () => {
               </div>
 
               <div className="flex justify-between gap-2 pt-2">
-                {selected.status !== "done" && !approveResult && (
+                {editStatus !== "done" && !approveResult && (
                   <Button variant="outline" onClick={handleApprove} disabled={approving} className="flex items-center gap-2">
                     {approving ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
                     Одобрить и создать аккаунт
