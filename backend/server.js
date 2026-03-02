@@ -126,6 +126,7 @@ app.use(cors({
 app.use(express.json());
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+let hasClosedAtColumn = false;
 
 const s3 = new S3Client({
   endpoint: process.env.S3_ENDPOINT,
@@ -507,7 +508,8 @@ app.get('/api/requests', auth, async (req, res) => {
     if (installer_id && installer_id !== 'all') { conds.push(`installer_id = $${idx++}`); params.push(installer_id); }
     if (city && city !== 'all') { conds.push(`city = $${idx++}`); params.push(city); }
     if (partner_id && partner_id !== 'all') { conds.push(`partner_id = $${idx++}`); params.push(partner_id); }
-    const dateCol = req.query.date_field === 'closed_at' ? 'closed_at' : 'created_at';
+    const requestedDateField = req.query.date_field === 'closed_at' ? 'closed_at' : 'created_at';
+    const dateCol = requestedDateField === 'closed_at' && hasClosedAtColumn ? 'closed_at' : 'created_at';
     if (date_from) { conds.push(`${dateCol} >= $${idx++}`); params.push(date_from); }
     if (date_to) { conds.push(`${dateCol} <= $${idx++}::date + interval '1 day'`); params.push(date_to); }
 
@@ -922,16 +924,29 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
   }
 });
 
-// === Auto-migrate: add closed_at column ===
+// === Startup check: closed_at column ===
 (async () => {
   try {
-    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ`);
-    // Backfill: set closed_at for already closed requests
-    await pool.query(`UPDATE requests SET closed_at = updated_at WHERE status = 'closed' AND closed_at IS NULL AND updated_at IS NOT NULL`);
-    await pool.query(`UPDATE requests SET closed_at = created_at WHERE status = 'closed' AND closed_at IS NULL`);
-    console.log('Migration: closed_at column ready');
+    const { rows } = await pool.query(`
+      SELECT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'requests'
+          AND column_name = 'closed_at'
+      ) AS exists
+    `);
+
+    hasClosedAtColumn = !!rows[0]?.exists;
+
+    if (hasClosedAtColumn) {
+      await pool.query(`UPDATE requests SET closed_at = COALESCE(updated_at, created_at) WHERE status = 'closed' AND closed_at IS NULL`);
+      console.log('Startup check: closed_at column ready');
+    } else {
+      console.warn('Startup check: closed_at column is missing. Date filter falls back to created_at.');
+    }
   } catch (err) {
-    console.error('Migration closed_at error:', err.message);
+    console.error('Startup check closed_at error:', err.message);
   }
 })();
 
