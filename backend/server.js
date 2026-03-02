@@ -509,7 +509,12 @@ app.get('/api/requests', auth, async (req, res) => {
     if (city && city !== 'all') { conds.push(`city = $${idx++}`); params.push(city); }
     if (partner_id && partner_id !== 'all') { conds.push(`partner_id = $${idx++}`); params.push(partner_id); }
     const requestedDateField = req.query.date_field === 'closed_at' ? 'closed_at' : 'created_at';
-    const dateCol = requestedDateField === 'closed_at' && hasClosedAtColumn ? 'closed_at' : 'created_at';
+    if (requestedDateField === 'closed_at') {
+      conds.push(`status = 'closed'`);
+    }
+    const dateCol = requestedDateField === 'closed_at'
+      ? (hasClosedAtColumn ? 'closed_at' : 'updated_at')
+      : 'created_at';
     if (date_from) { conds.push(`${dateCol} >= $${idx++}`); params.push(date_from); }
     if (date_to) { conds.push(`${dateCol} <= $${idx++}::date + interval '1 day'`); params.push(date_to); }
 
@@ -943,7 +948,7 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
       await pool.query(`UPDATE requests SET closed_at = COALESCE(updated_at, created_at) WHERE status = 'closed' AND closed_at IS NULL`);
       console.log('Startup check: closed_at column ready');
     } else {
-      console.warn('Startup check: closed_at column is missing. Date filter falls back to created_at.');
+      console.warn('Startup check: closed_at column is missing. Date filter uses updated_at for closed requests.');
     }
   } catch (err) {
     console.error('Startup check closed_at error:', err.message);
