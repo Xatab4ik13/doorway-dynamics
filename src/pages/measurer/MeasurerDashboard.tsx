@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
-import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2 } from "lucide-react";
-import { useRequests, type ApiRequest } from "@/hooks/useRequests";
+import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2, Briefcase } from "lucide-react";
+import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 const MeasurerDashboard = () => {
   const { user } = useAuth();
   const { requests, loading, updateRequest } = useRequests();
+  const { getUserName } = useUsers();
   const [selected, setSelected] = useState<ApiRequest | null>(null);
 
   const [measurementNotes, setMeasurementNotes] = useState("");
@@ -103,11 +104,16 @@ const MeasurerDashboard = () => {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
                           {statusLabels[r.status as RequestStatus] || r.status}
                         </span>
+                        {r.partner_id && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                            <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
+                          </span>
+                        )}
                       </div>
                       <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -161,7 +167,14 @@ const MeasurerDashboard = () => {
             <CardContent className="p-6 space-y-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+                    {selected.partner_id && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                        <Briefcase size={10} /> {getUserName(selected.partner_id) || "Партнёр"}
+                      </span>
+                    )}
+                  </div>
                   <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
                   <p className="text-sm text-muted-foreground">
                     <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
