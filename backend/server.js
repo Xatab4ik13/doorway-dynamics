@@ -93,7 +93,7 @@ const typeLabels = {
 // === Status flow validation ===
 const statusFlows = {
   measurement: ['new', 'pending', 'measurer_assigned', 'date_agreed', 'measurement_done', 'closed', 'cancelled'],
-  installation: ['new', 'pending', 'date_agreed', 'installation_rescheduled', 'closed', 'cancelled'],
+  installation: ['new', 'pending', 'installer_assigned', 'date_agreed', 'installation_rescheduled', 'closed', 'cancelled'],
   reclamation: ['new', 'pending', 'date_agreed', 'closed', 'cancelled'],
 };
 
