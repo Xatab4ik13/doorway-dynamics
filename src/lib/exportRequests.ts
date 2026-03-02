@@ -19,6 +19,7 @@ const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Входные": r.entrance_doors != null ? r.entrance_doors : "",
   "Перегородка (кол-во створок)": r.partitions != null ? r.partitions : "",
   "Дата создания": r.created_at?.split("T")[0] || "",
+  "Дата закрытия": r.closed_at?.split("T")[0] || "",
   "Согласованная дата": r.agreed_date?.split("T")[0] || "",
 });
 

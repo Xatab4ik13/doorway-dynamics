@@ -31,6 +31,7 @@ export interface ApiRequest {
   agreed_date?: string;
   accepted_at?: string;
   amount?: number;
+  closed_at?: string;
   created_at: string;
   updated_at?: string;
 }

@@ -41,6 +41,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
     if (filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
     if (filters.dateFrom) params.set("date_from", filters.dateFrom);
     if (filters.dateTo) params.set("date_to", filters.dateTo);
+    if (filters.dateField && filters.dateField !== "created_at") params.set("date_field", filters.dateField);
     if (quickFilter && quickFilter !== "all") params.set("quick", quickFilter);
     return params.toString();
   }, [page, limit, filters, quickFilter]);
@@ -75,8 +76,13 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         if (filters.measurerId !== "all") filtered = filtered.filter(r => r.measurer_id === filters.measurerId);
         if (filters.installerId !== "all") filtered = filtered.filter(r => r.installer_id === filters.installerId);
         if (filters.partnerId !== "all") filtered = filtered.filter(r => r.partner_id === filters.partnerId);
-        if (filters.dateFrom) filtered = filtered.filter(r => (r.created_at?.split("T")[0] || "") >= filters.dateFrom);
-        if (filters.dateTo) filtered = filtered.filter(r => (r.created_at?.split("T")[0] || "") <= filters.dateTo);
+        const dateField = filters.dateField || "created_at";
+        const getDateValue = (r: ApiRequest) => {
+          const val = dateField === "closed_at" ? (r as any).closed_at : r.created_at;
+          return val?.split("T")[0] || "";
+        };
+        if (filters.dateFrom) filtered = filtered.filter(r => getDateValue(r) >= filters.dateFrom);
+        if (filters.dateTo) filtered = filtered.filter(r => getDateValue(r) <= filters.dateTo);
 
         if (quickFilter === "new") filtered = filtered.filter(r => r.status === "new");
         else if (quickFilter === "in_progress") filtered = filtered.filter(r => !["new", "closed", "cancelled"].includes(r.status));
@@ -121,7 +127,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
   useEffect(() => {
     setPage(1);
     prevTotalRef.current = null;
-  }, [filters.search, filters.status, filters.type, filters.measurerId, filters.installerId, filters.partnerId, filters.dateFrom, filters.dateTo, quickFilter]);
+  }, [filters.search, filters.status, filters.type, filters.measurerId, filters.installerId, filters.partnerId, filters.dateFrom, filters.dateTo, filters.dateField, quickFilter]);
 
   useEffect(() => {
     fetchRequests();
