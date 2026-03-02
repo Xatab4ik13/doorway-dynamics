@@ -5,11 +5,15 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Decode SSH key
         id: ssh_key
         run: |
@@ -18,38 +22,28 @@ jobs:
           cat /tmp/deploy_key >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
-      - name: Deploy backend to VPS
+      - name: Upload backend files to VPS backend directory
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ env.DECODED_KEY }}
+          source: "backend/server.js,backend/bot.js,backend/package.json"
+          target: "/var/www/primedoor-api/backend"
+          strip_components: 1
+
+      - name: Install deps and restart PM2 services
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ env.DECODED_KEY }}
           script: |
-            cd /var/www/primedoor-api
-            
-            # Инициализация git если ещё не сделано
-            if [ ! -d ".git" ]; then
-              git init
-              git remote add origin https://github.com/${{ github.repository }}.git
-            fi
-            
-            # Получаем последние изменения
-            git fetch origin main
-            
-            # Копируем только backend файлы
-            git checkout origin/main -- backend/server.js backend/bot.js backend/package.json
-            
-            # Перемещаем файлы из backend/ в текущую директорию
-            cp backend/server.js ./server.js
-            cp backend/bot.js ./bot.js
-            cp backend/package.json ./package.json
-            rm -rf backend/
-            
-            # Устанавливаем зависимости если package.json изменился
+            set -e
+            cd /var/www/primedoor-api/backend
             npm install --production
-            
-            # Перезапускаем процессы
-            pm2 restart primedoor-api
-            pm2 restart primedoor-bot
-            
-            echo "✅ Backend deployed successfully"
+            pm2 restart primedoor-api --update-env
+            pm2 restart primedoor-bot --update-env
+            pm2 save
+            pm2 status
+            echo "✅ Backend deployed successfully to /var/www/primedoor-api/backend"
