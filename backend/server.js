@@ -507,8 +507,9 @@ app.get('/api/requests', auth, async (req, res) => {
     if (installer_id && installer_id !== 'all') { conds.push(`installer_id = $${idx++}`); params.push(installer_id); }
     if (city && city !== 'all') { conds.push(`city = $${idx++}`); params.push(city); }
     if (partner_id && partner_id !== 'all') { conds.push(`partner_id = $${idx++}`); params.push(partner_id); }
-    if (date_from) { conds.push(`created_at >= $${idx++}`); params.push(date_from); }
-    if (date_to) { conds.push(`created_at <= $${idx++}::date + interval '1 day'`); params.push(date_to); }
+    const dateCol = req.query.date_field === 'closed_at' ? 'closed_at' : 'created_at';
+    if (date_from) { conds.push(`${dateCol} >= $${idx++}`); params.push(date_from); }
+    if (date_to) { conds.push(`${dateCol} <= $${idx++}::date + interval '1 day'`); params.push(date_to); }
 
     if (quick === 'new') conds.push(`status = 'new'`);
     else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
@@ -677,6 +678,15 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     }
     if (updates.extra_phone) {
       updates.extra_phone = normalizePhone(updates.extra_phone) || updates.extra_phone;
+    }
+
+    // Автоматизация: закрытие → проставляем closed_at
+    if (updates.status === 'closed' && request.status !== 'closed') {
+      updates.closed_at = new Date().toISOString();
+    }
+    // Если заявку переоткрывают — сбрасываем closed_at
+    if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
+      updates.closed_at = null;
     }
 
     // Собираем UPDATE запрос
@@ -911,6 +921,19 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
     res.status(500).json({ error: "Ошибка удаления заявки" });
   }
 });
+
+// === Auto-migrate: add closed_at column ===
+(async () => {
+  try {
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ`);
+    // Backfill: set closed_at for already closed requests
+    await pool.query(`UPDATE requests SET closed_at = updated_at WHERE status = 'closed' AND closed_at IS NULL AND updated_at IS NOT NULL`);
+    await pool.query(`UPDATE requests SET closed_at = created_at WHERE status = 'closed' AND closed_at IS NULL`);
+    console.log('Migration: closed_at column ready');
+  } catch (err) {
+    console.error('Migration closed_at error:', err.message);
+  }
+})();
 
 // === Partner form ===
 // Auto-create partner_forms table

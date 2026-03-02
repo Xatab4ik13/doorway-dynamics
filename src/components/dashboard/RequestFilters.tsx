@@ -14,6 +14,7 @@ export interface FilterState {
   partnerId: string;
   dateFrom: string;
   dateTo: string;
+  dateField: "created_at" | "closed_at";
 }
 
 export const defaultFilters: FilterState = {
@@ -26,6 +27,7 @@ export const defaultFilters: FilterState = {
   partnerId: "all",
   dateFrom: "",
   dateTo: "",
+  dateField: "created_at",
 };
 
 interface RequestFiltersProps {
@@ -119,7 +121,7 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-4 rounded-xl bg-accent/50 border border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl bg-accent/50 border border-border">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Замерщик</label>
                 <select value={filters.measurerId} onChange={(e) => set("measurerId", e.target.value)} className={selectClass + " w-full"}>
@@ -139,6 +141,13 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
                 <select value={filters.partnerId} onChange={(e) => set("partnerId", e.target.value)} className={selectClass + " w-full"}>
                   <option value="all">Все</option>
                   {partners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Calendar size={11} /> Тип даты</label>
+                <select value={filters.dateField} onChange={(e) => set("dateField", e.target.value)} className={selectClass + " w-full"}>
+                  <option value="created_at">Дата создания</option>
+                  <option value="closed_at">Дата закрытия</option>
                 </select>
               </div>
               <div className="grid grid-cols-2 gap-2">
