@@ -343,6 +343,19 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Описание работ</label>
                     <textarea value={workDescription} onChange={(e) => setWorkDescription(e.target.value)} rows={2} className={inputClass + " resize-none"} placeholder="Описание работ..." />
                   </div>
+
+                  {/* Agreed date — visible in edit mode for partner (read-only display) */}
+                  {canPartnerEdit && showDateField && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <Calendar size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                          {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
+                        </p>
+                        <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Read-only Info grid */
