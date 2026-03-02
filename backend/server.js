@@ -648,7 +648,9 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     }
 
     // Автоматизация: перенос даты монтажа → installation_rescheduled
-    if (updates.agreed_date && ["date_agreed", "installation_rescheduled"].includes(request.status) && request.type === "installation" && ["installer", "admin", "manager"].includes(role)) {
+    // Только если пользователь НЕ менял статус вручную (т.е. статус в payload совпадает с текущим)
+    const userExplicitlyChangedStatus = updates.status && updates.status !== request.status;
+    if (updates.agreed_date && !userExplicitlyChangedStatus && ["date_agreed", "installation_rescheduled"].includes(request.status) && request.type === "installation" && ["installer", "admin", "manager"].includes(role)) {
       updates.status = "installation_rescheduled";
     }
 
