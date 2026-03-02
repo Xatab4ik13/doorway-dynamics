@@ -44,6 +44,7 @@ export interface ApiUser {
 }
 
 const POLL_INTERVAL = 10000; // 10 seconds
+const FULL_FETCH_LIMIT = 1000;
 
 export function useRequests() {
   const [requests, setRequests] = useState<ApiRequest[]>([]);
@@ -54,7 +55,7 @@ export function useRequests() {
   const fetchRequests = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const response = await api<ApiRequest[] | { data: ApiRequest[] }>("/api/requests", { auth: true });
+      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}`, { auth: true });
       const data = Array.isArray(response) ? response : response.data;
       
       // Notify about new requests
