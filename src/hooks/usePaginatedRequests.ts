@@ -77,8 +77,13 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         if (filters.installerId !== "all") filtered = filtered.filter(r => r.installer_id === filters.installerId);
         if (filters.partnerId !== "all") filtered = filtered.filter(r => r.partner_id === filters.partnerId);
         const dateField = filters.dateField || "created_at";
+        if (dateField === "closed_at") {
+          filtered = filtered.filter(r => r.status === "closed");
+        }
         const getDateValue = (r: ApiRequest) => {
-          const val = dateField === "closed_at" ? (r as any).closed_at : r.created_at;
+          const val = dateField === "closed_at"
+            ? ((r as any).closed_at || r.updated_at)
+            : r.created_at;
           return val?.split("T")[0] || "";
         };
         if (filters.dateFrom) filtered = filtered.filter(r => getDateValue(r) >= filters.dateFrom);
