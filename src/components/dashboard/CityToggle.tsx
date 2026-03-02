@@ -1,6 +1,6 @@
 import { MapPin } from "lucide-react";
 
-export type CityFilter = "Москва" | "Санкт-Петербург";
+export type CityFilter = "all" | "Москва" | "Санкт-Петербург";
 
 interface CityToggleProps {
   value: CityFilter;
@@ -8,6 +8,7 @@ interface CityToggleProps {
 }
 
 const cities: { label: string; value: CityFilter }[] = [
+  { label: "Все города", value: "all" },
   { label: "Москва", value: "Москва" },
   { label: "Санкт-Петербург", value: "Санкт-Петербург" },
 ];

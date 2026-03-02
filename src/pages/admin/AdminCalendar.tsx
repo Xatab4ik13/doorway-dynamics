@@ -4,7 +4,7 @@ import InstallationCalendar from "@/components/dashboard/InstallationCalendar";
 import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
 
 const AdminCalendar = () => {
-  const [city, setCity] = useState<CityFilter>("Москва");
+  const [city, setCity] = useState<CityFilter>("all");
 
   return (
     <DashboardLayout role="admin">
