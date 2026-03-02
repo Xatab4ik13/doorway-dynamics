@@ -123,9 +123,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       delete updates.notes;
     }
     
-    // Only send agreed_date if it actually changed
-    const originalDate = request.agreed_date?.split("T")[0] || "";
-    if (canChangeDate && agreedDate && agreedDate !== originalDate) {
+    // Always send agreed_date to prevent backend from clearing it
+    if (canChangeDate && agreedDate) {
       updates.agreed_date = agreedDate;
     }
     
