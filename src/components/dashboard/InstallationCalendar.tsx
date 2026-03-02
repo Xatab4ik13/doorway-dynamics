@@ -211,7 +211,7 @@ const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
     const map: Record<string, DayData> = {};
     const filtered = requests
       .filter((r) => r.agreed_date && ACTIVE_STATUSES.includes(r.status))
-      .filter((r) => !cityFilter || cityFilter === "all" || r.city === cityFilter);
+      .filter((r) => !cityFilter || r.city === cityFilter);
 
     filtered.forEach((r) => {
       const dateKey = r.agreed_date!.slice(0, 10);
