@@ -164,7 +164,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
