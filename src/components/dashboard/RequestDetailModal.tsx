@@ -681,28 +681,47 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               ) : photos.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {photos.map((file, i) => (
-                    <a
-                      key={i}
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-all"
-                    >
-                      {file.type === "image" ? (
-                        <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
-                          <FileText size={24} className="text-muted-foreground" />
-                          <p className="text-[10px] text-muted-foreground mt-1">{file.url.split("/").pop()}</p>
+                    <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-all">
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block w-full h-full"
+                      >
+                        {file.type === "image" ? (
+                          <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
+                            <FileText size={24} className="text-muted-foreground" />
+                            <p className="text-[10px] text-muted-foreground mt-1">{file.url.split("/").pop()}</p>
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                          <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
+                        <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
+                          {file.uploaded_at?.split("T")[0]}
+                        </p>
+                      </a>
+                      {viewerRole === "admin" && onSave && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const updatedPhotos = photos.filter((_, idx) => idx !== i);
+                            try {
+                              await onSave(request.id, { photos: updatedPhotos as any });
+                              toast.success("Файл удалён");
+                            } catch {
+                              toast.error("Ошибка удаления файла");
+                            }
+                          }}
+                          className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition-all z-10"
+                          title="Удалить файл"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                        <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                      <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
-                        {file.uploaded_at?.split("T")[0]}
-                      </p>
-                    </a>
+                    </div>
                   ))}
                 </div>
               ) : null}
