@@ -130,6 +130,11 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore }: {
         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColors[r.status as RequestStatus] || "bg-muted text-muted-foreground"}`}>
           {statusLabels[r.status as RequestStatus] || r.status}
         </span>
+        {r.accepted_at && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-primary/10 text-primary border border-primary/20">
+            ✓ Принято {new Date(r.accepted_at).toLocaleDateString("ru-RU")}
+          </span>
+        )}
       </div>
     </div>
 
