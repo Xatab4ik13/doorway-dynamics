@@ -779,7 +779,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           
           {/* Confirmation modal */}
           {showConfirm && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20 rounded-2xl">
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60]">
               <div className="bg-card rounded-xl p-6 max-w-sm mx-4 shadow-2xl space-y-4">
                 <div className="flex items-center gap-3">
                   <AlertTriangle size={24} className="text-amber-500" />
