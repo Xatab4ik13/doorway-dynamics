@@ -374,6 +374,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
 
       {/* Modal with tabs per category */}
       <Dialog
+        modal={!detailRequest}
         open={!!selectedDate}
         onOpenChange={(open) => {
           if (!open && !detailRequest) setSelectedDate(null);
