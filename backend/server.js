@@ -687,13 +687,17 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       updates.extra_phone = normalizePhone(updates.extra_phone) || updates.extra_phone;
     }
 
-    // Автоматизация: закрытие → проставляем closed_at
-    if (updates.status === 'closed' && request.status !== 'closed') {
-      updates.closed_at = new Date().toISOString();
-    }
-    // Если заявку переоткрывают — сбрасываем closed_at
-    if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
-      updates.closed_at = null;
+    // Автоматизация: закрытие → проставляем closed_at (если колонка доступна)
+    if (hasClosedAtColumn) {
+      if (updates.status === 'closed' && request.status !== 'closed') {
+        updates.closed_at = new Date().toISOString();
+      }
+      // Если заявку переоткрывают — сбрасываем closed_at
+      if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
+        updates.closed_at = null;
+      }
+    } else if (Object.prototype.hasOwnProperty.call(updates, 'closed_at')) {
+      delete updates.closed_at;
     }
 
     // Собираем UPDATE запрос
