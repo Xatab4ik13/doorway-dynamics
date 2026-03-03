@@ -81,13 +81,13 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       return;
     }
 
-    // Handle single percent like "+30%"
+    // Handle single percent like "+30%" — only one allowed, replaces if exists
     if (isPercentPrice(priceStr)) {
       const pct = parsePercent(priceStr);
       const name = `${item.name} (+${pct}%)`;
       const existing = items.find(i => i.name === name && i.isPercent);
       if (existing) {
-        setItems(prev => prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i));
+        // Already added — do nothing, percent items are not stackable
         return;
       }
       setItems(prev => [...prev, {
@@ -125,13 +125,12 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   };
 
   const addWithVariant = (item: PriceItem, variant: string) => {
-    // Handle percent variant
+    // Handle percent variant — not stackable
     if (isPercentPrice(variant)) {
       const pct = parsePercent(variant);
       const name = `${item.name} (+${pct}%)`;
       const existing = items.find(i => i.name === name && i.isPercent);
       if (existing) {
-        setItems(prev => prev.map(i => i.id === existing.id ? { ...i, quantity: i.quantity + 1 } : i));
         setVariantModal(null);
         return;
       }
@@ -182,7 +181,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const regularItems = items.filter(i => !i.isPercent);
   const percentItems = items.filter(i => i.isPercent);
   const subtotal = regularItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const percentSurcharge = percentItems.reduce((sum, i) => sum + subtotal * ((i.percentValue || 0) / 100) * i.quantity, 0);
+  const percentSurcharge = percentItems.reduce((sum, i) => sum + subtotal * ((i.percentValue || 0) / 100), 0);
   const subtotalWithSurcharge = subtotal + percentSurcharge;
   const discountAmount = subtotalWithSurcharge * (discount / 100);
   const total = subtotalWithSurcharge - discountAmount;
