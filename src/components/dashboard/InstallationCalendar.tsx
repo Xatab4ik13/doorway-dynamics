@@ -373,8 +373,21 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
       </div>
 
       {/* Modal with tabs per category */}
-      <Dialog open={!!selectedDate} onOpenChange={(open) => !open && setSelectedDate(null)}>
-        <DialogContent className="dashboard-theme max-w-5xl max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground">
+      <Dialog
+        open={!!selectedDate}
+        onOpenChange={(open) => {
+          if (!open && !detailRequest) setSelectedDate(null);
+        }}
+      >
+        <DialogContent
+          onInteractOutside={(e) => {
+            if (detailRequest) e.preventDefault();
+          }}
+          onEscapeKeyDown={(e) => {
+            if (detailRequest) e.preventDefault();
+          }}
+          className={`dashboard-theme max-w-5xl max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground ${detailRequest ? "pointer-events-none" : ""}`}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon size={18} className="text-primary" />
