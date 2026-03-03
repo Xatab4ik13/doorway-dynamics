@@ -4,6 +4,7 @@ import { useRequests, useUsers } from "@/hooks/useRequests";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SearchableUserSelect from "@/components/dashboard/SearchableUserSelect";
+import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus, Check, Loader2, DoorOpen, DoorClosed, Ruler, ExternalLink } from "lucide-react";
 import {
   format,
@@ -71,7 +72,7 @@ const CalendarInstallerAssign = ({ request, installers, getUserName, onAssign }:
   };
 
   return (
-    <div className="flex items-center gap-2 text-xs pt-1 border-t border-border/30">
+    <div className="flex items-center gap-2 text-xs pt-1 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
       <UserPlus size={12} className="text-muted-foreground shrink-0" />
       <div className="flex-1 min-w-0">
         <SearchableUserSelect
@@ -93,24 +94,24 @@ const CalendarInstallerAssign = ({ request, installers, getUserName, onAssign }:
 };
 
 // Request card shown in modals
-const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath }: {
+const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
   r: ApiRequest;
   installers: ApiUser[];
   getUserName: (id?: string) => string | undefined;
   onAssign: (id: string, iid: string) => Promise<void>;
   onRestore: (id: string) => Promise<void>;
   basePath?: string;
+  onOpenDetail?: (r: ApiRequest) => void;
 }) => {
-  const navigate = useNavigate();
-  const handleOpenRequest = () => {
-    if (basePath) navigate(`${basePath}/requests?search=${encodeURIComponent(r.number)}`);
-  };
   return (
-  <div className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/50 transition-colors">
+  <div
+    className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/50 transition-colors cursor-pointer"
+    onClick={() => onOpenDetail?.(r)}
+  >
     <div className="flex items-center justify-between">
-      <button onClick={handleOpenRequest} className="text-xs font-mono text-primary hover:underline flex items-center gap-1">
+      <span className="text-xs font-mono text-primary flex items-center gap-1">
         {r.number} <ExternalLink size={10} />
-      </button>
+      </span>
       <div className="flex items-center gap-1.5">
         {r.type === "installation" && ((r.interior_doors ?? 0) > 0 || (r.entrance_doors ?? 0) > 0 || (r.partitions ?? 0) > 0) && (
           <div className="flex flex-wrap gap-1">
@@ -193,6 +194,7 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath
 interface InstallationCalendarProps {
   cityFilter?: string;
   basePath?: string;
+  viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
 interface DayData {
@@ -203,9 +205,10 @@ interface DayData {
   reclamations: ApiRequest[];
 }
 
-const InstallationCalendar = ({ cityFilter, basePath }: InstallationCalendarProps) => {
+const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: InstallationCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [detailRequest, setDetailRequest] = useState<ApiRequest | null>(null);
   const { requests, loading, updateRequest } = useRequests();
   const { getUserName, getByRole } = useUsers();
   const installers = useMemo(() => getByRole("installer"), [getByRole]);
@@ -216,6 +219,12 @@ const InstallationCalendar = ({ cityFilter, basePath }: InstallationCalendarProp
 
   const handleRestoreDateAgreed = useCallback(async (requestId: string) => {
     try { await updateRequest(requestId, { status: "date_agreed" } as any); toast.success("Статус изменён"); } catch {}
+  }, [updateRequest]);
+
+  const handleSaveRequest = useCallback(async (id: string, updates: Partial<ApiRequest>) => {
+    await updateRequest(id, updates);
+    setDetailRequest(null);
+    toast.success("Заявка обновлена");
   }, [updateRequest]);
 
   const dataByDate = useMemo(() => {
@@ -378,38 +387,48 @@ const InstallationCalendar = ({ cityFilter, basePath }: InstallationCalendarProp
               {/* Interior installations */}
               {selectedDayData.interiorInstalls.length > 0 && (
                 <Section title="Межкомнатные двери" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
               )}
 
               {selectedDayData.entranceInstalls.length > 0 && (
                 <Section title="Входные двери" icon={<DoorClosed size={14} />} color="text-blue-500" requests={selectedDayData.entranceInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
               )}
 
               {selectedDayData.mixedInstalls.length > 0 && (
                 <Section title="Межкомн. + Входные" icon={<Wrench size={14} />} color="text-violet-500" requests={selectedDayData.mixedInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
               )}
 
               {selectedDayData.measurements.length > 0 && (
                 <Section title="Замеры" icon={<Ruler size={14} />} color="text-amber-500" requests={selectedDayData.measurements}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
               )}
 
               {selectedDayData.reclamations.length > 0 && (
                 <Section title="Рекламации" icon={<MessageSquare size={14} />} color="text-rose-500" requests={selectedDayData.reclamations}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
               )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Request detail modal on top */}
+      {detailRequest && (
+        <RequestDetailModal
+          request={detailRequest}
+          onClose={() => setDetailRequest(null)}
+          onSave={handleSaveRequest}
+          viewerRole={viewerRole}
+        />
+      )}
     </>
   );
 };
 
 // Collapsible section for each category
-const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore, basePath }: {
+const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
   title: string;
   icon: React.ReactNode;
   color: string;
@@ -419,6 +438,7 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
   onAssign: (id: string, iid: string) => Promise<void>;
   onRestore: (id: string) => Promise<void>;
   basePath?: string;
+  onOpenDetail?: (r: ApiRequest) => void;
 }) => (
   <div className="flex-1 min-w-[300px]">
     <div className={`flex items-center gap-2 mb-2 font-semibold text-sm ${color} sticky top-0 bg-card py-1`}>
@@ -428,7 +448,7 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
     </div>
     <div className="space-y-2 overflow-y-auto max-h-[55vh] pr-1">
       {requests.map((r) => (
-        <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} basePath={basePath} />
+        <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} basePath={basePath} onOpenDetail={onOpenDetail} />
       ))}
     </div>
   </div>
