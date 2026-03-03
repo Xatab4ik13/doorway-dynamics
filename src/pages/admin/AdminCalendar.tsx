@@ -12,7 +12,7 @@ const AdminCalendar = () => {
         <div className="flex items-center gap-4">
           <CityToggle value={city} onChange={setCity} />
         </div>
-        <InstallationCalendar cityFilter={city} />
+        <InstallationCalendar cityFilter={city} basePath="/admin" />
       </div>
     </DashboardLayout>
   );

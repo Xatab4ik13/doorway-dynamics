@@ -21,8 +21,9 @@ const AdminRequests = () => {
   const { users, getUserName } = useUsers();
   const [searchParams] = useSearchParams();
   const quickFromUrl = searchParams.get("quick") || undefined;
+  const searchFromUrl = searchParams.get("search") || "";
   const [city, setCity] = useState<CityFilter>("Москва");
-  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
+  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва", search: searchFromUrl });
   const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter: quickFromUrl });
   const { createRequest, deleteRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);

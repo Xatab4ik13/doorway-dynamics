@@ -1,9 +1,10 @@
 import { useState, useMemo, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRequests, useUsers } from "@/hooks/useRequests";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus, Check, Loader2, DoorOpen, DoorClosed, Ruler } from "lucide-react";
+import SearchableUserSelect from "@/components/dashboard/SearchableUserSelect";
+import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus, Check, Loader2, DoorOpen, DoorClosed, Ruler, ExternalLink } from "lucide-react";
 import {
   format,
   startOfMonth,
@@ -72,19 +73,14 @@ const CalendarInstallerAssign = ({ request, installers, getUserName, onAssign }:
   return (
     <div className="flex items-center gap-2 text-xs pt-1 border-t border-border/30">
       <UserPlus size={12} className="text-muted-foreground shrink-0" />
-      {request.installer_id && !hasChanged ? (
-        <span className="text-muted-foreground">{getUserName(request.installer_id) || "Назначен"}</span>
-      ) : null}
-      <Select value={selectedId} onValueChange={setSelectedId}>
-        <SelectTrigger className="h-7 text-xs flex-1 min-w-0">
-          <SelectValue placeholder={request.installer_id ? "Сменить" : "Назначить монтажника"} />
-        </SelectTrigger>
-        <SelectContent className="dashboard-theme">
-          {installers.map((u) => (
-            <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="flex-1 min-w-0">
+        <SearchableUserSelect
+          value={selectedId}
+          onChange={setSelectedId}
+          users={installers}
+          placeholder={request.installer_id ? "Сменить" : "Назначить монтажника"}
+        />
+      </div>
       {hasChanged && (
         <button onClick={handleConfirm} disabled={saving}
           className="shrink-0 h-7 px-2.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center gap-1">
@@ -97,16 +93,24 @@ const CalendarInstallerAssign = ({ request, installers, getUserName, onAssign }:
 };
 
 // Request card shown in modals
-const RequestCard = ({ r, installers, getUserName, onAssign, onRestore }: {
+const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath }: {
   r: ApiRequest;
   installers: ApiUser[];
   getUserName: (id?: string) => string | undefined;
   onAssign: (id: string, iid: string) => Promise<void>;
   onRestore: (id: string) => Promise<void>;
-}) => (
+  basePath?: string;
+}) => {
+  const navigate = useNavigate();
+  const handleOpenRequest = () => {
+    if (basePath) navigate(`${basePath}/requests?search=${encodeURIComponent(r.number)}`);
+  };
+  return (
   <div className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/50 transition-colors">
     <div className="flex items-center justify-between">
-      <span className="text-xs font-mono text-muted-foreground">{r.number}</span>
+      <button onClick={handleOpenRequest} className="text-xs font-mono text-primary hover:underline flex items-center gap-1">
+        {r.number} <ExternalLink size={10} />
+      </button>
       <div className="flex items-center gap-1.5">
         {r.type === "installation" && ((r.interior_doors ?? 0) > 0 || (r.entrance_doors ?? 0) > 0 || (r.partitions ?? 0) > 0) && (
           <div className="flex flex-wrap gap-1">
@@ -184,9 +188,11 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore }: {
     )}
   </div>
 );
+};
 
 interface InstallationCalendarProps {
   cityFilter?: string;
+  basePath?: string;
 }
 
 interface DayData {
@@ -197,7 +203,7 @@ interface DayData {
   reclamations: ApiRequest[];
 }
 
-const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
+const InstallationCalendar = ({ cityFilter, basePath }: InstallationCalendarProps) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const { requests, loading, updateRequest } = useRequests();
@@ -372,31 +378,27 @@ const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
               {/* Interior installations */}
               {selectedDayData.interiorInstalls.length > 0 && (
                 <Section title="Межкомнатные двери" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
               )}
 
-              {/* Entrance installations */}
               {selectedDayData.entranceInstalls.length > 0 && (
                 <Section title="Входные двери" icon={<DoorClosed size={14} />} color="text-blue-500" requests={selectedDayData.entranceInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
               )}
 
-              {/* Mixed installations */}
               {selectedDayData.mixedInstalls.length > 0 && (
                 <Section title="Межкомн. + Входные" icon={<Wrench size={14} />} color="text-violet-500" requests={selectedDayData.mixedInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
               )}
 
-              {/* Measurements */}
               {selectedDayData.measurements.length > 0 && (
                 <Section title="Замеры" icon={<Ruler size={14} />} color="text-amber-500" requests={selectedDayData.measurements}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
               )}
 
-              {/* Reclamations */}
               {selectedDayData.reclamations.length > 0 && (
                 <Section title="Рекламации" icon={<MessageSquare size={14} />} color="text-rose-500" requests={selectedDayData.reclamations}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} />
+                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} />
               )}
             </div>
           )}
@@ -407,7 +409,7 @@ const InstallationCalendar = ({ cityFilter }: InstallationCalendarProps) => {
 };
 
 // Collapsible section for each category
-const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore }: {
+const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore, basePath }: {
   title: string;
   icon: React.ReactNode;
   color: string;
@@ -416,6 +418,7 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
   getUserName: (id?: string) => string | undefined;
   onAssign: (id: string, iid: string) => Promise<void>;
   onRestore: (id: string) => Promise<void>;
+  basePath?: string;
 }) => (
   <div className="flex-1 min-w-[300px]">
     <div className={`flex items-center gap-2 mb-2 font-semibold text-sm ${color} sticky top-0 bg-card py-1`}>
@@ -425,7 +428,7 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
     </div>
     <div className="space-y-2 overflow-y-auto max-h-[55vh] pr-1">
       {requests.map((r) => (
-        <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} />
+        <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} basePath={basePath} />
       ))}
     </div>
   </div>
