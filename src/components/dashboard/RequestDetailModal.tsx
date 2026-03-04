@@ -20,7 +20,7 @@ interface RequestDetailModalProps {
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
-  const { getByRole, getUserName } = useUsers(!canEdit);
+  const { getByRole, getUserName, getUser } = useUsers(!canEdit);
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
   const [installerId, setInstallerId] = useState(request.installer_id || "");
@@ -50,6 +50,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [extraPhone, setExtraPhone] = useState(request.extra_phone || "");
   const [workDescription, setWorkDescription] = useState(request.work_description || "");
   const [source, setSource] = useState<string>(request.source || "site");
+  const [partnerId, setPartnerId] = useState<string>(request.partner_id || "");
   const [requestType, setRequestType] = useState<string>(request.type || "measurement");
   
   // Edit mode toggle for admin/manager
@@ -61,6 +62,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
+  const partners = getByRole("partner");
+  const partnerUser = getUser(partnerId || request.partner_id);
 
   const canChangeDateInstaller = viewerRole === "installer" && !!request.agreed_date;
   const canChangeDateMeasurer = viewerRole === "measurer";
@@ -91,7 +94,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.extra_name = extraName || null;
       updates.extra_phone = extraPhone || null;
       updates.work_description = workDescription || null;
-      updates.source = source;
+      updates.source = partnerId ? "partner" : source;
+      updates.partner_id = partnerId || null;
       updates.type = requestType;
       
       if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
@@ -181,9 +185,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent text-muted-foreground">
                   {requestTypeLabels[request.type] || request.type}
                 </span>
-                {request.partner_id && (
+                {(partnerUser || request.partner_id) && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
-                    <Briefcase size={10} /> Партнёр
+                    <Briefcase size={10} />
+                    {partnerUser ? partnerUser.name : "Партнёр"}
+                    {partnerUser?.phone && (
+                      <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="ml-1 underline hover:no-underline" onClick={(e) => e.stopPropagation()}>
+                        {partnerUser.phone}
+                      </a>
+                    )}
                   </span>
                 )}
                 {request.accepted_at && (
@@ -312,12 +322,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </div>
                     {canEdit && (
                       <>
-                        <div>
-                          <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Источник</label>
-                          <select value={source} onChange={(e) => setSource(e.target.value)} className={inputClass}>
-                            <option value="site">Сайт</option>
-                            <option value="partner">Партнёр</option>
-                          </select>
+                        <div className="sm:col-span-2">
+                          <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Партнёр</label>
+                          <SearchableUserSelect
+                            value={partnerId}
+                            onChange={(val) => {
+                              setPartnerId(val);
+                              setSource(val ? "partner" : "site");
+                            }}
+                            users={partners}
+                            placeholder="Без партнёра (заявка с сайта)"
+                          />
                         </div>
                         <div>
                           <label className="text-[10px] font-medium text-muted-foreground mb-1 block uppercase tracking-wider">Тип заявки</label>
@@ -391,6 +406,19 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <p className="text-sm font-medium">{request.extra_name}</p>
                         {request.extra_phone && (
                           <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary hover:underline">{request.extra_phone}</a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {partnerUser && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+                      <Briefcase size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Партнёр</p>
+                        <p className="text-sm font-medium text-emerald-700">{partnerUser.name}</p>
+                        {partnerUser.phone && (
+                          <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerUser.phone}</a>
                         )}
                       </div>
                     </div>

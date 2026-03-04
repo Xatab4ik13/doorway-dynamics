@@ -41,6 +41,7 @@ export interface ApiUser {
   name: string;
   role: string;
   telegram_id?: string;
+  phone?: string;
   active: boolean;
 }
 
@@ -145,9 +146,14 @@ export function useUsers(skip = false) {
     return users.find(u => u.id === id)?.name;
   }, [users]);
 
+  const getUser = useCallback((id?: string) => {
+    if (!id) return undefined;
+    return users.find(u => u.id === id);
+  }, [users]);
+
   const getByRole = useCallback((role: string) => {
     return users.filter(u => u.role === role && u.active);
   }, [users]);
 
-  return { users, loading, getUserName, getByRole };
+  return { users, loading, getUserName, getUser, getByRole };
 }
