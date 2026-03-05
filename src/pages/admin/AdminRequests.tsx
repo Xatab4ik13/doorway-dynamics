@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,7 +14,10 @@ import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { useRequests } from "@/hooks/useRequests";
+import api from "@/lib/api";
+import type { PaginatedResponse } from "@/hooks/usePaginatedRequests";
 
 const AdminRequests = () => {
   const { user } = useAuth();
@@ -31,10 +34,40 @@ const AdminRequests = () => {
 
   useEffect(() => { document.title = "Заявки — Админ-панель"; }, []);
 
-  const handleExport = (format: "csv" | "xlsx") => {
-    if (format === "csv") exportToCSV(requests, getUserName);
-    else exportToExcel(requests, getUserName);
-  };
+  const handleExport = useCallback(async (format: "csv" | "xlsx") => {
+    try {
+      // Build query with same filters but no pagination limit — fetch all
+      const params = new URLSearchParams();
+      params.set("page", "1");
+      params.set("limit", "10000");
+      if (filters.search) params.set("search", filters.search);
+      if (filters.status !== "all") params.set("status", filters.status);
+      if (filters.type !== "all") params.set("type", filters.type);
+      if (filters.city && filters.city !== "all") params.set("city", filters.city);
+      if (filters.measurerId !== "all") params.set("measurer_id", filters.measurerId);
+      if (filters.installerId !== "all") params.set("installer_id", filters.installerId);
+      if (filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
+      if (filters.dateFrom) params.set("date_from", filters.dateFrom);
+      if (filters.dateTo) params.set("date_to", filters.dateTo);
+      if (filters.dateField && filters.dateField !== "created_at") params.set("date_field", filters.dateField);
+      if (quickFromUrl && quickFromUrl !== "all") params.set("quick", quickFromUrl);
+
+      toast.info("Загрузка данных для экспорта...");
+      const raw = await api<PaginatedResponse | ApiRequest[]>(`/api/requests?${params.toString()}`, { auth: true });
+      const allData = Array.isArray(raw) ? raw : raw.data;
+
+      if (allData.length === 0) {
+        toast.warning("Нет данных для экспорта");
+        return;
+      }
+
+      if (format === "csv") await exportToCSV(allData, getUserName);
+      else await exportToExcel(allData, getUserName);
+      toast.success(`Экспортировано ${allData.length} заявок`);
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка экспорта");
+    }
+  }, [filters, quickFromUrl, getUserName]);
 
   const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
     await updateRequest(id, updates);
