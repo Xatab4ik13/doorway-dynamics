@@ -127,9 +127,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       delete updates.notes;
     }
     
-    // Always send agreed_date to prevent backend from clearing it
-    if (canChangeDate && agreedDate) {
-      updates.agreed_date = agreedDate;
+    // Only send agreed_date if it actually changed to prevent backend from triggering 'installation_rescheduled'
+    if (canChangeDate) {
+      const originalDate = request.agreed_date?.split("T")[0] || "";
+      if (agreedDate !== originalDate) {
+        updates.agreed_date = agreedDate || null;
+      }
     }
     
     return updates;
