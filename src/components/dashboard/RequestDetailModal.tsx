@@ -98,8 +98,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.partner_id = partnerId || null;
       updates.type = requestType;
       
-      if (showMeasurerField && measurerId) updates.measurer_id = measurerId;
-      if (showInstallerField && installerId) updates.installer_id = installerId;
+      if (showMeasurerField) updates.measurer_id = measurerId || null;
+      if (showInstallerField) updates.installer_id = installerId || null;
       if (showInstallerField) {
         updates.installer_2_id = installer2Id || null;
         updates.installer_3_id = installer3Id || null;
