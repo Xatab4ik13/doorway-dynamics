@@ -208,6 +208,7 @@ interface DayData {
 }
 
 const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: InstallationCalendarProps) => {
+  const isMobile = useIsMobile();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [detailRequest, setDetailRequest] = useState<ApiRequest | null>(null);
