@@ -375,74 +375,107 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
         {loading && <p className="text-center text-sm text-muted-foreground">Загрузка заявок...</p>}
       </div>
 
-      {/* Modal with tabs per category */}
-      <Dialog
-        modal={!detailRequest}
-        open={!!selectedDate}
-        onOpenChange={(open) => {
-          if (!open && !detailRequest) setSelectedDate(null);
-        }}
-      >
-        <DialogContent
-          onInteractOutside={(e) => {
-            if (detailRequest) e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            if (detailRequest) e.preventDefault();
-          }}
-          className={`dashboard-theme max-w-5xl max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground ${detailRequest ? "pointer-events-none" : ""}`}
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon size={18} className="text-primary" />
-              {selectedDate && format(selectedDate, "d MMMM yyyy", { locale: ru })}
-            </DialogTitle>
-          </DialogHeader>
+      {/* Day detail — mobile: fullscreen sheet, desktop: dialog */}
+      {isMobile ? (
+        <>
+          <MobileFullScreen
+            open={!!selectedDate}
+            onClose={() => { if (!detailRequest) setSelectedDate(null); }}
+            title={selectedDate ? format(selectedDate, "d MMMM yyyy", { locale: ru }) : ""}
+          >
+            {selectedDayData && (
+              <div className="p-4 space-y-4">
+                {selectedDayData.interiorInstalls.length > 0 && (
+                  <Section title="Межкомнатные" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                )}
+                {selectedDayData.entranceInstalls.length > 0 && (
+                  <Section title="Входные" icon={<DoorClosed size={14} />} color="text-blue-500" requests={selectedDayData.entranceInstalls}
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                )}
+                {selectedDayData.mixedInstalls.length > 0 && (
+                  <Section title="Смешанные" icon={<Wrench size={14} />} color="text-violet-500" requests={selectedDayData.mixedInstalls}
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                )}
+                {selectedDayData.measurements.length > 0 && (
+                  <Section title="Замеры" icon={<Ruler size={14} />} color="text-amber-500" requests={selectedDayData.measurements}
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                )}
+                {selectedDayData.reclamations.length > 0 && (
+                  <Section title="Рекламации" icon={<MessageSquare size={14} />} color="text-rose-500" requests={selectedDayData.reclamations}
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                )}
+              </div>
+            )}
+          </MobileFullScreen>
 
-          {selectedDayData && (
-            <div className="flex gap-4 max-h-[65vh] overflow-x-auto pr-1">
-              {/* Interior installations */}
-              {selectedDayData.interiorInstalls.length > 0 && (
-                <Section title="Межкомнатные двери" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
-              )}
-
-              {selectedDayData.entranceInstalls.length > 0 && (
-                <Section title="Входные двери" icon={<DoorClosed size={14} />} color="text-blue-500" requests={selectedDayData.entranceInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
-              )}
-
-              {selectedDayData.mixedInstalls.length > 0 && (
-                <Section title="Межкомн. + Входные" icon={<Wrench size={14} />} color="text-violet-500" requests={selectedDayData.mixedInstalls}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
-              )}
-
-              {selectedDayData.measurements.length > 0 && (
-                <Section title="Замеры" icon={<Ruler size={14} />} color="text-amber-500" requests={selectedDayData.measurements}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
-              )}
-
-              {selectedDayData.reclamations.length > 0 && (
-                <Section title="Рекламации" icon={<MessageSquare size={14} />} color="text-rose-500" requests={selectedDayData.reclamations}
-                  installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
-              )}
-            </div>
+          {/* Request detail opens as another fullscreen (stacks on top) */}
+          {detailRequest && (
+            <RequestDetailModal
+              request={detailRequest}
+              onClose={() => setDetailRequest(null)}
+              onSave={handleSaveRequest}
+              viewerRole={viewerRole}
+            />
           )}
-        </DialogContent>
-      </Dialog>
+        </>
+      ) : (
+        <>
+          {/* Desktop: Dialog */}
+          <Dialog
+            modal={!detailRequest}
+            open={!!selectedDate}
+            onOpenChange={(open) => { if (!open && !detailRequest) setSelectedDate(null); }}
+          >
+            <DialogContent
+              onInteractOutside={(e) => { if (detailRequest) e.preventDefault(); }}
+              onEscapeKeyDown={(e) => { if (detailRequest) e.preventDefault(); }}
+              className={`dashboard-theme max-w-5xl max-h-[85vh] overflow-y-auto bg-card border-border text-card-foreground ${detailRequest ? "pointer-events-none" : ""}`}
+            >
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <CalendarIcon size={18} className="text-primary" />
+                  {selectedDate && format(selectedDate, "d MMMM yyyy", { locale: ru })}
+                </DialogTitle>
+              </DialogHeader>
 
-      {/* Request detail modal on top */}
-      {detailRequest && (
-        <RequestDetailModal
-          request={detailRequest}
-          onClose={() => setDetailRequest(null)}
-          onSave={handleSaveRequest}
-          viewerRole={viewerRole}
-        />
+              {selectedDayData && (
+                <div className="flex gap-4 max-h-[65vh] overflow-x-auto pr-1">
+                  {selectedDayData.interiorInstalls.length > 0 && (
+                    <Section title="Межкомнатные двери" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                  )}
+                  {selectedDayData.entranceInstalls.length > 0 && (
+                    <Section title="Входные двери" icon={<DoorClosed size={14} />} color="text-blue-500" requests={selectedDayData.entranceInstalls}
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                  )}
+                  {selectedDayData.mixedInstalls.length > 0 && (
+                    <Section title="Межкомн. + Входные" icon={<Wrench size={14} />} color="text-violet-500" requests={selectedDayData.mixedInstalls}
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                  )}
+                  {selectedDayData.measurements.length > 0 && (
+                    <Section title="Замеры" icon={<Ruler size={14} />} color="text-amber-500" requests={selectedDayData.measurements}
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                  )}
+                  {selectedDayData.reclamations.length > 0 && (
+                    <Section title="Рекламации" icon={<MessageSquare size={14} />} color="text-rose-500" requests={selectedDayData.reclamations}
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                  )}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {detailRequest && (
+            <RequestDetailModal
+              request={detailRequest}
+              onClose={() => setDetailRequest(null)}
+              onSave={handleSaveRequest}
+              viewerRole={viewerRole}
+            />
+          )}
+        </>
       )}
-    </>
-  );
-};
 
 // Collapsible section for each category
 const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
