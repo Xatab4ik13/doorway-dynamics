@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { triggerHaptic } from "@/lib/haptics";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -145,7 +146,7 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                   <Link
                     key={item.href}
                     to={item.href}
-                    onClick={() => setMoreOpen(false)}
+                    onClick={() => { triggerHaptic("light"); setMoreOpen(false); }}
                     className={cn(
                       "flex items-center gap-3.5 px-5 py-3.5 text-[15px] font-medium transition-colors active:bg-accent/60",
                       i < more.length - 1 && "border-b border-border/30",
@@ -183,7 +184,10 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
               return (
                 <button
                   key="more"
-                  onClick={() => setMoreOpen((prev) => !prev)}
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setMoreOpen((prev) => !prev);
+                  }}
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 pt-2.5 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
                     active ? "text-primary" : "text-muted-foreground",
@@ -201,6 +205,7 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={() => triggerHaptic("light")}
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 pt-2.5 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
                   active ? "text-primary" : "text-muted-foreground",
