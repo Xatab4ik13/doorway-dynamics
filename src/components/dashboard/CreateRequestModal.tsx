@@ -127,7 +127,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.97 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="relative bg-card shadow-2xl w-full max-w-lg overflow-auto rounded-t-2xl md:rounded-2xl h-[95vh] md:h-auto md:max-h-[90vh]"
+          className="relative bg-card shadow-2xl w-full max-w-lg rounded-t-2xl md:rounded-2xl h-[95vh] md:h-auto md:max-h-[90vh] flex flex-col"
           onClick={(e) => e.stopPropagation()}
           onPointerDown={(e) => e.stopPropagation()}
           style={{
