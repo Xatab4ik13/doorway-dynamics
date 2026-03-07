@@ -607,7 +607,7 @@ app.post('/api/requests', auth, async (req, res) => {
     );
     // Push
     await sendPushToRoles(['admin', 'manager'], {
-      title: `📋 Новая заявка ${req_data.number}`,
+      title: `Новая заявка ${req_data.number}`,
       body: `${req_data.client_name} — ${req_data.client_address}`,
       url: '/admin/requests',
     });
