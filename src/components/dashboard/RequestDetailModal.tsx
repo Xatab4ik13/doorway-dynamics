@@ -445,7 +445,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
                     <Briefcase size={10} />
                     {partnerUser ? partnerUser.name : "Партнёр"}
-                    {partnerUser?.phone && (
+                    {partnerUser?.phone && viewerRole !== "measurer" && (
                       <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="ml-1 underline hover:no-underline" onClick={(e) => e.stopPropagation()}>
                         {partnerUser.phone}
                       </a>
@@ -673,7 +673,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <div>
                         <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Партнёр</p>
                         <p className="text-sm font-medium text-emerald-700">{partnerUser.name}</p>
-                        {partnerUser.phone && (
+                        {partnerUser.phone && viewerRole !== "measurer" && (
                           <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerUser.phone}</a>
                         )}
                       </div>

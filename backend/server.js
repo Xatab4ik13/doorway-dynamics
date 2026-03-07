@@ -569,7 +569,7 @@ app.post('/api/requests/public', async (req, res) => {
     await notifyManagersAndAdmins(pool, tgMsg);
     // Push
     await sendPushToRoles(['admin', 'manager'], {
-      title: `📋 Новая заявка ${req_data.number}`,
+      title: `Новая заявка ${req_data.number}`,
       body: `${req_data.client_name} — ${req_data.client_address}`,
       url: '/admin/requests',
     });
@@ -607,7 +607,7 @@ app.post('/api/requests', auth, async (req, res) => {
     );
     // Push
     await sendPushToRoles(['admin', 'manager'], {
-      title: `📋 Новая заявка ${req_data.number}`,
+      title: `Новая заявка ${req_data.number}`,
       body: `${req_data.client_name} — ${req_data.client_address}`,
       url: '/admin/requests',
     });
@@ -747,7 +747,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       }
       // Push to measurer
       await sendPushToUser(updates.measurer_id, {
-        title: '🔔 Новая заявка на замер',
+        title: 'Новая заявка на замер',
         body: `${updated.client_name} — ${updated.client_address}`,
         url: '/measurer',
       });
@@ -760,7 +760,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           );
         }
         await sendPushToUser(request.measurer_id, {
-          title: 'ℹ️ Вы сняты с заявки',
+          title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
           url: '/measurer',
         });
@@ -778,7 +778,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       }
       // Push to installer
       await sendPushToUser(updates.installer_id, {
-        title: '🔔 Новый монтаж',
+        title: 'Новый монтаж',
         body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
         url: '/installer',
       });
@@ -791,7 +791,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           );
         }
         await sendPushToUser(request.installer_id, {
-          title: 'ℹ️ Вы сняты с заявки',
+          title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
           url: '/installer',
         });
@@ -806,7 +806,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         `📅 <b>Дата ${action}</b>\n\nЗаявка: ${updated.number}\nНовая дата: ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}${comment}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
       await sendPushToRoles(['admin', 'manager'], {
-        title: `📅 Дата ${action}`,
+        title: `Дата ${action}`,
         body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
         url: '/admin/requests',
       });
@@ -818,7 +818,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         `✅ <b>Работа завершена</b>\n\nЗаявка: ${updated.number}\nТип: ${typeLabels[updated.type] || updated.type}\nСтатус: ${statusLabels[updates.status]}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
       await sendPushToRoles(['admin', 'manager'], {
-        title: '✅ Работа завершена',
+        title: 'Работа завершена',
         body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
         url: '/admin/requests',
       });
@@ -835,7 +835,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           );
         }
         await sendPushToUser(execId, {
-          title: '❌ Заявка отменена',
+          title: 'Заявка отменена',
           body: `Заявка ${updated.number} была отменена.`,
         });
       }
@@ -847,7 +847,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         `📌 <b>Статус заявки ${updated.number} изменён</b>\n\nНовый статус: ${statusLabels[updates.status] || updates.status}\n\n👉 <a href="${SITE_URL}/login">Подробнее в кабинете</a>`
       );
       await sendPushToUser(updated.partner_id, {
-        title: `📌 Статус заявки ${updated.number}`,
+        title: `Статус заявки ${updated.number}`,
         body: `Новый статус: ${statusLabels[updates.status] || updates.status}`,
         url: '/partner',
       });
