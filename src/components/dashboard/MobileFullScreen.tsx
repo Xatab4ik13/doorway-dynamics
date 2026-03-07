@@ -64,7 +64,7 @@ const MobileFullScreen = ({ open, onClose, title, children, headerRight }: Mobil
   return createPortal(
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-[80] dashboard-theme" role="dialog" aria-modal="true">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
