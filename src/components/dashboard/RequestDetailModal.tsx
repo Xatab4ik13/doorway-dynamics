@@ -10,7 +10,17 @@ import { formatPhone } from "@/lib/formatPhone";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
 
-interface RequestDetailModalProps {
+/** iOS-style grouped row for mobile detail view */
+const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
+  <div className="flex items-start gap-3 px-4 py-3">
+    <div className="mt-0.5 shrink-0">{icon}</div>
+    <div className="flex-1 min-w-0">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+      {children}
+    </div>
+  </div>
+);
+
   request: ApiRequest;
   onClose: () => void;
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
