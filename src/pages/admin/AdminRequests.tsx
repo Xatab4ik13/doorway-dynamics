@@ -9,9 +9,11 @@ import RequestFilters, { type FilterState, defaultFilters } from "@/components/d
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
 import Pagination from "@/components/dashboard/Pagination";
 import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
+import MobileRequestCard from "@/components/dashboard/MobileRequestCard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
