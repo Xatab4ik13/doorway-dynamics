@@ -7,6 +7,19 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadFile } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileFullScreen from "./MobileFullScreen";
+
+/** iOS-style grouped row for mobile detail view */
+const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
+  <div className="flex items-start gap-3 px-4 py-3">
+    <div className="mt-0.5 shrink-0">{icon}</div>
+    <div className="flex-1 min-w-0">
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+      {children}
+    </div>
+  </div>
+);
 
 interface RequestDetailModalProps {
   request: ApiRequest;
@@ -18,6 +31,7 @@ interface RequestDetailModalProps {
 }
 
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
+  const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
   const { getByRole, getUserName, getUser } = useUsers(!canEdit);
@@ -169,16 +183,255 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const inputClass = "w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
+  const editButton = canEdit ? (
+    <button
+      onClick={() => setIsEditing(!isEditing)}
+      className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
+      title={isEditing ? "Отключить редактирование" : "Редактировать"}
+    >
+      <Pencil size={18} />
+    </button>
+  ) : null;
+
+  // Extracted render helpers for reuse between mobile and desktop
+  const renderConfirmation = () => showConfirm ? (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[80]">
+      <div className="bg-card rounded-2xl p-6 max-w-sm mx-4 shadow-2xl space-y-4">
+        <div className="flex items-center gap-3">
+          <AlertTriangle size={24} className="text-amber-500" />
+          <h3 className="font-heading font-bold">Подтверждение</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">Вы уверены, что хотите сохранить изменения в этой заявке?</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={() => setShowConfirm(false)} className="px-4 py-2.5 rounded-xl text-sm bg-accent text-foreground active:opacity-60 transition-opacity">
+            Отмена
+          </button>
+          <button 
+            onClick={() => executeSave(pendingUpdates)} 
+            disabled={saving}
+            className="px-4 py-2.5 rounded-xl text-sm bg-primary text-primary-foreground active:opacity-60 transition-opacity flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить"}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  const renderFooter = () => (
+    <div className="flex items-center justify-between p-4 border-t border-border/30 bg-card sticky bottom-0">
+      <div>
+        {viewerRole === "admin" && onDelete && !confirmDelete && (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-destructive active:opacity-60 transition-opacity"
+          >
+            <Trash2 size={14} /> Удалить
+          </button>
+        )}
+        {viewerRole === "admin" && onDelete && confirmDelete && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                setDeleting(true);
+                try { await onDelete(request.id); onClose(); toast.success("Заявка удалена"); } catch {} finally { setDeleting(false); }
+              }}
+              disabled={deleting}
+              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-destructive text-destructive-foreground disabled:opacity-50"
+            >
+              {deleting ? <Loader2 size={12} className="animate-spin" /> : "Удалить"}
+            </button>
+            <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 rounded-xl text-xs font-medium bg-accent text-foreground">
+              Отмена
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2">
+        {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
+          <button
+            onClick={async () => {
+              setSendingToInstall(true);
+              try { await onSendToInstallation(request); toast.success("Заявка на монтаж создана"); } catch {} finally { setSendingToInstall(false); }
+            }}
+            disabled={sendingToInstall}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
+          </button>
+        )}
+        {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground shadow-md shadow-primary/25 disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : "Сохранить"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  // === MOBILE: fullscreen iOS sheet ===
+  if (isMobile) {
+    return (
+      <>
+        <MobileFullScreen open={true} onClose={onClose} title={request.number} headerRight={editButton}>
+          {/* Segmented tabs */}
+          <div className="flex border-b border-border/30 bg-card sticky top-0 z-10">
+            <button onClick={() => setActiveTab("details")}
+              className={`flex-1 py-3 text-[13px] font-medium transition-colors ${activeTab === "details" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
+              Детали
+            </button>
+            <button onClick={() => setActiveTab("files")}
+              className={`flex-1 py-3 text-[13px] font-medium transition-colors flex items-center justify-center gap-1.5 ${activeTab === "files" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"}`}>
+              Файлы {hasFiles && <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">{photos.length}</span>}
+            </button>
+          </div>
+
+          {activeTab === "details" && (
+            <div className="p-4 space-y-4">
+              {/* iOS grouped info cards */}
+              <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
+                <InfoRow icon={<Phone size={16} className="text-primary" />} label="Телефон">
+                  <a href={`tel:${request.client_phone?.replace(/\s/g, "")}`} className="text-sm font-medium text-primary">{request.client_phone}</a>
+                </InfoRow>
+                <InfoRow icon={<MapPin size={16} className="text-primary" />} label="Адрес">
+                  <a href={`https://yandex.ru/maps/?text=${encodeURIComponent((request.client_address || "") + (request.city ? ", " + request.city : ""))}`}
+                    target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary">
+                    {request.client_address}{request.city ? `, ${request.city}` : ""}
+                  </a>
+                </InfoRow>
+                {request.extra_name && (
+                  <InfoRow icon={<User size={16} className="text-primary" />} label="Доп. контакт">
+                    <p className="text-sm font-medium">{request.extra_name}</p>
+                    {request.extra_phone && <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary">{request.extra_phone}</a>}
+                  </InfoRow>
+                )}
+                <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
+                  <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                </InfoRow>
+                {showDateField && (
+                  <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
+                    {canChangeDate ? (
+                      <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                    ) : (
+                      <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+                    )}
+                  </InfoRow>
+                )}
+              </div>
+
+              {/* Work description */}
+              {request.work_description && (
+                <div className="p-3.5 rounded-2xl bg-accent/30">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Описание работ</p>
+                  <p className="text-sm">{request.work_description}</p>
+                </div>
+              )}
+              {request.status_comment && (
+                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
+                  <p className="text-[10px] text-amber-700 uppercase tracking-wider mb-1">Комментарий</p>
+                  <p className="text-sm text-amber-900">{request.status_comment}</p>
+                </div>
+              )}
+              {(request.interior_doors || request.entrance_doors || request.partitions) && (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold">{request.interior_doors || 0}</p></div>
+                  <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold">{request.entrance_doors || 0}</p></div>
+                  <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold">{request.partitions || 0}</p></div>
+                </div>
+              )}
+              {canEdit && (
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Статус</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {allValidStatuses.map((key) => (
+                      <button key={key} onClick={() => setStatus(key)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium active:scale-95 ${status === key ? statusColors[key as RequestStatus] + " shadow-sm" : "bg-accent text-muted-foreground"}`}>
+                        {getStatusLabel(key as RequestStatus, request.type as RequestType)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {canEdit && (
+                <div className="space-y-3">
+                  {showMeasurerField && <div><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Замерщик</p><SearchableUserSelect value={measurerId} onChange={setMeasurerId} users={measurers} placeholder="Не назначен" /></div>}
+                  {showInstallerField && (
+                    <><div><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Монтажник 1</p><SearchableUserSelect value={installerId} onChange={setInstallerId} users={installers} placeholder="Не назначен" /></div>
+                    <div><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Монтажник 2</p><SearchableUserSelect value={installer2Id} onChange={setInstaller2Id} users={installers} placeholder="Не назначен" /></div></>
+                  )}
+                </div>
+              )}
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Заметки</p>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Добавьте заметку..."
+                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && !canPartnerEdit} />
+              </div>
+            </div>
+          )}
+
+          {activeTab === "files" && (
+            <div className="p-4 space-y-4">
+              {(canEdit || viewerRole === "partner") && onSave && (
+                <div>
+                  <input ref={fileInputRef} type="file" multiple className="hidden" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    onChange={async (e) => {
+                      const selectedFiles = Array.from(e.target.files || []);
+                      if (!selectedFiles.length) return;
+                      setUploadingFile(true);
+                      try {
+                        const uploaded: typeof photos = [];
+                        for (const f of selectedFiles) {
+                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: "general", uploaded_at: new Date().toISOString() }); }
+                          catch { toast.error(`Не удалось: ${f.name}`); }
+                        }
+                        if (uploaded.length > 0) { await onSave(request.id, { photos: [...photos, ...uploaded] as any }); toast.success(`Загружено: ${uploaded.length}`); }
+                      } finally { setUploadingFile(false); e.target.value = ""; }
+                    }} />
+                  <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}
+                    className="w-full py-3.5 border-2 border-dashed border-border rounded-2xl text-xs text-muted-foreground flex items-center justify-center gap-2 active:bg-accent/50 disabled:opacity-50">
+                    {uploadingFile ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                    {uploadingFile ? "Загрузка..." : "Загрузить файлы"}
+                  </button>
+                </div>
+              )}
+              {photos.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground"><Image size={40} className="mx-auto mb-3 opacity-30" /><p className="text-sm">Нет файлов</p></div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {photos.map((file, i) => (
+                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border">
+                      <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                        {file.type === "image" ? <img src={file.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-accent/50"><FileText size={24} className="text-muted-foreground" /></div>}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {renderFooter()}
+        </MobileFullScreen>
+        {renderConfirmation()}
+      </>
+    );
+  }
+
+  // Desktop: original modal
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center md:p-4" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <motion.div
           initial={{ opacity: 0, y: 40, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.97 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="relative bg-card shadow-2xl w-full max-w-2xl overflow-auto rounded-t-2xl md:rounded-2xl h-[95vh] md:h-auto md:max-h-[90vh]"
+          className="relative bg-card shadow-2xl w-full max-w-2xl overflow-auto rounded-2xl max-h-[90vh]"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10 rounded-t-2xl">
