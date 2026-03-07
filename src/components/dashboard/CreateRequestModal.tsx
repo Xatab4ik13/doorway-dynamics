@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { X, Send, Loader2, MapPin, Phone, User, FileText, Building2, Upload, Trash2, Handshake } from "lucide-react";
 import { type ApiRequest, useUsers } from "@/hooks/useRequests";
 import { requestTypeLabels } from "@/data/mockDashboard";
@@ -7,6 +7,7 @@ import AddressInput from "@/components/AddressInput";
 import { uploadFile } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
 import SearchableUserSelect from "@/components/dashboard/SearchableUserSelect";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const cities = ["Москва", "Санкт-Петербург"];
 
@@ -16,9 +17,10 @@ interface CreateRequestModalProps {
 }
 
 const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
+  const isMobile = useIsMobile();
   const { getByRole } = useUsers();
   const partners = getByRole("partner");
-  
+
   const [type, setType] = useState<"measurement" | "installation" | "reclamation">("measurement");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
@@ -35,7 +37,13 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<{ file: File; preview?: string }[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [backdropClosable, setBackdropClosable] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setBackdropClosable(true), 180);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -83,11 +91,13 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
         work_description: workDescription || undefined,
         source: partnerId ? "partner" : "site",
         partner_id: partnerId || undefined,
-        ...(type === "installation" ? {
-          interior_doors: interiorDoors ? parseInt(interiorDoors) : undefined,
-          entrance_doors: entranceDoors ? parseInt(entranceDoors) : undefined,
-          partitions: partitions ? parseInt(partitions) : undefined,
-        } : {}),
+        ...(type === "installation"
+          ? {
+              interior_doors: interiorDoors ? parseInt(interiorDoors) : undefined,
+              entrance_doors: entranceDoors ? parseInt(entranceDoors) : undefined,
+              partitions: partitions ? parseInt(partitions) : undefined,
+            }
+          : {}),
         ...(photos ? { photos } : {}),
       });
       onClose();
@@ -105,10 +115,12 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4">
+      <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center md:p-4">
         <div
-          className="absolute inset-0 bg-black/50"
-          onClick={onClose}
+          className="absolute inset-0 bg-foreground/50"
+          onClick={() => {
+            if (backdropClosable) onClose();
+          }}
         />
         <motion.div
           initial={{ opacity: 0, y: 40, scale: 0.97 }}
@@ -116,6 +128,12 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
           exit={{ opacity: 0, y: 40, scale: 0.97 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           className="relative bg-card shadow-2xl w-full max-w-lg overflow-auto rounded-t-2xl md:rounded-2xl h-[95vh] md:h-auto md:max-h-[90vh]"
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          style={{
+            paddingBottom: isMobile ? "env(safe-area-inset-bottom, 0px)" : undefined,
+            paddingTop: isMobile ? "env(safe-area-inset-top, 0px)" : undefined,
+          }}
         >
           <div className="flex items-center justify-between p-5 border-b border-border">
             <h2 className="text-lg font-heading font-bold">Новая заявка</h2>
@@ -249,43 +267,43 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
               <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
                 <Upload size={12} /> Файлы (необязательно)
               </label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    const newFiles = Array.from(e.target.files || []).map(f => ({
-                      file: f,
-                      preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined,
-                    }));
-                    setFiles(prev => [...prev, ...newFiles]);
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full py-3 border-2 border-dashed border-border rounded-xl text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all"
-                >
-                  Нажмите для выбора файлов
-                </button>
-                {files.length > 0 && (
-                  <div className="mt-2 space-y-1.5">
-                    {files.map((f, i) => (
-                      <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent/50 text-xs">
-                        <span className="truncate flex-1">{f.file.name}</span>
-                        <button onClick={() => setFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive ml-2">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const newFiles = Array.from(e.target.files || []).map((f) => ({
+                    file: f,
+                    preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined,
+                  }));
+                  setFiles((prev) => [...prev, ...newFiles]);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full py-3 border-2 border-dashed border-border rounded-xl text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all"
+              >
+                Нажмите для выбора файлов
+              </button>
+              {files.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  {files.map((f, i) => (
+                    <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg bg-accent/50 text-xs">
+                      <span className="truncate flex-1">{f.file.name}</span>
+                      <button onClick={() => setFiles((prev) => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive ml-2">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 p-5 border-t border-border">
+          <div className="flex justify-end gap-3 p-5 border-t border-border sticky bottom-0 bg-card">
             <button onClick={onClose} className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
               Отмена
             </button>
