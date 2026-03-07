@@ -835,7 +835,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           );
         }
         await sendPushToUser(execId, {
-          title: '❌ Заявка отменена',
+          title: 'Заявка отменена',
           body: `Заявка ${updated.number} была отменена.`,
         });
       }
