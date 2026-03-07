@@ -98,11 +98,11 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
   // ─── Mobile layout (iOS PWA style) ───
   if (isMobile) {
     return (
-      <div className="dashboard-theme min-h-screen bg-background text-foreground flex flex-col">
+      <div className="dashboard-theme h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
         <MobileHeader role={role} />
         <main
           ref={containerRef}
-          className="flex-1 px-4 pt-0 overflow-auto overscroll-contain"
+          className="flex-1 px-4 pt-0 overflow-y-auto overflow-x-hidden overscroll-contain -webkit-overflow-scrolling-touch"
           style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
         >
           <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />

@@ -110,8 +110,11 @@ const MobileFullScreen = ({ open, onClose, title, children, headerRight }: Mobil
 
               {/* Content */}
               <div
-                className="flex-1 overflow-auto overscroll-contain"
-                style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+                className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain"
+                style={{
+                  paddingBottom: "env(safe-area-inset-bottom, 0px)",
+                  WebkitOverflowScrolling: "touch",
+                }}
               >
                 {children}
               </div>
