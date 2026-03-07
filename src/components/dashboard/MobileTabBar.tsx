@@ -15,11 +15,9 @@ interface TabItem {
   icon: React.ElementType;
 }
 
-interface MoreItem extends TabItem {}
-
 interface RoleTabConfig {
   tabs: TabItem[];
-  more: MoreItem[];
+  more: TabItem[];
 }
 
 const tabsByRole: Record<UserRole, RoleTabConfig> = {
@@ -84,7 +82,6 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const isActive = (href: string) => {
-    // Exact match for root role pages
     if (href === `/${role}` || href === "/admin") {
       return location.pathname === href;
     }
@@ -103,15 +100,23 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
       <AnimatePresence>
         {moreOpen && (
           <div className="fixed inset-0 z-40 md:hidden">
-            <div className="absolute inset-0" onClick={() => setMoreOpen(false)} />
+            {/* Backdrop */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.15 }}
-              className="absolute bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] left-3 right-3 bg-card rounded-2xl shadow-2xl border border-border/50 p-2 space-y-0.5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+              onClick={() => setMoreOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 16, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="absolute left-4 right-4 bg-card rounded-2xl shadow-2xl border border-border/30 overflow-hidden"
+              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
             >
-              {more.map((item) => {
+              {more.map((item, i) => {
                 const active = isActive(item.href);
                 return (
                   <Link
@@ -119,13 +124,14 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                     to={item.href}
                     onClick={() => setMoreOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all",
+                      "flex items-center gap-3.5 px-5 py-3.5 text-[15px] font-medium transition-colors active:bg-accent/60",
+                      i < more.length - 1 && "border-b border-border/30",
                       active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                        ? "text-primary bg-primary/5"
+                        : "text-foreground"
                     )}
                   >
-                    <item.icon size={20} />
+                    <item.icon size={22} strokeWidth={active ? 2.2 : 1.6} className={active ? "text-primary" : "text-muted-foreground"} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -135,9 +141,15 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
         )}
       </AnimatePresence>
 
-      {/* Tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden bg-card/95 backdrop-blur-lg border-t border-border/50">
-        <div className="flex items-stretch justify-around px-1" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+      {/* iOS-style Tab bar */}
+      <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden">
+        {/* Frosted glass background */}
+        <div className="absolute inset-0 bg-card/80 backdrop-blur-xl border-t border-border/30" />
+        
+        <div
+          className="relative flex items-end justify-around px-2"
+          style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)" }}
+        >
           {allTabs.map((item) => {
             const isMore = item.href === "__more__";
             const active = isMore ? isMoreActive || moreOpen : isActive(item.href);
@@ -149,12 +161,12 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                   key="more"
                   onClick={() => setMoreOpen(!moreOpen)}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 flex-1 transition-colors",
+                    "flex flex-col items-center justify-center gap-1 pt-2 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
                     active ? "text-primary" : "text-muted-foreground"
                   )}
                 >
-                  <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                  <span className={cn("text-[10px] leading-tight", active ? "font-semibold" : "font-medium")}>
+                  <Icon size={26} strokeWidth={active ? 2 : 1.5} />
+                  <span className={cn("text-[11px] leading-none tracking-tight", active ? "font-semibold" : "font-normal")}>
                     {item.label}
                   </span>
                 </button>
@@ -166,19 +178,12 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 flex-1 transition-colors relative",
+                  "flex flex-col items-center justify-center gap-1 pt-2 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
                   active ? "text-primary" : "text-muted-foreground"
                 )}
               >
-                {active && (
-                  <motion.div
-                    layoutId="tab-indicator"
-                    className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  />
-                )}
-                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                <span className={cn("text-[10px] leading-tight", active ? "font-semibold" : "font-medium")}>
+                <Icon size={26} strokeWidth={active ? 2 : 1.5} />
+                <span className={cn("text-[11px] leading-none tracking-tight", active ? "font-semibold" : "font-normal")}>
                   {item.label}
                 </span>
               </Link>

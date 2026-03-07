@@ -83,12 +83,12 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
     return location.pathname.startsWith(href);
   };
 
-  // ─── Mobile layout ───
+  // ─── Mobile layout (iOS PWA style) ───
   if (isMobile) {
     return (
       <div className="dashboard-theme min-h-screen bg-background text-foreground flex flex-col">
         <MobileHeader role={role} />
-        <main className="flex-1 p-3 pb-20 overflow-auto">
+        <main className="flex-1 px-4 pt-3 overflow-auto" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}>
           {children}
         </main>
         <MobileTabBar role={role} />
