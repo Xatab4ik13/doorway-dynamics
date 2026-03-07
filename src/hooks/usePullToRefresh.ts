@@ -35,7 +35,13 @@ export function usePullToRefresh({ onRefresh, threshold = 80, maxPull = 120 }: U
     }
 
     const dy = e.touches[0].clientY - startY.current;
-    if (dy < 0) { setPullDistance(0); return; }
+
+    // If swiping up, stop pull tracking and let native scroll handle it
+    if (dy <= 0) {
+      pulling.current = false;
+      setPullDistance(0);
+      return;
+    }
 
     // Apply resistance
     const distance = Math.min(dy * 0.5, maxPull);
@@ -46,8 +52,8 @@ export function usePullToRefresh({ onRefresh, threshold = 80, maxPull = 120 }: U
       triggerHaptic("medium");
     }
 
-    // Only prevent default scroll when actively pulling indicator
-    if (distance > 5) e.preventDefault();
+    // Only prevent default scroll when clearly pulling the refresh indicator
+    if (distance > 20) e.preventDefault();
   }, [threshold, maxPull]);
 
   const handleTouchEnd = useCallback(async () => {
