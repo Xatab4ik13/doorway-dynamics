@@ -24,6 +24,7 @@ const quickFilters = [
 ];
 
 const ManagerDashboard = () => {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const { users, getUserName } = useUsers();
   const [city, setCity] = useState<CityFilter>("Москва");
