@@ -569,7 +569,7 @@ app.post('/api/requests/public', async (req, res) => {
     await notifyManagersAndAdmins(pool, tgMsg);
     // Push
     await sendPushToRoles(['admin', 'manager'], {
-      title: `📋 Новая заявка ${req_data.number}`,
+      title: `Новая заявка ${req_data.number}`,
       body: `${req_data.client_name} — ${req_data.client_address}`,
       url: '/admin/requests',
     });
