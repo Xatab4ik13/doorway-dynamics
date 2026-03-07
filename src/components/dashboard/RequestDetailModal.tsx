@@ -21,6 +21,7 @@ const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: stri
   </div>
 );
 
+interface RequestDetailModalProps {
   request: ApiRequest;
   onClose: () => void;
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
