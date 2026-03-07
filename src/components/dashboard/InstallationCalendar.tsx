@@ -5,6 +5,8 @@ import { statusLabels, statusColors, requestTypeLabels, type RequestStatus, type
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import SearchableUserSelect from "@/components/dashboard/SearchableUserSelect";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
+import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus, Check, Loader2, DoorOpen, DoorClosed, Ruler, ExternalLink } from "lucide-react";
 import {
   format,
