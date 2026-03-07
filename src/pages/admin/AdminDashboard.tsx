@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
-import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp, Loader2, Pause } from "lucide-react";
+import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
+import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp, Loader2, Pause, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format, subDays, parseISO, startOfDay } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
