@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import ScrollToTop from "@/components/ScrollToTop";
 import Header from "@/components/Header";
 import DashboardErrorBoundary from "@/components/DashboardErrorBoundary";
@@ -12,6 +12,7 @@ import FloatingPhone from "@/components/FloatingPhone";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import CookieBanner from "@/components/CookieBanner";
+import { isCrmDomain } from "@/hooks/useCrmDomain";
 import Index from "./pages/Index";
 
 const ServicesPage = lazy(() => import("./pages/ServicesPage"));
@@ -97,14 +98,53 @@ const SuspenseFallback = () => {
   );
 };
 
-const AppRoutes = () => (
+const CrmRoutes = () => (
+  <Layout>
+    <Suspense fallback={<SuspenseFallback />}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        {/* Admin */}
+        <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/requests" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminRequests /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAccounts /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminNews /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminPartners /></DashboardErrorBoundary></ProtectedRoute>} />
+        {/* Manager */}
+        <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAssign /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerFiles /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
+        {/* Measurer */}
+        <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/measurer/estimates" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/measurer/calendar" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
+        {/* Installer */}
+        <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/calendar" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
+        {/* Partner */}
+        <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/partner/new" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerNewRequest /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/partner/history" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
+        {/* Всё остальное → логин */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </Suspense>
+  </Layout>
+);
+
+const SiteRoutes = () => (
   <Layout>
     <Suspense fallback={<SuspenseFallback />}>
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/services" element={<ServicesPage />} />
-        
-        
         <Route path="/contacts" element={<ContactsPage />} />
         <Route path="/request" element={<RequestPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -148,6 +188,11 @@ const AppRoutes = () => (
     </Suspense>
   </Layout>
 );
+
+const AppRoutes = () => {
+  const crm = isCrmDomain();
+  return crm ? <CrmRoutes /> : <SiteRoutes />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
