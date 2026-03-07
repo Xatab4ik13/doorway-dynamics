@@ -20,6 +20,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
     "node-telegram-bot-api": "^0.67.0",
-    "pg": "^8.18.0"
+    "pg": "^8.18.0",
+    "web-push": "^3.6.7"
   }
 }
