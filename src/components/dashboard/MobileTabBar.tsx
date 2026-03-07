@@ -184,7 +184,10 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
               return (
                 <button
                   key="more"
-                  onClick={() => setMoreOpen((prev) => !prev)}
+                  onClick={() => {
+                    triggerHaptic("light");
+                    setMoreOpen((prev) => !prev);
+                  }}
                   className={cn(
                     "flex flex-col items-center justify-center gap-1 pt-2.5 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
                     active ? "text-primary" : "text-muted-foreground",
