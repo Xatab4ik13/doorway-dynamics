@@ -475,7 +475,9 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
             />
           )}
         </>
-      )}
+    </>
+  );
+};
 
 // Collapsible section for each category
 const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
