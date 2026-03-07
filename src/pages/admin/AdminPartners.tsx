@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -15,7 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Trash2, Eye, Handshake, UserPlus } from "lucide-react";
+import { Loader2, Trash2, Eye, Handshake, UserPlus, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
@@ -46,6 +47,7 @@ const statusColors: Record<string, string> = {
 };
 
 const AdminPartners = () => {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const [forms, setForms] = useState<PartnerForm[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,57 +145,89 @@ const AdminPartners = () => {
             Заявок пока нет
           </div>
         ) : (
-          <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Дата</TableHead>
-                  <TableHead>ФИО</TableHead>
-                  <TableHead>Магазин</TableHead>
-                  <TableHead>Телефон</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Статус</TableHead>
-                  <TableHead className="w-[100px]">Действия</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {forms.map((form) => (
-                  <TableRow key={form.id}>
-                    <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
-                      {format(new Date(form.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
-                    </TableCell>
-                    <TableCell className="font-medium">{form.name}</TableCell>
-                    <TableCell>{form.store_name}</TableCell>
-                    <TableCell>
-                      <a href={`tel:${form.phone}`} className="text-primary hover:underline">
-                        {form.phone}
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <a href={`mailto:${form.email}`} className="text-primary hover:underline text-sm">
-                        {form.email}
-                      </a>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[form.status] || "bg-muted text-muted-foreground"}`}>
-                        {statusLabels[form.status] || form.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleOpen(form)}>
-                          <Eye size={16} />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(form.id)} className="text-destructive hover:text-destructive">
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </TableCell>
+          isMobile ? (
+            <div className="space-y-2">
+              {forms.map((form) => (
+                <div
+                  key={form.id}
+                  onClick={() => handleOpen(form)}
+                  className="bg-card rounded-xl border border-border/50 p-3.5 active:scale-[0.98] transition-transform cursor-pointer"
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="font-medium text-sm">{form.name}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColors[form.status] || "bg-muted text-muted-foreground"}`}>
+                      {statusLabels[form.status] || form.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{form.store_name}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <a href={`tel:${form.phone}`} className="text-xs text-primary" onClick={(e) => e.stopPropagation()}>{form.phone}</a>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground">{format(new Date(form.created_at), "dd.MM.yy", { locale: ru })}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDelete(form.id); }}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Дата</TableHead>
+                    <TableHead>ФИО</TableHead>
+                    <TableHead>Магазин</TableHead>
+                    <TableHead>Телефон</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead className="w-[100px]">Действия</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {forms.map((form) => (
+                    <TableRow key={form.id}>
+                      <TableCell className="whitespace-nowrap text-xs text-muted-foreground">
+                        {format(new Date(form.created_at), "dd.MM.yyyy HH:mm", { locale: ru })}
+                      </TableCell>
+                      <TableCell className="font-medium">{form.name}</TableCell>
+                      <TableCell>{form.store_name}</TableCell>
+                      <TableCell>
+                        <a href={`tel:${form.phone}`} className="text-primary hover:underline">
+                          {form.phone}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <a href={`mailto:${form.email}`} className="text-primary hover:underline text-sm">
+                          {form.email}
+                        </a>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[form.status] || "bg-muted text-muted-foreground"}`}>
+                          {statusLabels[form.status] || form.status}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleOpen(form)}>
+                            <Eye size={16} />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(form.id)} className="text-destructive hover:text-destructive">
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )
         )}
       </div>
 
