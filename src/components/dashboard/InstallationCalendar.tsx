@@ -152,7 +152,7 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath
       </div>
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Phone size={14} className="shrink-0" />
-        <a href={`tel:${r.client_phone}`} className="hover:text-primary">{r.client_phone}</a>
+        <a href={`tel:${r.client_phone}`} className="hover:text-primary" onClick={(e) => e.stopPropagation()}>{r.client_phone}</a>
       </div>
       {r.extra_name && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

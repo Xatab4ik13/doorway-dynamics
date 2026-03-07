@@ -25,6 +25,15 @@ export function usePullToRefresh({ onRefresh, threshold = 80, maxPull = 120 }: U
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!pulling.current) return;
+
+    const el = containerRef.current;
+    // Only intercept when container is scrolled to the very top
+    if (!el || el.scrollTop > 0) {
+      pulling.current = false;
+      setPullDistance(0);
+      return;
+    }
+
     const dy = e.touches[0].clientY - startY.current;
     if (dy < 0) { setPullDistance(0); return; }
 
@@ -37,8 +46,8 @@ export function usePullToRefresh({ onRefresh, threshold = 80, maxPull = 120 }: U
       triggerHaptic("medium");
     }
 
-    // Prevent default scroll when pulling down
-    if (dy > 10) e.preventDefault();
+    // Only prevent default scroll when actively pulling indicator
+    if (distance > 5) e.preventDefault();
   }, [threshold, maxPull]);
 
   const handleTouchEnd = useCallback(async () => {
