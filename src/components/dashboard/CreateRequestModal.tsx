@@ -142,7 +142,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
             </button>
           </div>
 
-          <div className="p-5 space-y-4">
+          <div className="p-5 space-y-4 flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" as any }}>
             {/* Type */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-2 block">Тип заявки</label>

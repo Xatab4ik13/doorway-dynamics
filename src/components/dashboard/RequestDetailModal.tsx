@@ -415,8 +415,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           )}
 
           {renderFooter()}
+          {renderConfirmation()}
         </MobileFullScreen>
-        {renderConfirmation()}
       </>
     );
   }
