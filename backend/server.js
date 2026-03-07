@@ -120,7 +120,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors({
-  origin: ['https://primedoor.ru', 'https://www.primedoor.ru', 'https://id-preview--f5673e60-b138-4f14-a569-af8be198fbe7.lovable.app'],
+  origin: ['https://primedoor.ru', 'https://www.primedoor.ru', 'https://crm.primedoor.ru', 'https://id-preview--f5673e60-b138-4f14-a569-af8be198fbe7.lovable.app'],
   credentials: true,
 }));
 app.use(express.json());
