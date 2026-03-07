@@ -182,6 +182,86 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
     </button>
   ) : null;
 
+  // Extracted render helpers for reuse between mobile and desktop
+  const renderConfirmation = () => showConfirm ? (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[80]">
+      <div className="bg-card rounded-2xl p-6 max-w-sm mx-4 shadow-2xl space-y-4">
+        <div className="flex items-center gap-3">
+          <AlertTriangle size={24} className="text-amber-500" />
+          <h3 className="font-heading font-bold">Подтверждение</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">Вы уверены, что хотите сохранить изменения в этой заявке?</p>
+        <div className="flex justify-end gap-3">
+          <button onClick={() => setShowConfirm(false)} className="px-4 py-2.5 rounded-xl text-sm bg-accent text-foreground active:opacity-60 transition-opacity">
+            Отмена
+          </button>
+          <button 
+            onClick={() => executeSave(pendingUpdates)} 
+            disabled={saving}
+            className="px-4 py-2.5 rounded-xl text-sm bg-primary text-primary-foreground active:opacity-60 transition-opacity flex items-center gap-2 disabled:opacity-50"
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить"}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  const renderFooter = () => (
+    <div className="flex items-center justify-between p-4 border-t border-border/30 bg-card sticky bottom-0">
+      <div>
+        {viewerRole === "admin" && onDelete && !confirmDelete && (
+          <button
+            onClick={() => setConfirmDelete(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-destructive active:opacity-60 transition-opacity"
+          >
+            <Trash2 size={14} /> Удалить
+          </button>
+        )}
+        {viewerRole === "admin" && onDelete && confirmDelete && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={async () => {
+                setDeleting(true);
+                try { await onDelete(request.id); onClose(); toast.success("Заявка удалена"); } catch {} finally { setDeleting(false); }
+              }}
+              disabled={deleting}
+              className="px-3 py-1.5 rounded-xl text-xs font-medium bg-destructive text-destructive-foreground disabled:opacity-50"
+            >
+              {deleting ? <Loader2 size={12} className="animate-spin" /> : "Удалить"}
+            </button>
+            <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 rounded-xl text-xs font-medium bg-accent text-foreground">
+              Отмена
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2">
+        {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
+          <button
+            onClick={async () => {
+              setSendingToInstall(true);
+              try { await onSendToInstallation(request); toast.success("Заявка на монтаж создана"); } catch {} finally { setSendingToInstall(false); }
+            }}
+            disabled={sendingToInstall}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
+          </button>
+        )}
+        {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-5 py-2.5 rounded-xl text-sm font-medium bg-primary text-primary-foreground shadow-md shadow-primary/25 disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : "Сохранить"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   // Mobile: use fullscreen sheet
   if (isMobile) {
     return (
