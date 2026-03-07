@@ -105,17 +105,17 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4">
         <div
           className="absolute inset-0 bg-black/50"
           onClick={onClose}
         />
         <motion.div
-          initial={{ opacity: 0, scale: 0.97 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.97 }}
-          transition={{ duration: 0.15, ease: "easeOut" }}
-          className="relative bg-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto"
+          initial={{ opacity: 0, y: 40, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 40, scale: 0.97 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="relative bg-card shadow-2xl w-full max-w-lg overflow-auto rounded-t-2xl md:rounded-2xl h-[95vh] md:h-auto md:max-h-[90vh]"
         >
           <div className="flex items-center justify-between p-5 border-b border-border">
             <h2 className="text-lg font-heading font-bold">Новая заявка</h2>
