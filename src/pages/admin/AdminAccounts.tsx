@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { roleLabels, type UserRole } from "@/data/mockDashboard";
 import { UserPlus, Trash2, Search, Loader2, CheckCircle } from "lucide-react";
 import CreateAccountModal from "@/components/dashboard/CreateAccountModal";
