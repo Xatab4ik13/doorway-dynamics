@@ -565,9 +565,14 @@ app.post('/api/requests/public', async (req, res) => {
 
     const req_data = rows[0];
     // Уведомление менеджерам и админам о новой заявке
-    await notifyManagersAndAdmins(pool,
-      `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: Сайт\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
-    );
+    const tgMsg = `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: Сайт\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`;
+    await notifyManagersAndAdmins(pool, tgMsg);
+    // Push
+    await sendPushToRoles(['admin', 'manager'], {
+      title: `📋 Новая заявка ${req_data.number}`,
+      body: `${req_data.client_name} — ${req_data.client_address}`,
+      url: '/admin/requests',
+    });
 
     res.json(req_data);
   } catch (err) {
