@@ -8,9 +8,11 @@ import RequestFilters, { type FilterState, defaultFilters } from "@/components/d
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
 import Pagination from "@/components/dashboard/Pagination";
 import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
+import MobileRequestCard from "@/components/dashboard/MobileRequestCard";
 import { useUsers, useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
 
@@ -22,6 +24,7 @@ const quickFilters = [
 ];
 
 const ManagerDashboard = () => {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const { users, getUserName } = useUsers();
   const [city, setCity] = useState<CityFilter>("Москва");
@@ -107,74 +110,93 @@ const ManagerDashboard = () => {
                 <Loader2 className="animate-spin text-primary" size={36} />
               </div>
             ) : (
-              <div className="overflow-auto mt-4">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b-2 border-border text-left text-[10px] text-muted-foreground uppercase tracking-wider">
-                      <th className="pb-3 pr-4">№</th>
-                      <th className="pb-3 pr-4">Клиент</th>
-                      <th className="pb-3 pr-4">Адрес</th>
-                      <th className="pb-3 pr-4">Город</th>
-                      <th className="pb-3 pr-4">Тип</th>
-                      <th className="pb-3 pr-4">Статус</th>
-                      <th className="pb-3 pr-4">Источник</th>
-                      <th className="pb-3 pr-4">Исполнитель</th>
-                      <th className="pb-3 pr-4">Межком.</th>
-                      <th className="pb-3 pr-4">Входные</th>
-                      <th className="pb-3 pr-4">Перег.</th>
-                      <th className="pb-3 pr-4">Сумма</th>
-                      <th className="pb-3">Дата</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+              <div className="mt-4">
+                {isMobile ? (
+                  <div className="space-y-2.5">
                     {requests.map((r, i) => (
-                      <motion.tr
+                      <MobileRequestCard
                         key={r.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.02, duration: 0.2 }}
+                        request={r}
+                        index={i}
                         onClick={() => setSelectedRequest(r)}
-                        className="border-b border-border/50 last:border-0 hover:bg-primary/5 transition-colors cursor-pointer"
-                      >
-                        <td className="py-3.5 pr-4 font-mono text-xs text-primary">{r.number}</td>
-                        <td className="py-3.5 pr-4 font-medium">{r.client_name}</td>
-                        <td className="py-3.5 pr-4 text-xs text-muted-foreground max-w-[200px] truncate">
-                          <span className="flex items-center gap-1"><MapPin size={10} className="shrink-0" />{r.client_address || "—"}</span>
-                        </td>
-                        <td className="py-3.5 pr-4 text-xs text-muted-foreground">{r.city || "—"}</td>
-                        <td className="py-3.5 pr-4 text-xs">
-                          {requestTypeLabels[r.type] || r.type}
-                        </td>
-                        <td className="py-3.5 pr-4">
-                          <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
-                            {getStatusLabel(r.status as RequestStatus, r.type as RequestType)}
-                          </span>
-                        </td>
-                        <td className="py-3.5 pr-4 text-xs">
-                          {r.partner_id ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-medium">
-                              <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">Сайт</span>
-                          )}
-                        </td>
-                        <td className="py-3.5 pr-4 text-xs text-muted-foreground">
-                          {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
-                        </td>
-                        <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.interior_doors ?? "—"}</td>
-                        <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.entrance_doors ?? "—"}</td>
-                        <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.partitions ?? "—"}</td>
-                        <td className="py-3.5 pr-4 text-xs text-muted-foreground">
-                          {r.amount != null ? `${r.amount.toLocaleString("ru-RU")} ₽` : "—"}
-                        </td>
-                        <td className="py-3.5 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
-                      </motion.tr>
+                        getUserName={getUserName}
+                      />
                     ))}
-                  </tbody>
-                </table>
-                {requests.length === 0 && (
-                  <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
+                    {requests.length === 0 && (
+                      <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="overflow-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b-2 border-border text-left text-[10px] text-muted-foreground uppercase tracking-wider">
+                          <th className="pb-3 pr-4">№</th>
+                          <th className="pb-3 pr-4">Клиент</th>
+                          <th className="pb-3 pr-4">Адрес</th>
+                          <th className="pb-3 pr-4">Город</th>
+                          <th className="pb-3 pr-4">Тип</th>
+                          <th className="pb-3 pr-4">Статус</th>
+                          <th className="pb-3 pr-4">Источник</th>
+                          <th className="pb-3 pr-4">Исполнитель</th>
+                          <th className="pb-3 pr-4">Межком.</th>
+                          <th className="pb-3 pr-4">Входные</th>
+                          <th className="pb-3 pr-4">Перег.</th>
+                          <th className="pb-3 pr-4">Сумма</th>
+                          <th className="pb-3">Дата</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {requests.map((r, i) => (
+                          <motion.tr
+                            key={r.id}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.02, duration: 0.2 }}
+                            onClick={() => setSelectedRequest(r)}
+                            className="border-b border-border/50 last:border-0 hover:bg-primary/5 transition-colors cursor-pointer"
+                          >
+                            <td className="py-3.5 pr-4 font-mono text-xs text-primary">{r.number}</td>
+                            <td className="py-3.5 pr-4 font-medium">{r.client_name}</td>
+                            <td className="py-3.5 pr-4 text-xs text-muted-foreground max-w-[200px] truncate">
+                              <span className="flex items-center gap-1"><MapPin size={10} className="shrink-0" />{r.client_address || "—"}</span>
+                            </td>
+                            <td className="py-3.5 pr-4 text-xs text-muted-foreground">{r.city || "—"}</td>
+                            <td className="py-3.5 pr-4 text-xs">
+                              {requestTypeLabels[r.type] || r.type}
+                            </td>
+                            <td className="py-3.5 pr-4">
+                              <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                                {getStatusLabel(r.status as RequestStatus, r.type as RequestType)}
+                              </span>
+                            </td>
+                            <td className="py-3.5 pr-4 text-xs">
+                              {r.partner_id ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-700 text-[10px] font-medium">
+                                  <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
+                                </span>
+                              ) : (
+                                <span className="text-muted-foreground">Сайт</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 pr-4 text-xs text-muted-foreground">
+                              {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
+                            </td>
+                            <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.interior_doors ?? "—"}</td>
+                            <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.entrance_doors ?? "—"}</td>
+                            <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.partitions ?? "—"}</td>
+                            <td className="py-3.5 pr-4 text-xs text-muted-foreground">
+                              {r.amount != null ? `${r.amount.toLocaleString("ru-RU")} ₽` : "—"}
+                            </td>
+                            <td className="py-3.5 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {requests.length === 0 && (
+                      <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
+                    )}
+                  </div>
                 )}
 
                 <Pagination
