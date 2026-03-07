@@ -806,7 +806,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         `📅 <b>Дата ${action}</b>\n\nЗаявка: ${updated.number}\nНовая дата: ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}${comment}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
       await sendPushToRoles(['admin', 'manager'], {
-        title: `📅 Дата ${action}`,
+        title: `Дата ${action}`,
         body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
         url: '/admin/requests',
       });
