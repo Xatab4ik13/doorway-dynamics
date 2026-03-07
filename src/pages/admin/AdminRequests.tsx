@@ -22,6 +22,7 @@ import api from "@/lib/api";
 import type { PaginatedResponse } from "@/hooks/usePaginatedRequests";
 
 const AdminRequests = () => {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const { users, getUserName } = useUsers();
   const [searchParams] = useSearchParams();
