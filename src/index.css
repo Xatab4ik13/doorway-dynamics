@@ -79,9 +79,33 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+/* iOS-native feel utilities */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .dashboard-theme {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Smooth scroll for iOS */
+.overflow-auto, .overflow-y-auto, .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS-style active states */
+@media (max-width: 767px) {
+  .dashboard-theme button,
+  .dashboard-theme a {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

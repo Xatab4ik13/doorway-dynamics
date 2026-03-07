@@ -85,6 +85,7 @@ function computeTopEmployees(requests: ApiRequest[], getUserName: (id?: string) 
 }
 
 const AdminDashboard = () => {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const { requests, loading } = useRequests();
   const { getUserName } = useUsers();
