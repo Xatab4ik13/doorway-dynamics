@@ -154,58 +154,104 @@ const AdminAccounts = () => {
               </select>
             </div>
 
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <thead>
-                   <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                     <th className="pb-3 pr-4">Имя</th>
-                     <th className="pb-3 pr-4">Телефон</th>
-                     <th className="pb-3 pr-4">Роль</th>
-                     <th className="pb-3 pr-4">Статус</th>
-                     <th className="pb-3 pr-4">Создан</th>
-                     <th className="pb-3"></th>
-                   </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((u) => (
-                    <tr key={u.id} className={`border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer ${!u.active ? "bg-amber-50/50" : ""}`} onClick={() => setDetailTarget(u)}>
-                      <td className="py-3 pr-4 font-medium">{u.name}</td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.phone || "—"}</td>
-                      <td className="py-3 pr-4">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleColorMap[u.role]}`}>
+            {isMobile ? (
+              /* Mobile card view */
+              <div className="space-y-2">
+                {filtered.map((u) => (
+                  <div
+                    key={u.id}
+                    onClick={() => setDetailTarget(u)}
+                    className={`p-3.5 rounded-xl border border-border/50 active:scale-[0.98] transition-transform cursor-pointer ${!u.active ? "bg-amber-50/30" : "bg-background"}`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-medium text-sm">{u.name}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-block w-2 h-2 rounded-full ${u.active ? "bg-green-500" : "bg-amber-400"}`} />
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${roleColorMap[u.role]}`}>
                           {roleLabels[u.role]}
                         </span>
-                      </td>
-                      <td className="py-3 pr-4">
-                        <span className={`inline-block w-2 h-2 rounded-full ${u.active ? "bg-green-500" : "bg-amber-400"}`} />
-                        <span className="ml-2 text-xs">{u.active ? "Активен" : "Ожидает"}</span>
-                      </td>
-                      <td className="py-3 pr-4 text-xs text-muted-foreground">{u.created_at?.split("T")[0]}</td>
-                      <td className="py-3 flex items-center gap-1">
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground font-mono">{u.phone || "—"}</span>
+                      <div className="flex gap-1">
                         {!u.active && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleActivate(u); }}
-                            className="text-green-600 hover:text-green-700 transition-colors p-1"
-                            title="Активировать"
+                            className="text-green-600 p-1.5 rounded-lg hover:bg-green-50"
                           >
                             <CheckCircle size={16} />
                           </button>
                         )}
                         <button
                           onClick={(e) => { e.stopPropagation(); setDeleteTarget(u); }}
-                          className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                          className="text-muted-foreground p-1.5 rounded-lg hover:bg-destructive/10 hover:text-destructive"
                         >
                           <Trash2 size={16} />
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filtered.length === 0 && (
-                <p className="text-center text-muted-foreground py-8 text-sm">Аккаунты не найдены</p>
-              )}
-            </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {filtered.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8 text-sm">Аккаунты не найдены</p>
+                )}
+              </div>
+            ) : (
+              /* Desktop table view */
+              <div className="overflow-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                     <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                       <th className="pb-3 pr-4">Имя</th>
+                       <th className="pb-3 pr-4">Телефон</th>
+                       <th className="pb-3 pr-4">Роль</th>
+                       <th className="pb-3 pr-4">Статус</th>
+                       <th className="pb-3 pr-4">Создан</th>
+                       <th className="pb-3"></th>
+                     </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((u) => (
+                      <tr key={u.id} className={`border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer ${!u.active ? "bg-amber-50/50" : ""}`} onClick={() => setDetailTarget(u)}>
+                        <td className="py-3 pr-4 font-medium">{u.name}</td>
+                        <td className="py-3 pr-4 text-xs text-muted-foreground font-mono">{u.phone || "—"}</td>
+                        <td className="py-3 pr-4">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${roleColorMap[u.role]}`}>
+                            {roleLabels[u.role]}
+                          </span>
+                        </td>
+                        <td className="py-3 pr-4">
+                          <span className={`inline-block w-2 h-2 rounded-full ${u.active ? "bg-green-500" : "bg-amber-400"}`} />
+                          <span className="ml-2 text-xs">{u.active ? "Активен" : "Ожидает"}</span>
+                        </td>
+                        <td className="py-3 pr-4 text-xs text-muted-foreground">{u.created_at?.split("T")[0]}</td>
+                        <td className="py-3 flex items-center gap-1">
+                          {!u.active && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleActivate(u); }}
+                              className="text-green-600 hover:text-green-700 transition-colors p-1"
+                              title="Активировать"
+                            >
+                              <CheckCircle size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setDeleteTarget(u); }}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filtered.length === 0 && (
+                  <p className="text-center text-muted-foreground py-8 text-sm">Аккаунты не найдены</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
