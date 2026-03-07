@@ -673,7 +673,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <div>
                         <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Партнёр</p>
                         <p className="text-sm font-medium text-emerald-700">{partnerUser.name}</p>
-                        {partnerUser.phone && (
+                        {partnerUser.phone && viewerRole !== "measurer" && (
                           <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerUser.phone}</a>
                         )}
                       </div>
