@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import api from "@/lib/api";
 import { toast } from "sonner";
 import {
@@ -15,7 +16,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import { Loader2, Trash2, Eye, Handshake, UserPlus } from "lucide-react";
+import { Loader2, Trash2, Eye, Handshake, UserPlus, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
