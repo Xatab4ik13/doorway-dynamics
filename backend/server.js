@@ -745,6 +745,12 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           `🔔 <b>Новая заявка на замер</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\n\nПерейдите в личный кабинет, чтобы согласовать дату замера с клиентом.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
         );
       }
+      // Push to measurer
+      await sendPushToUser(updates.measurer_id, {
+        title: '🔔 Новая заявка на замер',
+        body: `${updated.client_name} — ${updated.client_address}`,
+        url: '/measurer',
+      });
       // Если был предыдущий замерщик — уведомить о снятии
       if (request.measurer_id && request.measurer_id !== updates.measurer_id) {
         const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.measurer_id]);
@@ -753,6 +759,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
             `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
           );
         }
+        await sendPushToUser(request.measurer_id, {
+          title: 'ℹ️ Вы сняты с заявки',
+          body: `Заявка ${updated.number} передана другому исполнителю.`,
+          url: '/measurer',
+        });
       }
     }
 
@@ -765,6 +776,12 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\nПодробнее — в личном кабинете.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
         );
       }
+      // Push to installer
+      await sendPushToUser(updates.installer_id, {
+        title: '🔔 Новый монтаж',
+        body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
+        url: '/installer',
+      });
       // Если был предыдущий монтажник — уведомить о снятии
       if (request.installer_id && request.installer_id !== updates.installer_id) {
         const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.installer_id]);
@@ -773,6 +790,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
             `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
           );
         }
+        await sendPushToUser(request.installer_id, {
+          title: 'ℹ️ Вы сняты с заявки',
+          body: `Заявка ${updated.number} передана другому исполнителю.`,
+          url: '/installer',
+        });
       }
     }
 
@@ -783,6 +805,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await notifyManagersAndAdmins(pool,
         `📅 <b>Дата ${action}</b>\n\nЗаявка: ${updated.number}\nНовая дата: ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}${comment}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
+      await sendPushToRoles(['admin', 'manager'], {
+        title: `📅 Дата ${action}`,
+        body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
+        url: '/admin/requests',
+      });
     }
 
     // 4. Работа завершена (measurement_done или closed) → менеджерам
@@ -790,6 +817,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await notifyManagersAndAdmins(pool,
         `✅ <b>Работа завершена</b>\n\nЗаявка: ${updated.number}\nТип: ${typeLabels[updated.type] || updated.type}\nСтатус: ${statusLabels[updates.status]}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
+      await sendPushToRoles(['admin', 'manager'], {
+        title: '✅ Работа завершена',
+        body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
+        url: '/admin/requests',
+      });
     }
 
     // 5. Заявка отменена → уведомить исполнителей
@@ -802,6 +834,10 @@ app.put('/api/requests/:id', auth, async (req, res) => {
             `❌ <b>Заявка отменена</b>\n\nЗаявка ${updated.number} была отменена.`
           );
         }
+        await sendPushToUser(execId, {
+          title: '❌ Заявка отменена',
+          body: `Заявка ${updated.number} была отменена.`,
+        });
       }
     }
 
