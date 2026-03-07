@@ -220,38 +220,66 @@ const AdminDashboard = () => {
               <CardTitle className="text-base">Последние заявки</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="overflow-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                      <th className="pb-2 pr-4">№</th>
-                      <th className="pb-2 pr-4">Клиент</th>
-                      <th className="pb-2 pr-4">Тип</th>
-                      <th className="pb-2 pr-4">Статус</th>
-                      <th className="pb-2">Дата</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requests.slice(0, 6).map((r) => (
-                      <tr key={r.id} className="border-b border-border last:border-0">
-                        <td className="py-2.5 pr-4 font-mono text-xs">{r.number}</td>
-                        <td className="py-2.5 pr-4">{r.client_name}</td>
-                        <td className="py-2.5 pr-4 capitalize text-xs">
-                          {r.type === "measurement" ? "Замер" : r.type === "installation" ? "Монтаж" : "Рекламация"}
-                        </td>
-                        <td className="py-2.5 pr-4">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
-                            {statusLabels[r.status as RequestStatus] || r.status}
+              {isMobile ? (
+                <div className="space-y-2">
+                  {requests.slice(0, 6).map((r) => (
+                    <div
+                      key={r.id}
+                      onClick={() => navigate("/admin/requests")}
+                      className="flex items-center justify-between p-3 rounded-xl bg-accent/30 active:scale-[0.98] transition-transform cursor-pointer"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="font-mono text-xs text-primary">{r.number}</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-accent text-muted-foreground">
+                            {requestTypeLabels[r.type] || r.type}
                           </span>
-                        </td>
-                        <td className="py-2.5 text-xs text-muted-foreground">
-                          {r.created_at ? format(parseISO(r.created_at), "dd.MM.yyyy") : "—"}
-                        </td>
+                        </div>
+                        <p className="text-sm font-medium truncate">{r.client_name}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={`px-2 py-0.5 rounded-lg text-[10px] font-medium ${statusColors[r.status as RequestStatus] || "bg-muted text-muted-foreground"}`}>
+                          {getStatusLabel(r.status as RequestStatus, r.type as RequestType)}
+                        </span>
+                        <ChevronRight size={14} className="text-muted-foreground" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                        <th className="pb-2 pr-4">№</th>
+                        <th className="pb-2 pr-4">Клиент</th>
+                        <th className="pb-2 pr-4">Тип</th>
+                        <th className="pb-2 pr-4">Статус</th>
+                        <th className="pb-2">Дата</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {requests.slice(0, 6).map((r) => (
+                        <tr key={r.id} className="border-b border-border last:border-0">
+                          <td className="py-2.5 pr-4 font-mono text-xs">{r.number}</td>
+                          <td className="py-2.5 pr-4">{r.client_name}</td>
+                          <td className="py-2.5 pr-4 capitalize text-xs">
+                            {r.type === "measurement" ? "Замер" : r.type === "installation" ? "Монтаж" : "Рекламация"}
+                          </td>
+                          <td className="py-2.5 pr-4">
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                              {statusLabels[r.status as RequestStatus] || r.status}
+                            </span>
+                          </td>
+                          <td className="py-2.5 text-xs text-muted-foreground">
+                            {r.created_at ? format(parseISO(r.created_at), "dd.MM.yyyy") : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
