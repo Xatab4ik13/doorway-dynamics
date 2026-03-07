@@ -16,6 +16,7 @@ import MobileTabBar from "./MobileTabBar";
 import MobileHeader from "./MobileHeader";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import PullToRefreshIndicator from "./PullToRefreshIndicator";
+import NotificationToggle from "./NotificationToggle";
 
 interface NavItem {
   label: string;
