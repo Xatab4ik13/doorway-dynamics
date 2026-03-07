@@ -1,12 +1,24 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, ClipboardList, Users, Newspaper, FileSpreadsheet,
-  Wrench, Ruler, History, PlusCircle, Eye, Calculator, CalendarDays,
-  Handshake, Upload, MoreHorizontal,
+  LayoutDashboard,
+  ClipboardList,
+  Users,
+  Newspaper,
+  FileSpreadsheet,
+  Wrench,
+  Ruler,
+  History,
+  PlusCircle,
+  Eye,
+  Calculator,
+  CalendarDays,
+  Handshake,
+  Upload,
+  MoreHorizontal,
 } from "lucide-react";
 import type { UserRole } from "@/data/mockDashboard";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
 interface TabItem {
@@ -41,9 +53,7 @@ const tabsByRole: Record<UserRole, RoleTabConfig> = {
       { label: "Задачи", href: "/manager/assign", icon: Users },
       { label: "Сметы", href: "/manager/estimates", icon: Calculator },
     ],
-    more: [
-      { label: "Файлы", href: "/manager/files", icon: Upload },
-    ],
+    more: [{ label: "Файлы", href: "/manager/files", icon: Upload }],
   },
   measurer: {
     tabs: [
@@ -80,6 +90,17 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
   const location = useLocation();
   const { tabs, more } = tabsByRole[role];
   const [moreOpen, setMoreOpen] = useState(false);
+  const [moreBackdropClosable, setMoreBackdropClosable] = useState(false);
+
+  useEffect(() => {
+    if (!moreOpen) {
+      setMoreBackdropClosable(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setMoreBackdropClosable(true), 180);
+    return () => window.clearTimeout(timer);
+  }, [moreOpen]);
 
   const isActive = (href: string) => {
     if (href === `/${role}` || href === "/admin") {
@@ -90,9 +111,7 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
 
   const isMoreActive = more.some((item) => isActive(item.href));
 
-  const allTabs = more.length > 0
-    ? [...tabs, { label: "Ещё", href: "__more__", icon: MoreHorizontal }]
-    : tabs;
+  const allTabs = more.length > 0 ? [...tabs, { label: "Ещё", href: "__more__", icon: MoreHorizontal }] : tabs;
 
   return (
     <>
@@ -100,21 +119,25 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
       <AnimatePresence>
         {moreOpen && (
           <div className="fixed inset-0 z-40 md:hidden">
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-              onClick={() => setMoreOpen(false)}
+              className="absolute inset-0 bg-foreground/20 backdrop-blur-sm"
+              onClick={() => {
+                if (moreBackdropClosable) setMoreOpen(false);
+              }}
             />
+
             <motion.div
               initial={{ opacity: 0, y: 16, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 16, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
               className="absolute left-4 right-4 bg-card rounded-2xl shadow-2xl border border-border/30 overflow-hidden"
-              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
+              style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 5.8rem)" }}
+              onClick={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
             >
               {more.map((item, i) => {
                 const active = isActive(item.href);
@@ -126,12 +149,14 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                     className={cn(
                       "flex items-center gap-3.5 px-5 py-3.5 text-[15px] font-medium transition-colors active:bg-accent/60",
                       i < more.length - 1 && "border-b border-border/30",
-                      active
-                        ? "text-primary bg-primary/5"
-                        : "text-foreground"
+                      active ? "text-primary bg-primary/5" : "text-foreground",
                     )}
                   >
-                    <item.icon size={22} strokeWidth={active ? 2.2 : 1.6} className={active ? "text-primary" : "text-muted-foreground"} />
+                    <item.icon
+                      size={22}
+                      strokeWidth={active ? 2.2 : 1.6}
+                      className={active ? "text-primary" : "text-muted-foreground"}
+                    />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -143,9 +168,8 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
 
       {/* iOS-style Tab bar */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 md:hidden">
-        {/* Frosted glass background */}
-        <div className="absolute inset-0 bg-card/80 backdrop-blur-xl border-t border-border/30" />
-        
+        <div className="absolute inset-0 bg-card/85 backdrop-blur-xl border-t border-border/30" />
+
         <div
           className="relative flex items-end justify-around px-2"
           style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 8px)" }}
@@ -159,10 +183,10 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
               return (
                 <button
                   key="more"
-                  onClick={() => setMoreOpen(!moreOpen)}
+                  onClick={() => setMoreOpen((prev) => !prev)}
                   className={cn(
-                    "flex flex-col items-center justify-center gap-1 pt-2 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
-                    active ? "text-primary" : "text-muted-foreground"
+                    "flex flex-col items-center justify-center gap-1 pt-2.5 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
+                    active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
                   <Icon size={26} strokeWidth={active ? 2 : 1.5} />
@@ -178,8 +202,8 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 pt-2 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
-                  active ? "text-primary" : "text-muted-foreground"
+                  "flex flex-col items-center justify-center gap-1 pt-2.5 pb-1 min-w-0 flex-1 transition-colors active:opacity-60",
+                  active ? "text-primary" : "text-muted-foreground",
                 )}
               >
                 <Icon size={26} strokeWidth={active ? 2 : 1.5} />
