@@ -1101,6 +1101,122 @@ app.delete('/api/partner-forms/:id', auth, async (req, res) => {
   }
 });
 
+// === Web Push Notifications ===
+
+// Configure VAPID
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:info@primedoor.ru',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
+// Auto-create push_subscriptions table
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+        endpoint TEXT UNIQUE NOT NULL,
+        keys_p256dh TEXT NOT NULL,
+        keys_auth TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log('push_subscriptions table ready');
+  } catch (err) {
+    console.error('Failed to create push_subscriptions table:', err.message);
+  }
+})();
+
+// Subscribe to push
+app.post('/api/push/subscribe', auth, async (req, res) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription?.endpoint || !subscription?.keys) {
+      return res.status(400).json({ error: 'Invalid subscription' });
+    }
+    await pool.query(
+      `INSERT INTO push_subscriptions (user_id, endpoint, keys_p256dh, keys_auth)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (endpoint) DO UPDATE SET user_id = $1, keys_p256dh = $3, keys_auth = $4`,
+      [req.user.id, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Push subscribe error:', err);
+    res.status(500).json({ error: 'Ошибка сохранения подписки' });
+  }
+});
+
+// Unsubscribe from push
+app.post('/api/push/unsubscribe', auth, async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Push unsubscribe error:', err);
+    res.status(500).json({ error: 'Ошибка удаления подписки' });
+  }
+});
+
+// Helper: send push to users by role(s)
+async function sendPushToRoles(roles, payload) {
+  if (!process.env.VAPID_PUBLIC_KEY) return;
+  try {
+    const placeholders = roles.map((_, i) => `$${i + 1}`).join(', ');
+    const { rows } = await pool.query(
+      `SELECT ps.endpoint, ps.keys_p256dh, ps.keys_auth
+       FROM push_subscriptions ps
+       JOIN users u ON u.id = ps.user_id
+       WHERE u.role IN (${placeholders}) AND u.active = true`,
+      roles
+    );
+    for (const row of rows) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: row.endpoint, keys: { p256dh: row.keys_p256dh, auth: row.keys_auth } },
+          JSON.stringify(payload)
+        );
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [row.endpoint]);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('sendPushToRoles error:', err.message);
+  }
+}
+
+// Helper: send push to specific user
+async function sendPushToUser(userId, payload) {
+  if (!process.env.VAPID_PUBLIC_KEY) return;
+  try {
+    const { rows } = await pool.query(
+      'SELECT endpoint, keys_p256dh, keys_auth FROM push_subscriptions WHERE user_id = $1',
+      [userId]
+    );
+    for (const row of rows) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: row.endpoint, keys: { p256dh: row.keys_p256dh, auth: row.keys_auth } },
+          JSON.stringify(payload)
+        );
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [row.endpoint]);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('sendPushToUser error:', err.message);
+  }
+}
+
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
 });
