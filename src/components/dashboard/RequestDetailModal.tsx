@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadFile } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileFullScreen from "./MobileFullScreen";
 
 interface RequestDetailModalProps {
   request: ApiRequest;
