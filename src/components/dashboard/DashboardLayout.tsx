@@ -195,10 +195,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-3">
-            <div className="relative">
-              <Bell size={18} className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
-            </div>
+            <NotificationToggle />
             <div className="h-6 w-px bg-border" />
             <span className="text-xs text-muted-foreground font-medium">{displayName}</span>
           </div>
