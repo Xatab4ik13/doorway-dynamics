@@ -262,51 +262,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
     </div>
   );
 
-  // Mobile: use fullscreen sheet
-  if (isMobile) {
-    return (
-      <>
-        <MobileFullScreen
-          open={true}
-          onClose={onClose}
-          title={request.number}
-          headerRight={editButton}
-        >
-          {/* Tabs */}
-          <div className="flex border-b border-border/30 bg-card sticky top-0 z-10">
-            <button
-              onClick={() => setActiveTab("details")}
-              className={`flex-1 py-3 text-[13px] font-medium transition-colors ${
-                activeTab === "details" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
-              }`}
-            >
-              Детали
-            </button>
-            <button
-              onClick={() => setActiveTab("files")}
-              className={`flex-1 py-3 text-[13px] font-medium transition-colors flex items-center justify-center gap-1.5 ${
-                activeTab === "files" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
-              }`}
-            >
-              Файлы
-              {hasFiles && (
-                <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">{photos.length}</span>
-              )}
-            </button>
-          </div>
-
-          {/* Reuse same content */}
-          {renderContent()}
-
-          {/* Footer */}
-          {renderFooter()}
-        </MobileFullScreen>
-
-        {/* Confirmation overlay */}
-        {renderConfirmation()}
-      </>
-    );
-  }
+  // Shared content & footer for both mobile and desktop
+  const tabContent = (
+    <>
+      {activeTab === "details" && (
 
   // Desktop: original modal
   return (
