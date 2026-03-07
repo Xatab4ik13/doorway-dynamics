@@ -665,26 +665,34 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     type="file"
                     multiple
                     className="hidden"
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                    accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt"
                     onChange={async (e) => {
                       const selectedFiles = Array.from(e.target.files || []);
                       if (!selectedFiles.length) return;
                       setUploadingFile(true);
+                      toast.info(`Загрузка ${selectedFiles.length} файл(ов)...`);
                       try {
-                        const uploaded = await Promise.all(
-                          selectedFiles.map(async (f) => {
+                        let successCount = 0;
+                        const uploaded: typeof photos = [];
+                        for (const f of selectedFiles) {
+                          try {
                             const result = await uploadFile(f, "requests");
-                            return {
+                            uploaded.push({
                               url: result.url,
                               type: f.type.startsWith("image/") ? "image" : "document",
                               stage: "general",
                               uploaded_at: new Date().toISOString(),
-                            };
-                          })
-                        );
-                        const updatedPhotos = [...photos, ...uploaded];
-                        await onSave(request.id, { photos: updatedPhotos as any });
-                        toast.success(`Загружено файлов: ${uploaded.length}`);
+                            });
+                            successCount++;
+                          } catch {
+                            toast.error(`Не удалось загрузить: ${f.name}`);
+                          }
+                        }
+                        if (uploaded.length > 0) {
+                          const updatedPhotos = [...photos, ...uploaded];
+                          await onSave(request.id, { photos: updatedPhotos as any });
+                          toast.success(`Загружено: ${successCount} из ${selectedFiles.length}`);
+                        }
                       } catch (err: any) {
                         toast.error(err.message || "Ошибка загрузки");
                       } finally {
