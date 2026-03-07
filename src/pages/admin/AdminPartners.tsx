@@ -47,6 +47,7 @@ const statusColors: Record<string, string> = {
 };
 
 const AdminPartners = () => {
+  const isMobile = useIsMobile();
   const { user } = useAuth();
   const [forms, setForms] = useState<PartnerForm[]>([]);
   const [loading, setLoading] = useState(true);
