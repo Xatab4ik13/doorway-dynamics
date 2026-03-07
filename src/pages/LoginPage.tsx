@@ -33,6 +33,8 @@ const LoginPage = () => {
   const [autoLogging, setAutoLogging] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
+  const { canInstall, isInstalled, install } = usePwaInstall();
+  const isCrm = isCrmDomain();
 
   useEffect(() => {
     document.title = "Вход в кабинет — PrimeDoor Service";
