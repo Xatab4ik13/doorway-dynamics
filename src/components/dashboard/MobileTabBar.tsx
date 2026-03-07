@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { triggerHaptic } from "@/lib/haptics";
 import {
   LayoutDashboard,
   ClipboardList,
