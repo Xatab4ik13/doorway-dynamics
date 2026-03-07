@@ -20,6 +20,7 @@ interface RequestDetailModalProps {
 }
 
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
+  const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
   const { getByRole, getUserName, getUser } = useUsers(!canEdit);
