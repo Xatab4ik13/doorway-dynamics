@@ -818,7 +818,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         `✅ <b>Работа завершена</b>\n\nЗаявка: ${updated.number}\nТип: ${typeLabels[updated.type] || updated.type}\nСтатус: ${statusLabels[updates.status]}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
       await sendPushToRoles(['admin', 'manager'], {
-        title: '✅ Работа завершена',
+        title: 'Работа завершена',
         body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
         url: '/admin/requests',
       });
