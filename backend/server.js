@@ -5,6 +5,7 @@ const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
 const { S3Client, PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const webpush = require('web-push');
 const multer = require('multer');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
@@ -564,9 +565,14 @@ app.post('/api/requests/public', async (req, res) => {
 
     const req_data = rows[0];
     // Уведомление менеджерам и админам о новой заявке
-    await notifyManagersAndAdmins(pool,
-      `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: Сайт\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
-    );
+    const tgMsg = `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: Сайт\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`;
+    await notifyManagersAndAdmins(pool, tgMsg);
+    // Push
+    await sendPushToRoles(['admin', 'manager'], {
+      title: `📋 Новая заявка ${req_data.number}`,
+      body: `${req_data.client_name} — ${req_data.client_address}`,
+      url: '/admin/requests',
+    });
 
     res.json(req_data);
   } catch (err) {
@@ -599,6 +605,12 @@ app.post('/api/requests', auth, async (req, res) => {
     await notifyManagersAndAdmins(pool,
       `📋 <b>Новая заявка ${req_data.number}</b>\n\nКлиент: ${req_data.client_name}\nТелефон: ${req_data.client_phone}\nАдрес: ${req_data.client_address}\nТип: ${typeLabels[req_data.type] || req_data.type}\nИсточник: ${sourceName}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
     );
+    // Push
+    await sendPushToRoles(['admin', 'manager'], {
+      title: `📋 Новая заявка ${req_data.number}`,
+      body: `${req_data.client_name} — ${req_data.client_address}`,
+      url: '/admin/requests',
+    });
 
     res.json(req_data);
   } catch (err) {
@@ -733,6 +745,12 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           `🔔 <b>Новая заявка на замер</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\n\nПерейдите в личный кабинет, чтобы согласовать дату замера с клиентом.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
         );
       }
+      // Push to measurer
+      await sendPushToUser(updates.measurer_id, {
+        title: '🔔 Новая заявка на замер',
+        body: `${updated.client_name} — ${updated.client_address}`,
+        url: '/measurer',
+      });
       // Если был предыдущий замерщик — уведомить о снятии
       if (request.measurer_id && request.measurer_id !== updates.measurer_id) {
         const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.measurer_id]);
@@ -741,6 +759,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
             `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
           );
         }
+        await sendPushToUser(request.measurer_id, {
+          title: 'ℹ️ Вы сняты с заявки',
+          body: `Заявка ${updated.number} передана другому исполнителю.`,
+          url: '/measurer',
+        });
       }
     }
 
@@ -753,6 +776,12 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\nПодробнее — в личном кабинете.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
         );
       }
+      // Push to installer
+      await sendPushToUser(updates.installer_id, {
+        title: '🔔 Новый монтаж',
+        body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
+        url: '/installer',
+      });
       // Если был предыдущий монтажник — уведомить о снятии
       if (request.installer_id && request.installer_id !== updates.installer_id) {
         const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.installer_id]);
@@ -761,6 +790,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
             `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
           );
         }
+        await sendPushToUser(request.installer_id, {
+          title: 'ℹ️ Вы сняты с заявки',
+          body: `Заявка ${updated.number} передана другому исполнителю.`,
+          url: '/installer',
+        });
       }
     }
 
@@ -771,6 +805,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await notifyManagersAndAdmins(pool,
         `📅 <b>Дата ${action}</b>\n\nЗаявка: ${updated.number}\nНовая дата: ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}${comment}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
+      await sendPushToRoles(['admin', 'manager'], {
+        title: `📅 Дата ${action}`,
+        body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
+        url: '/admin/requests',
+      });
     }
 
     // 4. Работа завершена (measurement_done или closed) → менеджерам
@@ -778,6 +817,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await notifyManagersAndAdmins(pool,
         `✅ <b>Работа завершена</b>\n\nЗаявка: ${updated.number}\nТип: ${typeLabels[updated.type] || updated.type}\nСтатус: ${statusLabels[updates.status]}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
       );
+      await sendPushToRoles(['admin', 'manager'], {
+        title: '✅ Работа завершена',
+        body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
+        url: '/admin/requests',
+      });
     }
 
     // 5. Заявка отменена → уведомить исполнителей
@@ -790,6 +834,10 @@ app.put('/api/requests/:id', auth, async (req, res) => {
             `❌ <b>Заявка отменена</b>\n\nЗаявка ${updated.number} была отменена.`
           );
         }
+        await sendPushToUser(execId, {
+          title: '❌ Заявка отменена',
+          body: `Заявка ${updated.number} была отменена.`,
+        });
       }
     }
 
@@ -798,6 +846,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await notifyPartner(pool, updated.partner_id,
         `📌 <b>Статус заявки ${updated.number} изменён</b>\n\nНовый статус: ${statusLabels[updates.status] || updates.status}\n\n👉 <a href="${SITE_URL}/login">Подробнее в кабинете</a>`
       );
+      await sendPushToUser(updated.partner_id, {
+        title: `📌 Статус заявки ${updated.number}`,
+        body: `Новый статус: ${statusLabels[updates.status] || updates.status}`,
+        url: '/partner',
+      });
     }
 
     res.json(updated);
@@ -1099,6 +1152,122 @@ app.delete('/api/partner-forms/:id', auth, async (req, res) => {
     res.status(500).json({ error: 'Ошибка сервера' });
   }
 });
+
+// === Web Push Notifications ===
+
+// Configure VAPID
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:info@primedoor.ru',
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+
+// Auto-create push_subscriptions table
+(async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS push_subscriptions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+        endpoint TEXT UNIQUE NOT NULL,
+        keys_p256dh TEXT NOT NULL,
+        keys_auth TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log('push_subscriptions table ready');
+  } catch (err) {
+    console.error('Failed to create push_subscriptions table:', err.message);
+  }
+})();
+
+// Subscribe to push
+app.post('/api/push/subscribe', auth, async (req, res) => {
+  try {
+    const { subscription } = req.body;
+    if (!subscription?.endpoint || !subscription?.keys) {
+      return res.status(400).json({ error: 'Invalid subscription' });
+    }
+    await pool.query(
+      `INSERT INTO push_subscriptions (user_id, endpoint, keys_p256dh, keys_auth)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (endpoint) DO UPDATE SET user_id = $1, keys_p256dh = $3, keys_auth = $4`,
+      [req.user.id, subscription.endpoint, subscription.keys.p256dh, subscription.keys.auth]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Push subscribe error:', err);
+    res.status(500).json({ error: 'Ошибка сохранения подписки' });
+  }
+});
+
+// Unsubscribe from push
+app.post('/api/push/unsubscribe', auth, async (req, res) => {
+  try {
+    const { endpoint } = req.body;
+    await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [endpoint]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Push unsubscribe error:', err);
+    res.status(500).json({ error: 'Ошибка удаления подписки' });
+  }
+});
+
+// Helper: send push to users by role(s)
+async function sendPushToRoles(roles, payload) {
+  if (!process.env.VAPID_PUBLIC_KEY) return;
+  try {
+    const placeholders = roles.map((_, i) => `$${i + 1}`).join(', ');
+    const { rows } = await pool.query(
+      `SELECT ps.endpoint, ps.keys_p256dh, ps.keys_auth
+       FROM push_subscriptions ps
+       JOIN users u ON u.id = ps.user_id
+       WHERE u.role IN (${placeholders}) AND u.active = true`,
+      roles
+    );
+    for (const row of rows) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: row.endpoint, keys: { p256dh: row.keys_p256dh, auth: row.keys_auth } },
+          JSON.stringify(payload)
+        );
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [row.endpoint]);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('sendPushToRoles error:', err.message);
+  }
+}
+
+// Helper: send push to specific user
+async function sendPushToUser(userId, payload) {
+  if (!process.env.VAPID_PUBLIC_KEY) return;
+  try {
+    const { rows } = await pool.query(
+      'SELECT endpoint, keys_p256dh, keys_auth FROM push_subscriptions WHERE user_id = $1',
+      [userId]
+    );
+    for (const row of rows) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: row.endpoint, keys: { p256dh: row.keys_p256dh, auth: row.keys_auth } },
+          JSON.stringify(payload)
+        );
+      } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          await pool.query('DELETE FROM push_subscriptions WHERE endpoint = $1', [row.endpoint]);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('sendPushToUser error:', err.message);
+  }
+}
 
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
