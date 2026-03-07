@@ -747,7 +747,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       }
       // Push to measurer
       await sendPushToUser(updates.measurer_id, {
-        title: '🔔 Новая заявка на замер',
+        title: 'Новая заявка на замер',
         body: `${updated.client_name} — ${updated.client_address}`,
         url: '/measurer',
       });
