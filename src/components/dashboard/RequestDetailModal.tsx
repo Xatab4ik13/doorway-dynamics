@@ -292,57 +292,150 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "details" && (
             <div className="p-4 space-y-4">
-              {/* iOS grouped info cards */}
-              <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
-                <InfoRow icon={<Phone size={16} className="text-primary" />} label="Телефон">
-                  <a href={`tel:${request.client_phone?.replace(/\s/g, "")}`} className="text-sm font-medium text-primary">{request.client_phone}</a>
-                </InfoRow>
-                <InfoRow icon={<MapPin size={16} className="text-primary" />} label="Адрес">
-                  <a href={`https://yandex.ru/maps/?text=${encodeURIComponent((request.client_address || "") + (request.city ? ", " + request.city : ""))}`}
-                    target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary">
-                    {request.client_address}{request.city ? `, ${request.city}` : ""}
-                  </a>
-                </InfoRow>
-                {request.extra_name && (
-                  <InfoRow icon={<User size={16} className="text-primary" />} label="Доп. контакт">
-                    <p className="text-sm font-medium">{request.extra_name}</p>
-                    {request.extra_phone && <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary">{request.extra_phone}</a>}
-                  </InfoRow>
-                )}
-                <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
-                  <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
-                </InfoRow>
-                {showDateField && (
-                  <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
-                    {canChangeDate ? (
-                      <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
-                    ) : (
-                      <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+              {/* Editable client data — when pencil is active or partner */}
+              {((canEdit && isEditing) || canPartnerEdit) ? (
+                <div className="space-y-3">
+                  <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
+                    <div className="px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Клиент</p>
+                      <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} className={inputClass} />
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Телефон</p>
+                      <input type="tel" value={clientPhone} onChange={(e) => setClientPhone(formatPhone(e.target.value))} className={inputClass} />
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Город</p>
+                      <select value={city} onChange={(e) => setCity(e.target.value)} className={inputClass}>
+                        <option value="">Не указан</option>
+                        <option value="Москва">Москва</option>
+                        <option value="Санкт-Петербург">Санкт-Петербург</option>
+                      </select>
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Адрес</p>
+                      <input type="text" value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} className={inputClass} />
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Доп. контакт</p>
+                      <input type="text" value={extraName} onChange={(e) => setExtraName(e.target.value)} className={inputClass} placeholder="ФИО" />
+                    </div>
+                    <div className="px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Доп. телефон</p>
+                      <input type="tel" value={extraPhone} onChange={(e) => setExtraPhone(formatPhone(e.target.value))} className={inputClass} placeholder="+7 ..." />
+                    </div>
+                  </div>
+                  {canEdit && (
+                    <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
+                      <div className="px-4 py-3">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Партнёр</p>
+                        <SearchableUserSelect
+                          value={partnerId}
+                          onChange={(val) => { setPartnerId(val); setSource(val ? "partner" : "site"); }}
+                          users={partners}
+                          placeholder="Без партнёра (заявка с сайта)"
+                        />
+                      </div>
+                      <div className="px-4 py-3">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Тип заявки</p>
+                        <select value={requestType} onChange={(e) => setRequestType(e.target.value)} className={inputClass}>
+                          <option value="measurement">Замер</option>
+                          <option value="installation">Монтаж</option>
+                          <option value="reclamation">Рекламация</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Описание работ</p>
+                    <textarea value={workDescription} onChange={(e) => setWorkDescription(e.target.value)} rows={2} className={inputClass + " resize-none"} placeholder="Описание работ..." />
+                  </div>
+                  {/* Agreed date in edit mode */}
+                  {showDateField && (
+                    <div className="rounded-2xl bg-accent/30 px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                        {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
+                      </p>
+                      {canChangeDate ? (
+                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                      ) : (
+                        <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+                      )}
+                    </div>
+                  )}
+                  {/* Door quantities in edit mode */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">МК</p>
+                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className="w-full text-center text-lg font-bold bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Входные</p>
+                      <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)} className="w-full text-center text-lg font-bold bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Перегор.</p>
+                      <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className="w-full text-center text-lg font-bold bg-transparent outline-none" placeholder="0" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Read-only iOS grouped info cards */}
+                  <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
+                    <InfoRow icon={<Phone size={16} className="text-primary" />} label="Телефон">
+                      <a href={`tel:${request.client_phone?.replace(/\s/g, "")}`} className="text-sm font-medium text-primary">{request.client_phone}</a>
+                    </InfoRow>
+                    <InfoRow icon={<MapPin size={16} className="text-primary" />} label="Адрес">
+                      <a href={`https://yandex.ru/maps/?text=${encodeURIComponent((request.client_address || "") + (request.city ? ", " + request.city : ""))}`}
+                        target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary">
+                        {request.client_address}{request.city ? `, ${request.city}` : ""}
+                      </a>
+                    </InfoRow>
+                    {request.extra_name && (
+                      <InfoRow icon={<User size={16} className="text-primary" />} label="Доп. контакт">
+                        <p className="text-sm font-medium">{request.extra_name}</p>
+                        {request.extra_phone && <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary">{request.extra_phone}</a>}
+                      </InfoRow>
                     )}
-                  </InfoRow>
-                )}
-              </div>
+                    <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
+                      <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                    </InfoRow>
+                    {showDateField && (
+                      <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
+                        {canChangeDate ? (
+                          <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                        ) : (
+                          <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+                        )}
+                      </InfoRow>
+                    )}
+                  </div>
 
-              {/* Work description */}
-              {request.work_description && (
-                <div className="p-3.5 rounded-2xl bg-accent/30">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Описание работ</p>
-                  <p className="text-sm">{request.work_description}</p>
-                </div>
+                  {/* Work description */}
+                  {request.work_description && (
+                    <div className="p-3.5 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Описание работ</p>
+                      <p className="text-sm">{request.work_description}</p>
+                    </div>
+                  )}
+                  {request.status_comment && (
+                    <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
+                      <p className="text-[10px] text-amber-700 uppercase tracking-wider mb-1">Комментарий</p>
+                      <p className="text-sm text-amber-900">{request.status_comment}</p>
+                    </div>
+                  )}
+                  {(request.interior_doors || request.entrance_doors || request.partitions) && (
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold">{request.interior_doors || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold">{request.entrance_doors || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold">{request.partitions || 0}</p></div>
+                    </div>
+                  )}
+                </>
               )}
-              {request.status_comment && (
-                <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
-                  <p className="text-[10px] text-amber-700 uppercase tracking-wider mb-1">Комментарий</p>
-                  <p className="text-sm text-amber-900">{request.status_comment}</p>
-                </div>
-              )}
-              {(request.interior_doors || request.entrance_doors || request.partitions) && (
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold">{request.interior_doors || 0}</p></div>
-                  <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold">{request.entrance_doors || 0}</p></div>
-                  <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold">{request.partitions || 0}</p></div>
-                </div>
-              )}
+
+              {/* Operational fields — always visible for admin/manager */}
               {canEdit && (
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Статус</p>
@@ -363,6 +456,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <><div><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Монтажник 1</p><SearchableUserSelect value={installerId} onChange={setInstallerId} users={installers} placeholder="Не назначен" /></div>
                     <div><p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Монтажник 2</p><SearchableUserSelect value={installer2Id} onChange={setInstaller2Id} users={installers} placeholder="Не назначен" /></div></>
                   )}
+                </div>
+              )}
+              {canEdit && (
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Сумма</p>
+                  <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} placeholder="0" />
                 </div>
               )}
               <div>
