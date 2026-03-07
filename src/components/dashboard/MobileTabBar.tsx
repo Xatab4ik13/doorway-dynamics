@@ -146,7 +146,7 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                   <Link
                     key={item.href}
                     to={item.href}
-                    onClick={() => setMoreOpen(false)}
+                    onClick={() => { triggerHaptic("light"); setMoreOpen(false); }}
                     className={cn(
                       "flex items-center gap-3.5 px-5 py-3.5 text-[15px] font-medium transition-colors active:bg-accent/60",
                       i < more.length - 1 && "border-b border-border/30",
