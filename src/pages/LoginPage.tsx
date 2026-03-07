@@ -3,11 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
-import { Shield, Lock, Loader2, Phone, ArrowLeft } from "lucide-react";
+import { Shield, Lock, Loader2, Phone, ArrowLeft, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import api from "@/lib/api";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { formatPhone } from "@/lib/formatPhone";
+import { usePwaInstall } from "@/hooks/usePwaInstall";
+import { isCrmDomain } from "@/hooks/useCrmDomain";
 
 type LoginMode = "pin" | "admin";
 type PinStep = "phone" | "code";
