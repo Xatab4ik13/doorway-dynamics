@@ -118,7 +118,7 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
       {/* More menu overlay */}
       <AnimatePresence>
         {moreOpen && (
-          <div className="fixed inset-0 z-40 md:hidden">
+          <div className="fixed inset-0 z-40 md:hidden dashboard-theme">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

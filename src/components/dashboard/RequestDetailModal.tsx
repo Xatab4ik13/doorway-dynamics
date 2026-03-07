@@ -195,7 +195,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   // Extracted render helpers for reuse between mobile and desktop
   const renderConfirmation = () => showConfirm ? (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[80]">
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[90] dashboard-theme">
       <div className="bg-card rounded-2xl p-6 max-w-sm mx-4 shadow-2xl space-y-4">
         <div className="flex items-center gap-3">
           <AlertTriangle size={24} className="text-amber-500" />
