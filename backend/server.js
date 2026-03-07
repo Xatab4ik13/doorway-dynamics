@@ -846,6 +846,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await notifyPartner(pool, updated.partner_id,
         `📌 <b>Статус заявки ${updated.number} изменён</b>\n\nНовый статус: ${statusLabels[updates.status] || updates.status}\n\n👉 <a href="${SITE_URL}/login">Подробнее в кабинете</a>`
       );
+      await sendPushToUser(updated.partner_id, {
+        title: `📌 Статус заявки ${updated.number}`,
+        body: `Новый статус: ${statusLabels[updates.status] || updates.status}`,
+        url: '/partner',
+      });
     }
 
     res.json(updated);
