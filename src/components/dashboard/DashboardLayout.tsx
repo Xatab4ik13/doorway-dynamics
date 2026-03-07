@@ -62,9 +62,10 @@ interface DashboardLayoutProps {
   role: UserRole;
   userName?: string;
   children: React.ReactNode;
+  onRefresh?: () => Promise<void>;
 }
 
-const DashboardLayout = ({ role, userName = "Пользователь", children }: DashboardLayoutProps) => {
+const DashboardLayout = ({ role, userName = "Пользователь", children, onRefresh }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,6 +73,15 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
   const isMobile = useIsMobile();
   const items = navByRole[role];
   const displayName = user?.name || userName;
+
+  const defaultRefresh = useCallback(async () => {
+    // Trigger a page reload as fallback
+    window.location.reload();
+  }, []);
+
+  const { containerRef, pullDistance, refreshing } = usePullToRefresh({
+    onRefresh: onRefresh || defaultRefresh,
+  });
 
   const handleLogout = () => {
     logout();
@@ -90,8 +100,15 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
     return (
       <div className="dashboard-theme min-h-screen bg-background text-foreground flex flex-col">
         <MobileHeader role={role} />
-        <main className="flex-1 px-4 pt-3 overflow-auto" style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}>
-          {children}
+        <main
+          ref={containerRef}
+          className="flex-1 px-4 pt-0 overflow-auto overscroll-contain"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
+        >
+          <PullToRefreshIndicator pullDistance={pullDistance} refreshing={refreshing} />
+          <div className="pt-3">
+            {children}
+          </div>
         </main>
         <MobileTabBar role={role} />
       </div>
