@@ -760,7 +760,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           );
         }
         await sendPushToUser(request.measurer_id, {
-          title: 'ℹ️ Вы сняты с заявки',
+          title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
           url: '/measurer',
         });
