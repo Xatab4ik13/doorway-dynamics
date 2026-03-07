@@ -33,6 +33,7 @@ const roleColorMap: Record<UserRole, string> = {
 };
 
 const AdminAccounts = () => {
+  const isMobile = useIsMobile();
   const { user: authUser } = useAuth();
   const [users, setUsers] = useState<UserAccount[]>([]);
   const [loading, setLoading] = useState(true);
