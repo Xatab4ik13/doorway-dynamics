@@ -9,8 +9,11 @@ import {
 import type { UserRole } from "@/data/mockDashboard";
 import { roleLabels } from "@/data/mockDashboard";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { motion, AnimatePresence } from "framer-motion";
 import logoImg from "@/assets/logo.png";
+import MobileTabBar from "./MobileTabBar";
+import MobileHeader from "./MobileHeader";
 
 interface NavItem {
   label: string;
@@ -61,10 +64,10 @@ interface DashboardLayoutProps {
 
 const DashboardLayout = ({ role, userName = "Пользователь", children }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
+  const isMobile = useIsMobile();
   const items = navByRole[role];
   const displayName = user?.name || userName;
 
@@ -80,7 +83,21 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
     return location.pathname.startsWith(href);
   };
 
-  const SidebarContent = () => (
+  // ─── Mobile layout ───
+  if (isMobile) {
+    return (
+      <div className="dashboard-theme min-h-screen bg-background text-foreground flex flex-col">
+        <MobileHeader role={role} />
+        <main className="flex-1 p-3 pb-20 overflow-auto">
+          {children}
+        </main>
+        <MobileTabBar role={role} />
+      </div>
+    );
+  }
+
+  // ─── Desktop layout (unchanged) ───
+  const DesktopSidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="px-5 py-6 border-b border-border/50 flex flex-col items-center">
@@ -98,7 +115,6 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
             <Link
               key={item.href}
               to={item.href}
-              onClick={() => setMobileOpen(false)}
               className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 active
                   ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
@@ -140,53 +156,19 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
     <div className="dashboard-theme min-h-screen bg-background text-foreground flex">
       {/* Desktop sidebar */}
       <aside
-        className={`hidden md:flex flex-col border-r border-border/50 bg-card transition-all duration-300 ${
+        className={`flex flex-col border-r border-border/50 bg-card transition-all duration-300 ${
           sidebarOpen ? "w-60" : "w-16"
         }`}
       >
-        <SidebarContent />
+        <DesktopSidebarContent />
       </aside>
-
-      {/* Mobile sidebar overlay */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <div className="fixed inset-0 z-50 md:hidden">
-            <div
-              className="absolute inset-0 bg-black/50"
-              onClick={() => setMobileOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: -280 }}
-              animate={{ x: 0 }}
-              exit={{ x: -280 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute left-0 top-0 bottom-0 w-64 bg-card border-r border-border shadow-2xl flex flex-col"
-            >
-              <div className="flex justify-end p-3">
-                <button onClick={() => setMobileOpen(false)} className="p-2 rounded-xl hover:bg-accent">
-                  <X size={20} className="text-muted-foreground" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-auto">
-                <SidebarContent />
-              </div>
-            </motion.aside>
-          </div>
-        )}
-      </AnimatePresence>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
         <header className="h-14 border-b border-border/50 bg-card/80 backdrop-blur-sm flex items-center px-4 gap-3 sticky top-0 z-30">
           <button
-            className="md:hidden text-muted-foreground hover:text-foreground transition-colors p-1"
-            onClick={() => setMobileOpen(true)}
-          >
-            <Menu size={22} />
-          </button>
-          <button
-            className="hidden md:flex text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-accent"
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-accent"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             <ChevronLeft size={20} className={`transition-transform duration-300 ${!sidebarOpen ? "rotate-180" : ""}`} />
@@ -198,18 +180,12 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-primary rounded-full animate-pulse" />
             </div>
             <div className="h-6 w-px bg-border" />
-            <span className="text-xs text-muted-foreground font-medium hidden sm:inline">{displayName}</span>
-            <button
-              onClick={handleLogout}
-              className="md:hidden flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors px-2 py-1.5 rounded-lg hover:bg-destructive/5"
-            >
-              <LogOut size={16} />
-            </button>
+            <span className="text-xs text-muted-foreground font-medium">{displayName}</span>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 md:p-6 overflow-auto">
+        <main className="flex-1 p-6 overflow-auto">
           {children}
         </main>
       </div>
