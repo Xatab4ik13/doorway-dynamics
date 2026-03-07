@@ -475,6 +475,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
             />
           )}
         </>
+      )}
     </>
   );
 };
