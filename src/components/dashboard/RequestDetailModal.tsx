@@ -172,16 +172,73 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const inputClass = "w-full px-3 py-2 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30";
 
+  const editButton = canEdit ? (
+    <button
+      onClick={() => setIsEditing(!isEditing)}
+      className={`p-2 rounded-xl transition-colors ${isEditing ? "bg-primary/10 text-primary" : "hover:bg-accent text-muted-foreground"}`}
+      title={isEditing ? "Отключить редактирование" : "Редактировать"}
+    >
+      <Pencil size={18} />
+    </button>
+  ) : null;
+
+  // Mobile: use fullscreen sheet
+  if (isMobile) {
+    return (
+      <>
+        <MobileFullScreen
+          open={true}
+          onClose={onClose}
+          title={request.number}
+          headerRight={editButton}
+        >
+          {/* Tabs */}
+          <div className="flex border-b border-border/30 bg-card sticky top-0 z-10">
+            <button
+              onClick={() => setActiveTab("details")}
+              className={`flex-1 py-3 text-[13px] font-medium transition-colors ${
+                activeTab === "details" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+              }`}
+            >
+              Детали
+            </button>
+            <button
+              onClick={() => setActiveTab("files")}
+              className={`flex-1 py-3 text-[13px] font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                activeTab === "files" ? "text-primary border-b-2 border-primary" : "text-muted-foreground"
+              }`}
+            >
+              Файлы
+              {hasFiles && (
+                <span className="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded-full font-bold">{photos.length}</span>
+              )}
+            </button>
+          </div>
+
+          {/* Reuse same content */}
+          {renderContent()}
+
+          {/* Footer */}
+          {renderFooter()}
+        </MobileFullScreen>
+
+        {/* Confirmation overlay */}
+        {renderConfirmation()}
+      </>
+    );
+  }
+
+  // Desktop: original modal
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[70] flex items-end md:items-center justify-center md:p-4" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
         <div className="absolute inset-0 bg-black/50" onClick={onClose} />
         <motion.div
           initial={{ opacity: 0, y: 40, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.97 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className="relative bg-card shadow-2xl w-full max-w-2xl overflow-auto rounded-t-2xl md:rounded-2xl h-[95vh] md:h-auto md:max-h-[90vh]"
+          className="relative bg-card shadow-2xl w-full max-w-2xl overflow-auto rounded-2xl max-h-[90vh]"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-5 border-b border-border sticky top-0 bg-card z-10 rounded-t-2xl">
