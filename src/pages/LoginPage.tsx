@@ -299,11 +299,32 @@ const LoginPage = () => {
           </form>
         )}
 
-        <p className="text-center text-xs text-muted-foreground mt-10">
-          <Link to="/" className="hover:text-foreground transition-colors">
-            ← На главную
-          </Link>
-        </p>
+        {/* PWA Install button */}
+        {canInstall && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            onClick={install}
+            className="w-full mt-8 py-3.5 rounded-xl text-sm font-medium bg-foreground text-background flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+          >
+            <Download size={16} /> Установить приложение
+          </motion.button>
+        )}
+
+        {isInstalled && (
+          <p className="text-center text-xs text-muted-foreground mt-6 flex items-center justify-center gap-1.5">
+            ✓ Приложение установлено
+          </p>
+        )}
+
+        {!isCrm && (
+          <p className="text-center text-xs text-muted-foreground mt-6">
+            <Link to="/" className="hover:text-foreground transition-colors">
+              ← На главную
+            </Link>
+          </p>
+        )}
       </motion.div>
     </main>
   );
