@@ -778,7 +778,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       }
       // Push to installer
       await sendPushToUser(updates.installer_id, {
-        title: '🔔 Новый монтаж',
+        title: 'Новый монтаж',
         body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
         url: '/installer',
       });
