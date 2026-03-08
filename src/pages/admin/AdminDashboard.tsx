@@ -103,7 +103,7 @@ const AdminDashboard = () => {
     { label: "Новые", value: stats.newCount, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50", onClick: () => navigate("/admin/requests?quick=new") },
     { label: "В ожидании", value: stats.pendingCount, icon: <Pause size={20} />, color: "text-yellow-600 bg-yellow-50", onClick: () => navigate("/admin/requests?quick=pending") },
     { label: "В работе", value: stats.inProgress, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50", onClick: () => navigate("/admin/requests?quick=in_progress") },
-    { label: "Выполнено", value: stats.completed, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50" },
+    { label: "Выполнено", value: stats.completed, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50", onClick: () => navigate("/admin/requests?quick=closed") },
     { label: "Рекламации", value: stats.reclamations, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50", onClick: () => navigate("/admin/requests?quick=reclamation") },
   ];
 

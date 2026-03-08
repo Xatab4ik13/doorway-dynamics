@@ -90,6 +90,8 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         if (filters.dateTo) filtered = filtered.filter(r => getDateValue(r) <= filters.dateTo);
 
         if (quickFilter === "new") filtered = filtered.filter(r => r.status === "new");
+        else if (quickFilter === "pending") filtered = filtered.filter(r => r.status === "pending");
+        else if (quickFilter === "closed") filtered = filtered.filter(r => r.status === "closed");
         else if (quickFilter === "in_progress") filtered = filtered.filter(r => !["new", "closed", "cancelled"].includes(r.status));
         else if (quickFilter === "reclamation") filtered = filtered.filter(r => r.type === "reclamation");
 
