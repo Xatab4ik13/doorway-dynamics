@@ -416,7 +416,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   {request.work_description && (
                     <div className="p-3.5 rounded-2xl bg-accent/30">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Описание работ</p>
-                      <p className="text-sm">{request.work_description}</p>
+                      <p className="text-sm text-foreground">{request.work_description}</p>
                     </div>
                   )}
                   {request.status_comment && (
