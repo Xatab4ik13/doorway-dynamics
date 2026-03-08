@@ -321,7 +321,7 @@ const MeasurerDashboard = () => {
                     <label className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
                       {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                       {uploading ? "Загрузка..." : "Загрузить файл"}
-                      <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*,.pdf" />
+                      <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,video/*,.pdf" />
                     </label>
                   </div>
 

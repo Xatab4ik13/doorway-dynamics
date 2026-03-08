@@ -418,7 +418,7 @@ const InstallerDashboard = () => {
                     )}
                     <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
                       {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
-                      <input type="file" className="hidden" onChange={handleUpload} accept="image/*,.pdf" />
+                      <input type="file" multiple className="hidden" onChange={handleUpload} accept="image/*,video/*,.pdf" />
                     </label>
                   </div>
 
