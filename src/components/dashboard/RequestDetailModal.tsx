@@ -399,7 +399,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       </InfoRow>
                     )}
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
-                      <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                      <p className="text-sm font-medium text-foreground">{request.created_at?.split("T")[0]}</p>
                     </InfoRow>
                     {showDateField && (
                       <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
