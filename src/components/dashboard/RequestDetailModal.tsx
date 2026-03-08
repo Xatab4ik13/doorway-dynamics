@@ -394,7 +394,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </InfoRow>
                     {request.extra_name && (
                       <InfoRow icon={<User size={16} className="text-primary" />} label="Доп. контакт">
-                        <p className="text-sm font-medium">{request.extra_name}</p>
+                        <p className="text-sm font-medium text-foreground">{request.extra_name}</p>
                         {request.extra_phone && <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary">{request.extra_phone}</a>}
                       </InfoRow>
                     )}
