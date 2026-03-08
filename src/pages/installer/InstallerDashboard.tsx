@@ -42,16 +42,26 @@ const InstallerDashboard = () => {
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
+    let success = 0;
+    let failed = 0;
     try {
-      const { url } = await uploadFile(file, "installations");
-      setUploadedFiles(prev => [...prev, url]);
-    } catch (err: any) {
-      toast.error(err.message || "Ошибка загрузки");
+      for (const file of files) {
+        try {
+          const { url } = await uploadFile(file, "installations");
+          setUploadedFiles(prev => [...prev, url]);
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+      if (success > 0) toast.success(`Загружено: ${success}`);
+      if (failed > 0) toast.error(`Не удалось: ${failed}`);
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
