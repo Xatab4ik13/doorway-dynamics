@@ -367,7 +367,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <div className="grid grid-cols-3 gap-2">
                     <div className="text-center p-3 rounded-2xl bg-accent/30">
                       <p className="text-[10px] text-muted-foreground mb-1">МК</p>
-                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className="w-full text-center text-lg font-bold bg-transparent outline-none" placeholder="0" />
+                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
                     <div className="text-center p-3 rounded-2xl bg-accent/30">
                       <p className="text-[10px] text-muted-foreground mb-1">Входные</p>
