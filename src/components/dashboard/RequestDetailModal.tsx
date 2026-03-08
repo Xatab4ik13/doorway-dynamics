@@ -367,15 +367,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <div className="grid grid-cols-3 gap-2">
                     <div className="text-center p-3 rounded-2xl bg-accent/30">
                       <p className="text-[10px] text-muted-foreground mb-1">МК</p>
-                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className="w-full text-center text-lg font-bold bg-transparent outline-none" placeholder="0" />
+                      <input type="number" min="0" value={interiorDoors} onChange={(e) => setInteriorDoors(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
                     <div className="text-center p-3 rounded-2xl bg-accent/30">
                       <p className="text-[10px] text-muted-foreground mb-1">Входные</p>
-                      <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)} className="w-full text-center text-lg font-bold bg-transparent outline-none" placeholder="0" />
+                      <input type="number" min="0" value={entranceDoors} onChange={(e) => setEntranceDoors(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
                     <div className="text-center p-3 rounded-2xl bg-accent/30">
                       <p className="text-[10px] text-muted-foreground mb-1">Перегор.</p>
-                      <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className="w-full text-center text-lg font-bold bg-transparent outline-none" placeholder="0" />
+                      <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
                   </div>
                 </div>
@@ -394,12 +394,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </InfoRow>
                     {request.extra_name && (
                       <InfoRow icon={<User size={16} className="text-primary" />} label="Доп. контакт">
-                        <p className="text-sm font-medium">{request.extra_name}</p>
+                        <p className="text-sm font-medium text-foreground">{request.extra_name}</p>
                         {request.extra_phone && <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary">{request.extra_phone}</a>}
                       </InfoRow>
                     )}
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
-                      <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                      <p className="text-sm font-medium text-foreground">{request.created_at?.split("T")[0]}</p>
                     </InfoRow>
                     {showDateField && (
                       <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
@@ -416,7 +416,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   {request.work_description && (
                     <div className="p-3.5 rounded-2xl bg-accent/30">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Описание работ</p>
-                      <p className="text-sm">{request.work_description}</p>
+                      <p className="text-sm text-foreground">{request.work_description}</p>
                     </div>
                   )}
                   {request.status_comment && (
@@ -427,9 +427,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   )}
                   {(request.interior_doors || request.entrance_doors || request.partitions) && (
                     <div className="grid grid-cols-3 gap-2">
-                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold">{request.interior_doors || 0}</p></div>
-                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold">{request.entrance_doors || 0}</p></div>
-                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold">{request.partitions || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold text-foreground">{request.interior_doors || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold text-foreground">{request.entrance_doors || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold text-foreground">{request.partitions || 0}</p></div>
                     </div>
                   )}
                 </>

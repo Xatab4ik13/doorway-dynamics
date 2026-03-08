@@ -79,12 +79,12 @@ const MobileFullScreen = ({ open, onClose, title, children, headerRight }: Mobil
 
           {isMobile ? (
             /* Mobile: fullscreen slide-up */
-            <motion.div
+          <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="absolute inset-0 bg-card flex flex-col"
+              className="absolute inset-0 bg-card text-card-foreground flex flex-col"
               style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}

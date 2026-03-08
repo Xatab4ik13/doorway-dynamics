@@ -35,16 +35,26 @@ const MeasurerDashboard = () => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
+    let success = 0;
+    let failed = 0;
     try {
-      const { url } = await uploadFile(file, "measurements");
-      setUploadedFiles(prev => [...prev, url]);
-    } catch (err: any) {
-      toast.error(err.message || "Ошибка загрузки файла");
+      for (const file of files) {
+        try {
+          const { url } = await uploadFile(file, "measurements");
+          setUploadedFiles(prev => [...prev, url]);
+          success++;
+        } catch {
+          failed++;
+        }
+      }
+      if (success > 0) toast.success(`Загружено: ${success}`);
+      if (failed > 0) toast.error(`Не удалось: ${failed}`);
     } finally {
       setUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -311,7 +321,7 @@ const MeasurerDashboard = () => {
                     <label className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
                       {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
                       {uploading ? "Загрузка..." : "Загрузить файл"}
-                      <input type="file" className="hidden" onChange={handleFileUpload} accept="image/*,.pdf" />
+                      <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,video/*,.pdf" />
                     </label>
                   </div>
 
