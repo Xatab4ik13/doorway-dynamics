@@ -84,7 +84,7 @@ const MobileFullScreen = ({ open, onClose, title, children, headerRight }: Mobil
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="absolute inset-0 bg-card text-card-foreground flex flex-col"
+              className="absolute inset-0 bg-card text-card-foreground flex flex-col dashboard-theme"
               style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
