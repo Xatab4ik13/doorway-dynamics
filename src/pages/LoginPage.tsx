@@ -33,7 +33,8 @@ const LoginPage = () => {
   const [autoLogging, setAutoLogging] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
-  const { canInstall, isInstalled, install } = usePwaInstall();
+  const { canInstall, isInstalled, install, showIosInstructions } = usePwaInstall();
+  const [showIosGuide, setShowIosGuide] = useState(false);
   const isCrm = isCrmDomain();
 
   useEffect(() => {
