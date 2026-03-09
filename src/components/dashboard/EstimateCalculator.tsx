@@ -9,6 +9,7 @@ import api from "@/lib/api";
 import type { UserRole } from "@/data/mockDashboard";
 import { motion } from "framer-motion";
 import AddressInput from "@/components/AddressInput";
+import { formatPhone } from "@/lib/formatPhone";
 
 interface EstimateItem {
   id: string;
@@ -36,7 +37,7 @@ const hasPercentVariants = (priceStr: string): boolean => priceStr.includes("/")
 
 const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [clientName, setClientName] = useState("");
-  const [clientPhone, setClientPhone] = useState("");
+  const [clientPhone, setClientPhone] = useState("+7 ");
   const [clientAddress, setClientAddress] = useState("");
   const [city, setCity] = useState<"moscow" | "spb">("moscow");
   const [items, setItems] = useState<EstimateItem[]>([]);
@@ -405,7 +406,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardHeader>
               <CardContent className="space-y-3">
                 <input type="text" value={clientName} onChange={(e) => setClientName(e.target.value)} className={inputClass} placeholder="ФИО или название объекта" />
-                <input type="tel" value={clientPhone} onChange={(e) => setClientPhone(e.target.value)} className={inputClass} placeholder="Телефон клиента" />
+                <input type="tel" value={clientPhone} onChange={(e) => setClientPhone(formatPhone(e.target.value))} className={inputClass} placeholder="+7 999 999 99 99" />
                 <AddressInput
                   value={clientAddress}
                   onChange={setClientAddress}

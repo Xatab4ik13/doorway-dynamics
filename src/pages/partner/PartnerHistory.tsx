@@ -17,11 +17,13 @@ const PartnerHistory = () => {
 
   const closed = requests.filter((r) => r.status === "closed" || r.status === "cancelled");
 
-  const filtered = closed.filter((r) =>
-    r.client_name.toLowerCase().includes(search.toLowerCase()) ||
-    r.number.toLowerCase().includes(search.toLowerCase()) ||
-    (r.client_address || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = closed.filter((r) => {
+    const q = search.toLowerCase().replace(/\s/g, "");
+    return r.client_name.toLowerCase().includes(search.toLowerCase()) ||
+      r.number.toLowerCase().includes(search.toLowerCase()) ||
+      (r.client_address || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.client_phone || "").replace(/\s/g, "").includes(q);
+  });
 
   return (
     <DashboardLayout role="partner" userName={user?.name || "Партнёр"}>

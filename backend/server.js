@@ -571,7 +571,7 @@ app.post('/api/requests/public', async (req, res) => {
     await sendPushToRoles(['admin', 'manager'], {
       title: `Новая заявка ${req_data.number}`,
       body: `${req_data.client_name} — ${req_data.client_address}`,
-      url: '/admin/requests',
+      url: `/admin/requests?search=${encodeURIComponent(req_data.number)}`,
     });
 
     res.json(req_data);
@@ -609,7 +609,7 @@ app.post('/api/requests', auth, async (req, res) => {
     await sendPushToRoles(['admin', 'manager'], {
       title: `Новая заявка ${req_data.number}`,
       body: `${req_data.client_name} — ${req_data.client_address}`,
-      url: '/admin/requests',
+      url: `/admin/requests?search=${encodeURIComponent(req_data.number)}`,
     });
 
     res.json(req_data);
@@ -749,7 +749,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToUser(updates.measurer_id, {
         title: 'Новая заявка на замер',
         body: `${updated.client_name} — ${updated.client_address}`,
-        url: '/measurer',
+        url: `/measurer?highlight=${updated.id}`,
       });
       // Если был предыдущий замерщик — уведомить о снятии
       if (request.measurer_id && request.measurer_id !== updates.measurer_id) {
@@ -762,7 +762,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         await sendPushToUser(request.measurer_id, {
           title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
-          url: '/measurer',
+          url: `/measurer`,
         });
       }
     }
@@ -780,7 +780,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToUser(updates.installer_id, {
         title: 'Новый монтаж',
         body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
-        url: '/installer',
+        url: `/installer?highlight=${updated.id}`,
       });
       // Если был предыдущий монтажник — уведомить о снятии
       if (request.installer_id && request.installer_id !== updates.installer_id) {
@@ -793,7 +793,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         await sendPushToUser(request.installer_id, {
           title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
-          url: '/installer',
+          url: `/installer`,
         });
       }
     }
@@ -808,7 +808,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToRoles(['admin', 'manager'], {
         title: `Дата ${action}`,
         body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
-        url: '/admin/requests',
+        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
       });
     }
 
@@ -820,7 +820,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToRoles(['admin', 'manager'], {
         title: 'Работа завершена',
         body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
-        url: '/admin/requests',
+        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
       });
     }
 
@@ -849,7 +849,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToUser(updated.partner_id, {
         title: `Статус заявки ${updated.number}`,
         body: `Новый статус: ${statusLabels[updates.status] || updates.status}`,
-        url: '/partner',
+        url: `/partner?search=${encodeURIComponent(updated.number)}`,
       });
     }
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus, type RequestType } from "@/data/mockDashboard";
@@ -10,16 +11,20 @@ import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 const PartnerDashboard = () => {
   const { user } = useAuth();
   const { requests, loading, updateRequest, createRequest } = useRequests();
-  const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const searchFromUrl = searchParams.get("search") || "";
+  const [search, setSearch] = useState(searchFromUrl);
   const [filterType, setFilterType] = useState<"all" | RequestType>("all");
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
 
   useEffect(() => { document.title = "Мои заявки — Партнёр"; }, []);
 
   const filtered = requests.filter((r) => {
+    const q = search.toLowerCase().replace(/\s/g, "");
     const matchSearch = r.client_name.toLowerCase().includes(search.toLowerCase()) ||
       r.number.toLowerCase().includes(search.toLowerCase()) ||
-      (r.client_address || "").toLowerCase().includes(search.toLowerCase());
+      (r.client_address || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.client_phone || "").replace(/\s/g, "").includes(q);
     const matchType = filterType === "all" || r.type === filterType;
     return matchSearch && matchType;
   });
@@ -29,8 +34,12 @@ const PartnerDashboard = () => {
 
   const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
     await updateRequest(id, updates);
-    // Update selected request in place
-    setSelectedRequest(prev => prev ? { ...prev, ...updates } : null);
+    const isFileOnly = Object.keys(updates).length === 1 && updates.photos !== undefined;
+    if (!isFileOnly) {
+      setSelectedRequest(prev => prev ? { ...prev, ...updates } : null);
+    } else {
+      setSelectedRequest(prev => prev ? { ...prev, ...updates } : null);
+    }
   };
 
   return (

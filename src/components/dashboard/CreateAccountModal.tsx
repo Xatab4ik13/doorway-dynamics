@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Phone, Lock, StickyNote, Mail } from "lucide-react";
+import { formatPhone } from "@/lib/formatPhone";
 import { type UserRole, roleLabels } from "@/data/mockDashboard";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
@@ -13,7 +14,7 @@ const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
 const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
   const [name, setName] = useState("");
   const [role, setRole] = useState<UserRole>("measurer");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState("+7 ");
   const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -47,7 +48,7 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
             <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
               <Phone size={14} /> Телефон <span className="text-destructive">*</span>
             </label>
-            <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="+7 999 999 99 99" />
+            <input type="tel" required value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} className={inputClass} placeholder="+7 999 999 99 99" />
           </div>
 
           <div>

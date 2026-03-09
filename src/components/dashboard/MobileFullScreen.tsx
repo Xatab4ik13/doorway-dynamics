@@ -84,7 +84,7 @@ const MobileFullScreen = ({ open, onClose, title, children, headerRight }: Mobil
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="absolute inset-0 bg-card text-card-foreground flex flex-col"
+              className="absolute inset-0 bg-card text-card-foreground flex flex-col dashboard-theme"
               style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
@@ -126,7 +126,7 @@ const MobileFullScreen = ({ open, onClose, title, children, headerRight }: Mobil
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 40, scale: 0.97 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[90vh] bg-card shadow-2xl rounded-2xl overflow-auto flex flex-col"
+              className="absolute inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl md:max-h-[90vh] bg-card shadow-2xl rounded-2xl overflow-auto flex flex-col dashboard-theme"
               onClick={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
             >

@@ -278,6 +278,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
     return (
       <>
         <MobileFullScreen open={true} onClose={onClose} title={request.number} headerRight={editButton}>
+          {/* Partner badge for measurer */}
+          {viewerRole === "measurer" && partnerUser && (
+            <div className="mx-4 mt-3 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+              <Briefcase size={14} className="text-emerald-600 shrink-0" />
+              <span className="text-xs font-medium text-emerald-700">{partnerUser.name}</span>
+            </div>
+          )}
           {/* Segmented tabs */}
           <div className="flex border-b border-border/30 bg-card sticky top-0 z-10">
             <button onClick={() => setActiveTab("details")}
@@ -487,7 +494,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: "general", uploaded_at: new Date().toISOString() }); }
                           catch { toast.error(`Не удалось: ${f.name}`); }
                         }
-                        if (uploaded.length > 0) { await onSave(request.id, { photos: [...photos, ...uploaded] as any }); toast.success(`Загружено: ${uploaded.length}`); }
+                        if (uploaded.length > 0) {
+                          const updatedPhotos = [...photos, ...uploaded];
+                          await onSave(request.id, { photos: updatedPhotos as any });
+                          request.photos = updatedPhotos;
+                          toast.success(`Загружено: ${uploaded.length}`);
+                        }
                       } finally { setUploadingFile(false); e.target.value = ""; }
                     }} />
                   <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}
@@ -1043,6 +1055,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         if (uploaded.length > 0) {
                           const updatedPhotos = [...photos, ...uploaded];
                           await onSave(request.id, { photos: updatedPhotos as any });
+                          // Re-read updated photos into local state to prevent modal from closing
+                          request.photos = updatedPhotos;
                           toast.success(`Загружено: ${successCount} из ${selectedFiles.length}`);
                         }
                       } catch (err: any) {
