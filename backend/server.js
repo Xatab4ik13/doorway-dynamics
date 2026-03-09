@@ -808,7 +808,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToRoles(['admin', 'manager'], {
         title: `Дата ${action}`,
         body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
-        url: '/admin/requests',
+        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
       });
     }
 
