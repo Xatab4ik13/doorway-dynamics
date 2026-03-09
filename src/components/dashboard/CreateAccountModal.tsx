@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Phone, Lock, StickyNote, Mail } from "lucide-react";
+import { formatPhone } from "@/lib/formatPhone";
 import { type UserRole, roleLabels } from "@/data/mockDashboard";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
