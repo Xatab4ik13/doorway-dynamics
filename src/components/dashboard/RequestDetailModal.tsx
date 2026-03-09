@@ -494,7 +494,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: "general", uploaded_at: new Date().toISOString() }); }
                           catch { toast.error(`Не удалось: ${f.name}`); }
                         }
-                        if (uploaded.length > 0) { await onSave(request.id, { photos: [...photos, ...uploaded] as any }); toast.success(`Загружено: ${uploaded.length}`); }
+                        if (uploaded.length > 0) {
+                          const updatedPhotos = [...photos, ...uploaded];
+                          await onSave(request.id, { photos: updatedPhotos as any });
+                          request.photos = updatedPhotos;
+                          toast.success(`Загружено: ${uploaded.length}`);
+                        }
                       } finally { setUploadingFile(false); e.target.value = ""; }
                     }} />
                   <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}

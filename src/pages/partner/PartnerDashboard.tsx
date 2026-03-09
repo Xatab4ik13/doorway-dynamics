@@ -17,9 +17,11 @@ const PartnerDashboard = () => {
   useEffect(() => { document.title = "Мои заявки — Партнёр"; }, []);
 
   const filtered = requests.filter((r) => {
+    const q = search.toLowerCase().replace(/\s/g, "");
     const matchSearch = r.client_name.toLowerCase().includes(search.toLowerCase()) ||
       r.number.toLowerCase().includes(search.toLowerCase()) ||
-      (r.client_address || "").toLowerCase().includes(search.toLowerCase());
+      (r.client_address || "").toLowerCase().includes(search.toLowerCase()) ||
+      (r.client_phone || "").replace(/\s/g, "").includes(q);
     const matchType = filterType === "all" || r.type === filterType;
     return matchSearch && matchType;
   });

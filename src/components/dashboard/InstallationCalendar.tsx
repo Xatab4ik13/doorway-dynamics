@@ -457,7 +457,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
               </DialogHeader>
 
               {selectedDayData && (
-                <div className="flex gap-4 max-h-[65vh] overflow-x-auto pr-1">
+                <div className="flex gap-4 max-h-[75vh] overflow-x-auto pr-1">
                   {selectedDayData.interiorInstalls.length > 0 && (
                     <Section title="Межкомнатные двери" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
                       installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />

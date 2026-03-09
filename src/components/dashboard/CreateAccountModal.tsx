@@ -48,7 +48,7 @@ const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
             <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
               <Phone size={14} /> Телефон <span className="text-destructive">*</span>
             </label>
-            <input type="tel" required value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} placeholder="+7 999 999 99 99" />
+            <input type="tel" required value={phone} onChange={(e) => setPhone(formatPhone(e.target.value))} className={inputClass} placeholder="+7 999 999 99 99" />
           </div>
 
           <div>
