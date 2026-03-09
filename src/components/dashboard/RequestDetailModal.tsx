@@ -1050,6 +1050,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         if (uploaded.length > 0) {
                           const updatedPhotos = [...photos, ...uploaded];
                           await onSave(request.id, { photos: updatedPhotos as any });
+                          // Re-read updated photos into local state to prevent modal from closing
+                          request.photos = updatedPhotos;
                           toast.success(`Загружено: ${successCount} из ${selectedFiles.length}`);
                         }
                       } catch (err: any) {
