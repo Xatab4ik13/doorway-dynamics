@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Share, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
