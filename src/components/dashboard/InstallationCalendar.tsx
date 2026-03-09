@@ -515,13 +515,13 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
   basePath?: string;
   onOpenDetail?: (r: ApiRequest) => void;
 }) => (
-  <div className="flex-1 min-w-[300px]">
-    <div className={`flex items-center gap-2 mb-2 font-semibold text-sm ${color} sticky top-0 bg-card py-1`}>
+  <div className="flex-1 min-w-[300px] flex flex-col h-full">
+    <div className={`flex items-center gap-2 mb-2 font-semibold text-sm ${color} shrink-0`}>
       {icon}
       {title}
       <span className="text-xs font-normal text-muted-foreground">({requests.length})</span>
     </div>
-    <div className="space-y-2 overflow-y-auto max-h-[55vh] pr-1">
+    <div className="space-y-2 overflow-y-auto flex-1 pr-1">
       {requests.map((r) => (
         <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} basePath={basePath} onOpenDetail={onOpenDetail} />
       ))}
