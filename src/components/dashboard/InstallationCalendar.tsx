@@ -336,35 +336,52 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
                       {format(d, "d")}
                     </span>
 
-                    {hasAny && dayData && (
-                      <div className="mt-0.5 flex flex-wrap gap-0.5 justify-center">
-                        {dayData.interiorInstalls.length > 0 && (
-                          <span className="inline-flex items-center justify-center w-5 h-5 md:px-1.5 md:w-auto md:h-5 text-[9px] md:text-[10px] font-bold rounded-full bg-emerald-500 text-white">
-                            {dayData.interiorInstalls.length}
-                          </span>
-                        )}
-                        {dayData.entranceInstalls.length > 0 && (
-                          <span className="inline-flex items-center justify-center w-5 h-5 md:px-1.5 md:w-auto md:h-5 text-[9px] md:text-[10px] font-bold rounded-full bg-blue-500 text-white">
-                            {dayData.entranceInstalls.length}
-                          </span>
-                        )}
-                        {dayData.mixedInstalls.length > 0 && (
-                          <span className="inline-flex items-center justify-center w-5 h-5 md:px-1.5 md:w-auto md:h-5 text-[9px] md:text-[10px] font-bold rounded-full bg-violet-500 text-white">
-                            {dayData.mixedInstalls.length}
-                          </span>
-                        )}
-                        {dayData.measurements.length > 0 && (
-                          <span className="inline-flex items-center justify-center w-5 h-5 md:px-1.5 md:w-auto md:h-5 text-[9px] md:text-[10px] font-bold rounded-full bg-amber-500 text-white">
-                            {dayData.measurements.length}
-                          </span>
-                        )}
-                        {dayData.reclamations.length > 0 && (
-                          <span className="inline-flex items-center justify-center w-5 h-5 md:px-1.5 md:w-auto md:h-5 text-[9px] md:text-[10px] font-bold rounded-full bg-rose-500 text-white">
-                            {dayData.reclamations.length}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    {hasAny && dayData && (() => {
+                      const allReqs = [...dayData.interiorInstalls, ...dayData.entranceInstalls, ...dayData.mixedInstalls, ...dayData.measurements, ...dayData.reclamations];
+                      const assigned = allReqs.filter(r => r.installer_id || r.measurer_id).length;
+                      const total = allReqs.length;
+                      return (
+                        <div className="mt-0.5 space-y-0.5">
+                          {assigned > 0 && assigned < total && (
+                            <div className="text-center">
+                              <span className="text-[8px] md:text-[9px] font-medium text-primary">✓{assigned}</span>
+                            </div>
+                          )}
+                          {assigned === total && (
+                            <div className="text-center">
+                              <span className="text-[8px] md:text-[9px] font-medium text-emerald-600">✓ все</span>
+                            </div>
+                          )}
+                          <div className="flex flex-wrap gap-0.5 justify-center">
+                            {dayData.interiorInstalls.length > 0 && (
+                              <span className="inline-flex items-center justify-center px-1 h-4 md:px-1.5 md:h-5 text-[8px] md:text-[10px] font-bold rounded-full bg-emerald-500 text-white gap-0.5" title="Межкомнатные">
+                                <span className="hidden md:inline">МК</span>{dayData.interiorInstalls.length}
+                              </span>
+                            )}
+                            {dayData.entranceInstalls.length > 0 && (
+                              <span className="inline-flex items-center justify-center px-1 h-4 md:px-1.5 md:h-5 text-[8px] md:text-[10px] font-bold rounded-full bg-blue-500 text-white gap-0.5" title="Входные">
+                                <span className="hidden md:inline">Вх</span>{dayData.entranceInstalls.length}
+                              </span>
+                            )}
+                            {dayData.mixedInstalls.length > 0 && (
+                              <span className="inline-flex items-center justify-center px-1 h-4 md:px-1.5 md:h-5 text-[8px] md:text-[10px] font-bold rounded-full bg-violet-500 text-white gap-0.5" title="Смешанные">
+                                <span className="hidden md:inline">См</span>{dayData.mixedInstalls.length}
+                              </span>
+                            )}
+                            {dayData.measurements.length > 0 && (
+                              <span className="inline-flex items-center justify-center px-1 h-4 md:px-1.5 md:h-5 text-[8px] md:text-[10px] font-bold rounded-full bg-amber-500 text-white gap-0.5" title="Замеры">
+                                <span className="hidden md:inline">З</span>{dayData.measurements.length}
+                              </span>
+                            )}
+                            {dayData.reclamations.length > 0 && (
+                              <span className="inline-flex items-center justify-center px-1 h-4 md:px-1.5 md:h-5 text-[8px] md:text-[10px] font-bold rounded-full bg-rose-500 text-white gap-0.5" title="Рекламации">
+                                <span className="hidden md:inline">Р</span>{dayData.reclamations.length}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </button>
                 );
               })}
