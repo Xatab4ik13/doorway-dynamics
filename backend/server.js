@@ -849,7 +849,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToUser(updated.partner_id, {
         title: `Статус заявки ${updated.number}`,
         body: `Новый статус: ${statusLabels[updates.status] || updates.status}`,
-        url: '/partner',
+        url: `/partner?search=${encodeURIComponent(updated.number)}`,
       });
     }
 
