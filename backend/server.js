@@ -780,7 +780,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToUser(updates.installer_id, {
         title: 'Новый монтаж',
         body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
-        url: '/installer',
+        url: `/installer?highlight=${updated.id}`,
       });
       // Если был предыдущий монтажник — уведомить о снятии
       if (request.installer_id && request.installer_id !== updates.installer_id) {
