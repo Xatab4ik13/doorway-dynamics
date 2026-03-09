@@ -749,7 +749,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToUser(updates.measurer_id, {
         title: 'Новая заявка на замер',
         body: `${updated.client_name} — ${updated.client_address}`,
-        url: '/measurer',
+        url: `/measurer?highlight=${updated.id}`,
       });
       // Если был предыдущий замерщик — уведомить о снятии
       if (request.measurer_id && request.measurer_id !== updates.measurer_id) {
