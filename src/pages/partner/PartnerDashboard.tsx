@@ -34,8 +34,12 @@ const PartnerDashboard = () => {
 
   const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
     await updateRequest(id, updates);
-    // Update selected request in place
-    setSelectedRequest(prev => prev ? { ...prev, ...updates } : null);
+    const isFileOnly = Object.keys(updates).length === 1 && updates.photos !== undefined;
+    if (!isFileOnly) {
+      setSelectedRequest(prev => prev ? { ...prev, ...updates } : null);
+    } else {
+      setSelectedRequest(prev => prev ? { ...prev, ...updates } : null);
+    }
   };
 
   return (

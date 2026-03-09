@@ -226,8 +226,13 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
 
   const handleSaveRequest = useCallback(async (id: string, updates: Partial<ApiRequest>) => {
     await updateRequest(id, updates);
-    setDetailRequest(null);
-    toast.success("Заявка обновлена");
+    const isFileOnly = Object.keys(updates).length === 1 && updates.photos !== undefined;
+    if (isFileOnly) {
+      setDetailRequest(prev => prev ? { ...prev, ...updates } : null);
+    } else {
+      setDetailRequest(null);
+      toast.success("Заявка обновлена");
+    }
   }, [updateRequest]);
 
   const dataByDate = useMemo(() => {
