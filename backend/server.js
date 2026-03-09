@@ -571,7 +571,7 @@ app.post('/api/requests/public', async (req, res) => {
     await sendPushToRoles(['admin', 'manager'], {
       title: `Новая заявка ${req_data.number}`,
       body: `${req_data.client_name} — ${req_data.client_address}`,
-      url: '/admin/requests',
+      url: `/admin/requests?search=${encodeURIComponent(req_data.number)}`,
     });
 
     res.json(req_data);
