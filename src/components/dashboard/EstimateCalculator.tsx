@@ -9,6 +9,7 @@ import api from "@/lib/api";
 import type { UserRole } from "@/data/mockDashboard";
 import { motion } from "framer-motion";
 import AddressInput from "@/components/AddressInput";
+import { formatPhone } from "@/lib/formatPhone";
 
 interface EstimateItem {
   id: string;
