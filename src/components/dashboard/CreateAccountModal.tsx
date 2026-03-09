@@ -14,7 +14,7 @@ const roles: UserRole[] = ["manager", "measurer", "installer", "partner"];
 const CreateAccountModal = ({ onClose, onSave }: CreateAccountModalProps) => {
   const [name, setName] = useState("");
   const [role, setRole] = useState<UserRole>("measurer");
-  const [phone, setPhone] = useState("");
+  const [phone, setPhone] = useState("+7 ");
   const [pin, setPin] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
