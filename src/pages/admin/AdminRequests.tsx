@@ -73,8 +73,14 @@ const AdminRequests = () => {
   }, [filters, quickFromUrl, getUserName]);
 
   const handleSave = async (id: string, updates: Partial<ApiRequest>) => {
-    await updateRequest(id, updates);
-    setSelectedRequest(null);
+    const updated = await updateRequest(id, updates);
+    // Only close modal if it's NOT a file-only update (photos)
+    const isFileOnly = Object.keys(updates).length === 1 && updates.photos !== undefined;
+    if (isFileOnly) {
+      setSelectedRequest(prev => prev ? { ...prev, ...updates, photos: updates.photos } : null);
+    } else {
+      setSelectedRequest(null);
+    }
     refetch();
   };
 
