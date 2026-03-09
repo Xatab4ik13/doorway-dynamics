@@ -820,7 +820,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       await sendPushToRoles(['admin', 'manager'], {
         title: 'Работа завершена',
         body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
-        url: '/admin/requests',
+        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
       });
     }
 
