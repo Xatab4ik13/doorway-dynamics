@@ -793,7 +793,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         await sendPushToUser(request.installer_id, {
           title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
-          url: '/installer',
+          url: `/installer`,
         });
       }
     }
