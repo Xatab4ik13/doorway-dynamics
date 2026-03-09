@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { Share, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -33,7 +34,8 @@ const LoginPage = () => {
   const [autoLogging, setAutoLogging] = useState(false);
   const navigate = useNavigate();
   const { login, isAuthenticated, user } = useAuth();
-  const { canInstall, isInstalled, install } = usePwaInstall();
+  const { canInstall, isInstalled, install, showIosInstructions } = usePwaInstall();
+  const [showIosGuide, setShowIosGuide] = useState(false);
   const isCrm = isCrmDomain();
 
   useEffect(() => {
@@ -300,15 +302,21 @@ const LoginPage = () => {
         )}
 
         {/* PWA Install button */}
-        {canInstall && (
+        {canInstall && !isInstalled && (
           <motion.button
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            onClick={install}
+            onClick={() => {
+              if (showIosInstructions) {
+                setShowIosGuide(true);
+              } else {
+                install();
+              }
+            }}
             className="w-full mt-8 py-3.5 rounded-xl text-sm font-medium bg-foreground text-background flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
           >
-            <Download size={16} /> Установить приложение
+            <Download size={16} /> Скачать приложение
           </motion.button>
         )}
 
@@ -317,6 +325,70 @@ const LoginPage = () => {
             ✓ Приложение установлено
           </p>
         )}
+
+        {/* iOS install guide modal */}
+        <AnimatePresence>
+          {showIosGuide && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+              onClick={() => setShowIosGuide(false)}
+            >
+              <motion.div
+                initial={{ y: 100 }}
+                animate={{ y: 0 }}
+                exit={{ y: 100 }}
+                transition={{ type: "spring", damping: 25 }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-full max-w-md rounded-2xl bg-card text-card-foreground p-6 pb-8 space-y-5"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Установка на iPhone</h3>
+                  <button onClick={() => setShowIosGuide(false)} className="p-1 rounded-full hover:bg-accent">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">1</div>
+                    <div>
+                      <p className="text-sm font-medium">Нажмите кнопку «Поделиться»</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                        Иконка <Share size={14} /> внизу экрана Safari
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">2</div>
+                    <div>
+                      <p className="text-sm font-medium">Выберите «На экран Домой»</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Прокрутите вниз, если не видите</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold shrink-0">3</div>
+                    <div>
+                      <p className="text-sm font-medium">Нажмите «Добавить»</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Приложение появится на домашнем экране</p>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowIosGuide(false)}
+                  className="w-full py-3 rounded-xl text-sm font-medium bg-foreground text-background"
+                >
+                  Понятно
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {!isCrm && (
           <p className="text-center text-xs text-muted-foreground mt-6">

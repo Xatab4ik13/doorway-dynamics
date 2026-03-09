@@ -9,9 +9,12 @@ export function usePwaInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isInStandaloneMode = window.matchMedia("(display-mode: standalone)").matches
+    || (navigator as any).standalone === true;
+
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    if (isInStandaloneMode) {
       setIsInstalled(true);
       return;
     }
@@ -22,7 +25,6 @@ export function usePwaInstall() {
     };
 
     window.addEventListener("beforeinstallprompt", handler);
-
     window.addEventListener("appinstalled", () => {
       setIsInstalled(true);
       setDeferredPrompt(null);
@@ -39,5 +41,9 @@ export function usePwaInstall() {
     return result.outcome === "accepted";
   };
 
-  return { canInstall: !!deferredPrompt && !isInstalled, isInstalled, install };
+  // Android: native prompt available; iOS: show manual instructions
+  const canInstall = !isInstalled && (!!deferredPrompt || isIos);
+  const showIosInstructions = !isInstalled && isIos && !deferredPrompt;
+
+  return { canInstall, isInstalled, install, isIos, showIosInstructions };
 }
