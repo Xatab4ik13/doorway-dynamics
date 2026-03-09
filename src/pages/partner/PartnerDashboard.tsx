@@ -11,7 +11,9 @@ import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 const PartnerDashboard = () => {
   const { user } = useAuth();
   const { requests, loading, updateRequest, createRequest } = useRequests();
-  const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const searchFromUrl = searchParams.get("search") || "";
+  const [search, setSearch] = useState(searchFromUrl);
   const [filterType, setFilterType] = useState<"all" | RequestType>("all");
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
 
