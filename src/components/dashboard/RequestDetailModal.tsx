@@ -78,6 +78,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const installers = getByRole("installer");
   const partners = getByRole("partner");
   const partnerUser = getUser(partnerId || request.partner_id);
+  const partnerName = partnerUser?.name || request.partner_name;
+  const partnerPhone = partnerUser?.phone || request.partner_phone;
 
   const canChangeDateInstaller = viewerRole === "installer" && !!request.agreed_date;
   const canChangeDateMeasurer = viewerRole === "measurer";
