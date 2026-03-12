@@ -352,6 +352,7 @@ const MeasurerDashboard = () => {
               )}
             </CardContent>
           </Card>
+          </>
         )}
       </div>
     </DashboardLayout>
