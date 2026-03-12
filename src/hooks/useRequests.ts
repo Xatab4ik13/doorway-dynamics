@@ -93,8 +93,15 @@ export function useRequests() {
         body: updates,
         auth: true,
       });
-      setRequests(prev => prev.map(r => r.id === id ? updated : r));
-      return updated;
+
+      let mergedRequest: ApiRequest | null = null;
+      setRequests(prev => prev.map((r) => {
+        if (r.id !== id) return r;
+        mergedRequest = { ...r, ...updated };
+        return mergedRequest;
+      }));
+
+      return mergedRequest || updated;
     } catch (err: any) {
       toast.error(err.message || "Ошибка обновления");
       throw err;
