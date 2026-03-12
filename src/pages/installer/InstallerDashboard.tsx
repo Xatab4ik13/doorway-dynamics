@@ -459,6 +459,7 @@ const InstallerDashboard = () => {
               )}
             </CardContent>
           </Card>
+          </>
         )}
       </div>
     </DashboardLayout>
