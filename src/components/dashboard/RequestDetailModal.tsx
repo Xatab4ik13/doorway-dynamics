@@ -78,6 +78,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const installers = getByRole("installer");
   const partners = getByRole("partner");
   const partnerUser = getUser(partnerId || request.partner_id);
+  const partnerName = partnerUser?.name || request.partner_name;
+  const partnerPhone = partnerUser?.phone || request.partner_phone;
 
   const canChangeDateInstaller = viewerRole === "installer" && !!request.agreed_date;
   const canChangeDateMeasurer = viewerRole === "measurer";
@@ -279,10 +281,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       <>
         <MobileFullScreen open={true} onClose={onClose} title={request.number} headerRight={editButton}>
           {/* Partner badge for measurer */}
-          {viewerRole === "measurer" && partnerUser && (
+          {viewerRole === "measurer" && partnerName && (
             <div className="mx-4 mt-3 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2">
               <Briefcase size={14} className="text-emerald-600 shrink-0" />
-              <span className="text-xs font-medium text-emerald-700">{partnerUser.name}</span>
+              <span className="text-xs font-medium text-emerald-700">{partnerName}</span>
             </div>
           )}
           {/* Segmented tabs */}
@@ -552,13 +554,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent text-muted-foreground">
                   {requestTypeLabels[request.type] || request.type}
                 </span>
-                {(partnerUser || request.partner_id) && (
+                {(partnerName || request.partner_id) && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
                     <Briefcase size={10} />
-                    {partnerUser ? partnerUser.name : "Партнёр"}
-                    {partnerUser?.phone && viewerRole !== "measurer" && (
-                      <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="ml-1 underline hover:no-underline" onClick={(e) => e.stopPropagation()}>
-                        {partnerUser.phone}
+                    {partnerName || "Партнёр"}
+                    {partnerPhone && viewerRole !== "measurer" && (
+                      <a href={`tel:${partnerPhone.replace(/\s/g, "")}`} className="ml-1 underline hover:no-underline" onClick={(e) => e.stopPropagation()}>
+                        {partnerPhone}
                       </a>
                     )}
                   </span>
@@ -778,14 +780,14 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </div>
                   )}
 
-                  {partnerUser && (
+                  {partnerName && (
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
                       <Briefcase size={16} className="text-emerald-600 mt-0.5 shrink-0" />
                       <div>
                         <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Партнёр</p>
-                        <p className="text-sm font-medium text-emerald-700">{partnerUser.name}</p>
-                        {partnerUser.phone && viewerRole !== "measurer" && (
-                          <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerUser.phone}</a>
+                        <p className="text-sm font-medium text-emerald-700">{partnerName}</p>
+                        {partnerPhone && viewerRole !== "measurer" && (
+                          <a href={`tel:${partnerPhone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerPhone}</a>
                         )}
                       </div>
                     </div>

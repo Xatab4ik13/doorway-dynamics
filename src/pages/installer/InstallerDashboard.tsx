@@ -7,10 +7,12 @@ import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const InstallerDashboard = () => {
   const { user } = useAuth();
   const { requests, loading, updateRequest } = useRequests();
+  const isMobile = useIsMobile();
   const [selected, setSelected] = useState<ApiRequest | null>(null);
 
   const [doorsInstalled, setDoorsInstalled] = useState("");
@@ -199,8 +201,17 @@ const InstallerDashboard = () => {
         )}
 
         {selected && (
-          <Card className="border-t-4 border-t-primary">
-            <CardContent className="p-6 space-y-5">
+          <>
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="fixed inset-0 z-[84] bg-foreground/40"
+                aria-label="Закрыть заявку"
+              />
+            )}
+            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
+              <CardContent className="p-6 space-y-5">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
@@ -448,6 +459,7 @@ const InstallerDashboard = () => {
               )}
             </CardContent>
           </Card>
+          </>
         )}
       </div>
     </DashboardLayout>

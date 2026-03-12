@@ -22,6 +22,8 @@ export interface ApiRequest {
   partitions?: number;
   source: "site" | "partner";
   partner_id?: string;
+  partner_name?: string;
+  partner_phone?: string;
   measurer_id?: string;
   installer_id?: string;
   installer_2_id?: string;
@@ -91,8 +93,15 @@ export function useRequests() {
         body: updates,
         auth: true,
       });
-      setRequests(prev => prev.map(r => r.id === id ? updated : r));
-      return updated;
+
+      let mergedRequest: ApiRequest | null = null;
+      setRequests(prev => prev.map((r) => {
+        if (r.id !== id) return r;
+        mergedRequest = { ...r, ...updated };
+        return mergedRequest;
+      }));
+
+      return mergedRequest || updated;
     } catch (err: any) {
       toast.error(err.message || "Ошибка обновления");
       throw err;

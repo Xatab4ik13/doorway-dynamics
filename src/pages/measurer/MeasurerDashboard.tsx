@@ -3,15 +3,16 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2, Briefcase } from "lucide-react";
-import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
+import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const MeasurerDashboard = () => {
   const { user } = useAuth();
   const { requests, loading, updateRequest } = useRequests();
-  const { getUserName } = useUsers();
+  const isMobile = useIsMobile();
   const [selected, setSelected] = useState<ApiRequest | null>(null);
 
   const [measurementNotes, setMeasurementNotes] = useState("");
@@ -121,7 +122,7 @@ const MeasurerDashboard = () => {
                         </span>
                         {r.partner_id && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
-                            <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
+                            <Briefcase size={10} /> {r.partner_name || "Партнёр"}
                           </span>
                         )}
                       </div>
@@ -173,15 +174,24 @@ const MeasurerDashboard = () => {
         )}
 
         {selected && (
-          <Card className="border-t-4 border-t-primary">
-            <CardContent className="p-6 space-y-5">
+          <>
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="fixed inset-0 z-[84] bg-foreground/40"
+                aria-label="Закрыть заявку"
+              />
+            )}
+            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
+              <CardContent className="p-6 space-y-5">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
                     {selected.partner_id && (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
-                        <Briefcase size={10} /> {getUserName(selected.partner_id) || "Партнёр"}
+                        <Briefcase size={10} /> {selected.partner_name || "Партнёр"}
                       </span>
                     )}
                   </div>
@@ -342,6 +352,7 @@ const MeasurerDashboard = () => {
               )}
             </CardContent>
           </Card>
+          </>
         )}
       </div>
     </DashboardLayout>
