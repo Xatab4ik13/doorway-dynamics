@@ -122,7 +122,7 @@ const MeasurerDashboard = () => {
                         </span>
                         {r.partner_id && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
-                            <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
+                            <Briefcase size={10} /> {r.partner_name || "Партнёр"}
                           </span>
                         )}
                       </div>
