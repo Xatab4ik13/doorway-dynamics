@@ -75,6 +75,7 @@ const statusLabels = {
   measurement_done: 'Замер выполнен',
   closed: 'Закрыта',
   cancelled: 'Отменена',
+  client_refused: 'Отказ клиента',
 };
 
 const roleLabels = {

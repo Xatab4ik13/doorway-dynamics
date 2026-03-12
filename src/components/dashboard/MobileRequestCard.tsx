@@ -12,6 +12,7 @@ interface MobileRequestCardProps {
 
 const MobileRequestCard = ({ request: r, index, onClick, getUserName }: MobileRequestCardProps) => {
   const executor = getUserName?.(r.measurer_id) || getUserName?.(r.installer_id);
+  const partnerLabel = getUserName?.(r.partner_id) || r.partner_name || "Партнёр";
 
   return (
     <motion.div
