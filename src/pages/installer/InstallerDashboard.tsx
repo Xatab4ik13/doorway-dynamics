@@ -6,6 +6,7 @@ import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight,
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
+import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const InstallerDashboard = () => {
