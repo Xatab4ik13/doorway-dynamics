@@ -534,8 +534,25 @@ app.get('/api/requests', auth, async (req, res) => {
       pool.query(`SELECT COUNT(*)::int as "all", COUNT(*) FILTER (WHERE status='new')::int as "new", COUNT(*) FILTER (WHERE status='pending')::int as "pending", COUNT(*) FILTER (WHERE status NOT IN ('new','closed','cancelled'))::int as "in_progress", COUNT(*) FILTER (WHERE type='reclamation')::int as "reclamation" FROM requests ${baseWhere}`, baseParams)
     ]);
 
+    let requestsData = dataRes.rows;
+    const partnerIds = [...new Set(requestsData.map((row) => row.partner_id).filter(Boolean))];
+    if (partnerIds.length > 0) {
+      const partnerRes = await pool.query(
+        'SELECT id, name, phone FROM users WHERE id = ANY($1::uuid[])',
+        [partnerIds]
+      );
+      const partnersById = new Map(partnerRes.rows.map((partner) => [partner.id, partner]));
+      requestsData = requestsData.map((row) => {
+        if (!row.partner_id) return row;
+        const partner = partnersById.get(row.partner_id);
+        return partner
+          ? { ...row, partner_name: partner.name, partner_phone: partner.phone || null }
+          : row;
+      });
+    }
+
     res.json({
-      data: dataRes.rows,
+      data: requestsData,
       total: countRes.rows[0].total,
       page: parseInt(page),
       limit: parseInt(limit),

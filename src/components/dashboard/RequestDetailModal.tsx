@@ -780,14 +780,14 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     </div>
                   )}
 
-                  {partnerUser && (
+                  {partnerName && (
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
                       <Briefcase size={16} className="text-emerald-600 mt-0.5 shrink-0" />
                       <div>
                         <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Партнёр</p>
-                        <p className="text-sm font-medium text-emerald-700">{partnerUser.name}</p>
-                        {partnerUser.phone && viewerRole !== "measurer" && (
-                          <a href={`tel:${partnerUser.phone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerUser.phone}</a>
+                        <p className="text-sm font-medium text-emerald-700">{partnerName}</p>
+                        {partnerPhone && viewerRole !== "measurer" && (
+                          <a href={`tel:${partnerPhone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerPhone}</a>
                         )}
                       </div>
                     </div>
