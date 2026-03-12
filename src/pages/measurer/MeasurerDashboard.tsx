@@ -12,7 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const MeasurerDashboard = () => {
   const { user } = useAuth();
   const { requests, loading, updateRequest } = useRequests();
-  const { getUserName } = useUsers();
+  const isMobile = useIsMobile();
   const [selected, setSelected] = useState<ApiRequest | null>(null);
 
   const [measurementNotes, setMeasurementNotes] = useState("");

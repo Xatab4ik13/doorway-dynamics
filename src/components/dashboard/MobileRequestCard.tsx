@@ -49,9 +49,9 @@ const MobileRequestCard = ({ request: r, index, onClick, getUserName }: MobileRe
       {/* Bottom row: executor + date + source */}
       <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border/30">
         <div className="flex items-center gap-2 min-w-0">
-          {r.partner_id && getUserName ? (
+          {r.partner_id ? (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-medium">
-              <Briefcase size={10} /> {getUserName(r.partner_id) || "Партнёр"}
+              <Briefcase size={10} /> {partnerLabel}
             </span>
           ) : null}
           {executor && (

@@ -12,6 +12,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 const InstallerDashboard = () => {
   const { user } = useAuth();
   const { requests, loading, updateRequest } = useRequests();
+  const isMobile = useIsMobile();
   const [selected, setSelected] = useState<ApiRequest | null>(null);
 
   const [doorsInstalled, setDoorsInstalled] = useState("");
