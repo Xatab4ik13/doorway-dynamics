@@ -22,6 +22,8 @@ export interface ApiRequest {
   partitions?: number;
   source: "site" | "partner";
   partner_id?: string;
+  partner_name?: string;
+  partner_phone?: string;
   measurer_id?: string;
   installer_id?: string;
   installer_2_id?: string;
