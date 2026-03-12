@@ -281,10 +281,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       <>
         <MobileFullScreen open={true} onClose={onClose} title={request.number} headerRight={editButton}>
           {/* Partner badge for measurer */}
-          {viewerRole === "measurer" && partnerUser && (
+          {viewerRole === "measurer" && partnerName && (
             <div className="mx-4 mt-3 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2">
               <Briefcase size={14} className="text-emerald-600 shrink-0" />
-              <span className="text-xs font-medium text-emerald-700">{partnerUser.name}</span>
+              <span className="text-xs font-medium text-emerald-700">{partnerName}</span>
             </div>
           )}
           {/* Segmented tabs */}
