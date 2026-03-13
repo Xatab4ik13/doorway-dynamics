@@ -398,7 +398,7 @@ app.post('/api/users', auth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       'INSERT INTO users (name, role, telegram_id, phone, email, notes, pin, active) VALUES ($1, $2, $3, $4, $5, $6, $7, true) RETURNING *',
-      [name, role, telegramId, phone || null, email || null, notes || null, pin || null]
+      [name, role, telegramId, normalizePhone(phone) || null, email || null, notes || null, pin || null]
     );
     res.json(rows[0]);
   } catch (err) {
