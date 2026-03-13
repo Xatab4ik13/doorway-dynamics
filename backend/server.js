@@ -416,7 +416,7 @@ app.put('/api/users/:id', auth, async (req, res) => {
     const values = [];
     let idx = 1;
     if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name); }
-    if (phone !== undefined) { fields.push(`phone = $${idx++}`); values.push(phone || null); }
+    if (phone !== undefined) { fields.push(`phone = $${idx++}`); values.push(normalizePhone(phone) || null); }
     if (email !== undefined) { fields.push(`email = $${idx++}`); values.push(email || null); }
     if (notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(notes || null); }
     if (telegram_id !== undefined) { fields.push(`telegram_id = $${idx++}`); values.push(telegram_id || null); }
