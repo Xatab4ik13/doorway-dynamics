@@ -398,7 +398,7 @@ app.post('/api/users', auth, async (req, res) => {
   try {
     const { rows } = await pool.query(
       'INSERT INTO users (name, role, telegram_id, phone, email, notes, pin, active) VALUES ($1, $2, $3, $4, $5, $6, $7, true) RETURNING *',
-      [name, role, telegramId, phone || null, email || null, notes || null, pin || null]
+      [name, role, telegramId, normalizePhone(phone) || null, email || null, notes || null, pin || null]
     );
     res.json(rows[0]);
   } catch (err) {
@@ -416,7 +416,7 @@ app.put('/api/users/:id', auth, async (req, res) => {
     const values = [];
     let idx = 1;
     if (name !== undefined) { fields.push(`name = $${idx++}`); values.push(name); }
-    if (phone !== undefined) { fields.push(`phone = $${idx++}`); values.push(phone || null); }
+    if (phone !== undefined) { fields.push(`phone = $${idx++}`); values.push(normalizePhone(phone) || null); }
     if (email !== undefined) { fields.push(`email = $${idx++}`); values.push(email || null); }
     if (notes !== undefined) { fields.push(`notes = $${idx++}`); values.push(notes || null); }
     if (telegram_id !== undefined) { fields.push(`telegram_id = $${idx++}`); values.push(telegram_id || null); }
