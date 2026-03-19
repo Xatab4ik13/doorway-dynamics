@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2, Briefcase, Ban } from "lucide-react";
@@ -36,6 +37,15 @@ const MeasurerDashboard = () => {
     setAgreedDate(r.agreed_date?.split("T")[0] || "");
     setDateConfirmed(!!r.agreed_date);
     setRescheduleOpen(false);
+    setRefuseOpen(false);
+    setRefuseComment("");
+  };
+
+  const handleCloseSelected = () => {
+    setSelected(null);
+    setRescheduleOpen(false);
+    setRefuseOpen(false);
+    setRefuseComment("");
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,13 +98,250 @@ const MeasurerDashboard = () => {
         notes: measurementNotes,
         photos: [...existingPhotos, ...newPhotos] as any,
       });
-      setSelected(null);
+      handleCloseSelected();
       toast.success("Замер завершён");
     } catch {}
   };
 
   const activeRequests = requests.filter((r) => !["measurement_done", "closed", "cancelled"].includes(r.status));
   const doneRequests = requests.filter((r) => ["measurement_done", "closed"].includes(r.status));
+
+  const selectedContent = selected && (
+    <div className="p-4 md:p-6 space-y-5">
+      <div className="space-y-3">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+            {selected.partner_id && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
+                <Briefcase size={10} /> {selected.partner_name || "Партнёр"}
+              </span>
+            )}
+          </div>
+          <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a>
+          </p>
+          {selected.extra_name && (
+            <div className="mt-2 p-2 rounded-lg bg-accent/50">
+              <p className="text-xs text-muted-foreground">Доп. контакт</p>
+              <p className="text-sm font-medium">{selected.extra_name}</p>
+              {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {selected.notes && (
+        <div className="p-4 rounded-xl bg-accent/30 border border-border">
+          <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
+          <p className="text-sm leading-relaxed">{selected.notes}</p>
+        </div>
+      )}
+
+      {selected.work_description && (
+        <div className="p-4 rounded-xl bg-accent/30 border border-border">
+          <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
+          <p className="text-sm leading-relaxed">{selected.work_description}</p>
+        </div>
+      )}
+
+      {!dateConfirmed && (
+        <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">Выберите дату замера</p>
+              <p className="text-xs text-amber-700">Укажите дату, которую согласовали с клиентом.</p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <input
+              type="date"
+              value={agreedDate}
+              onChange={(e) => setAgreedDate(e.target.value)}
+              min={new Date().toISOString().split("T")[0]}
+              className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            <button
+              onClick={handleConfirmDate}
+              disabled={!agreedDate}
+              className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
+            >
+              Подтвердить
+            </button>
+          </div>
+        </div>
+      )}
+
+      {dateConfirmed && (
+        <>
+          <div className="flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-primary shrink-0" />
+              <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
+            </div>
+            {selected.status !== "measurement_done" && selected.status !== "closed" && (
+              <button
+                onClick={() => setRescheduleOpen(!rescheduleOpen)}
+                className="w-full sm:w-auto text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
+              >
+                {rescheduleOpen ? "Отменить" : "Перенести дату"}
+              </button>
+            )}
+          </div>
+
+          {rescheduleOpen && (
+            <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+              <div className="flex items-start gap-2">
+                <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Перенос даты замера</p>
+                  <p className="text-xs text-amber-700">Укажите новую дату.</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <input
+                  type="date"
+                  value={agreedDate}
+                  onChange={(e) => setAgreedDate(e.target.value)}
+                  min={new Date().toISOString().split("T")[0]}
+                  className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+                <button
+                  onClick={async () => {
+                    if (!agreedDate || !selected) return;
+                    try {
+                      const updated = await updateRequest(selected.id, { agreed_date: agreedDate, status: "date_agreed" as any });
+                      setDateConfirmed(true);
+                      setRescheduleOpen(false);
+                      setSelected(updated);
+                      toast.success("Дата перенесена");
+                    } catch {}
+                  }}
+                  disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0]}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
+                >
+                  Подтвердить
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText size={16} /> Данные замера</h3>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">Заметки по замеру <span className="text-destructive">*</span></label>
+              <textarea
+                value={measurementNotes}
+                onChange={(e) => setMeasurementNotes(e.target.value)}
+                rows={5}
+                placeholder="Опишите результаты замера: количество проёмов, размеры, материал стен, особенности объекта..."
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+              <Camera size={16} /> Фото проёмов <span className="text-destructive text-xs">*</span>
+            </h3>
+            {uploadedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {uploadedFiles.map((f, i) => (
+                  <span key={i} className="flex items-center gap-1 px-3 py-1.5 bg-accent rounded-lg text-xs">
+                    📎 {f.split("/").pop()}
+                    <button onClick={() => handleRemoveFile(i)} className="text-muted-foreground hover:text-destructive"><X size={12} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <label className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+              {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+              {uploading ? "Загрузка..." : "Загрузить файл"}
+              <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,video/*,.pdf" />
+            </label>
+          </div>
+
+          {!canComplete && (
+            <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+              ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото
+            </p>
+          )}
+
+          {!refuseOpen ? (
+            <button
+              onClick={() => setRefuseOpen(true)}
+              className="w-full px-4 py-2.5 rounded-lg text-sm font-medium border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <Ban size={16} /> Отказ клиента
+            </button>
+          ) : (
+            <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-medium text-destructive">Причина отказа клиента</p>
+              <textarea
+                value={refuseComment}
+                onChange={(e) => setRefuseComment(e.target.value)}
+                rows={3}
+                placeholder="Укажите причину отказа..."
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-destructive/30 resize-none"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setRefuseOpen(false);
+                    setRefuseComment("");
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!selected || !refuseComment.trim()) return;
+                    setRefusing(true);
+                    try {
+                      await updateRequest(selected.id, {
+                        status: "client_refused" as any,
+                        status_comment: refuseComment.trim(),
+                      });
+                      handleCloseSelected();
+                      toast.success("Заявка отмечена как отказ клиента");
+                    } catch {} finally { setRefusing(false); }
+                  }}
+                  disabled={!refuseComment.trim() || refusing}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-40 flex items-center gap-2"
+                >
+                  {refusing ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить отказ"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="sticky bottom-0 -mx-4 mt-2 border-t border-border bg-card/95 px-4 pb-4 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/85 md:mx-0 md:bg-transparent md:px-0 md:pb-0 md:pt-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button
+                onClick={handleCloseSelected}
+                className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleComplete}
+                disabled={!canComplete}
+                className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+              >
+                <CheckCircle2 size={16} /> Замер выполнен
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <DashboardLayout role="measurer" userName={user?.name || "Замерщик"}>
@@ -177,230 +424,15 @@ const MeasurerDashboard = () => {
         )}
 
         {selected && (
-          <>
-            {isMobile && (
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="fixed inset-0 z-[84] bg-foreground/40"
-                aria-label="Закрыть заявку"
-              />
-            )}
-            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-0 top-0 bottom-0 z-[85] overflow-y-auto shadow-2xl rounded-none" : ""}`} style={isMobile ? { paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)" } : undefined}>
-              <CardContent className="p-6 space-y-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
-                    {selected.partner_id && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
-                        <Briefcase size={10} /> {selected.partner_name || "Партнёр"}
-                      </span>
-                    )}
-                  </div>
-                  <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
-                  <p className="text-sm text-muted-foreground">
-                    <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a>
-                  </p>
-                  {selected.extra_name && (
-                    <div className="mt-2 p-2 rounded-lg bg-accent/50">
-                      <p className="text-xs text-muted-foreground">Доп. контакт</p>
-                      <p className="text-sm font-medium">{selected.extra_name}</p>
-                      {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
-                    </div>
-                  )}
-                </div>
-                <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
-              </div>
-
-              {/* Notes from admin/manager */}
-              {selected.notes && (
-                <div className="p-4 rounded-xl bg-accent/30 border border-border">
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
-                  <p className="text-sm leading-relaxed">{selected.notes}</p>
-                </div>
-              )}
-
-              {/* Work description */}
-              {selected.work_description && (
-                <div className="p-4 rounded-xl bg-accent/30 border border-border">
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
-                  <p className="text-sm leading-relaxed">{selected.work_description}</p>
-                </div>
-              )}
-
-              {!dateConfirmed && (
-                <div className="border border-amber-300 bg-amber-50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-800">Выберите дату замера</p>
-                      <p className="text-xs text-amber-700">Укажите дату, которую согласовали с клиентом.</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
-                      min={new Date().toISOString().split("T")[0]}
-                      className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <button onClick={handleConfirmDate} disabled={!agreedDate}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40">
-                      Подтвердить
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {dateConfirmed && (
-                <>
-                  <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-primary" />
-                      <span className="text-sm font-medium text-primary">Согласованная дата: {agreedDate}</span>
-                    </div>
-                    {selected.status !== "measurement_done" && selected.status !== "closed" && (
-                      <button
-                        onClick={() => setRescheduleOpen(!rescheduleOpen)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-                      >
-                        {rescheduleOpen ? "Отменить" : "Перенести дату"}
-                      </button>
-                    )}
-                  </div>
-
-                  {rescheduleOpen && (
-                    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-amber-800">Перенос даты замера</p>
-                          <p className="text-xs text-amber-700">Укажите новую дату.</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
-                          min={new Date().toISOString().split("T")[0]}
-                          className="flex-1 px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                        <button
-                          onClick={async () => {
-                            if (!agreedDate || !selected) return;
-                            try {
-                              const updated = await updateRequest(selected.id, { agreed_date: agreedDate, status: "date_agreed" as any });
-                              setDateConfirmed(true);
-                              setRescheduleOpen(false);
-                              setSelected(updated);
-                              toast.success("Дата перенесена");
-                            } catch {}
-                          }}
-                          disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0]}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40"
-                        >
-                          Подтвердить
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="border-t border-border pt-4">
-                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><FileText size={16} /> Данные замера</h3>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Заметки по замеру <span className="text-destructive">*</span></label>
-                      <textarea
-                        value={measurementNotes}
-                        onChange={(e) => setMeasurementNotes(e.target.value)}
-                        rows={5}
-                        placeholder="Опишите результаты замера: количество проёмов, размеры, материал стен, особенности объекта..."
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border pt-4">
-                    <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                      <Camera size={16} /> Фото проёмов <span className="text-destructive text-xs">*</span>
-                    </h3>
-                    {uploadedFiles.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {uploadedFiles.map((f, i) => (
-                          <span key={i} className="flex items-center gap-1 px-3 py-1.5 bg-accent rounded-lg text-xs">
-                            📎 {f.split("/").pop()}
-                            <button onClick={() => handleRemoveFile(i)} className="text-muted-foreground hover:text-destructive"><X size={12} /></button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <label className="flex items-center gap-2 px-4 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
-                      {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                      {uploading ? "Загрузка..." : "Загрузить файл"}
-                      <input type="file" multiple className="hidden" onChange={handleFileUpload} accept="image/*,video/*,.pdf" />
-                    </label>
-                  </div>
-
-                  {!canComplete && (
-                    <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
-                      ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото
-                    </p>
-                  )}
-
-                  {/* Client refused section */}
-                  {!refuseOpen ? (
-                    <button
-                      onClick={() => setRefuseOpen(true)}
-                      className="w-full px-4 py-2.5 rounded-lg text-sm font-medium border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Ban size={16} /> Отказ клиента
-                    </button>
-                  ) : (
-                    <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-4 space-y-3">
-                      <p className="text-sm font-medium text-destructive">Причина отказа клиента</p>
-                      <textarea
-                        value={refuseComment}
-                        onChange={(e) => setRefuseComment(e.target.value)}
-                        rows={3}
-                        placeholder="Укажите причину отказа..."
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-destructive/30 resize-none"
-                      />
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => { setRefuseOpen(false); setRefuseComment(""); }}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
-                          Отмена
-                        </button>
-                        <button
-                          onClick={async () => {
-                            if (!selected || !refuseComment.trim()) return;
-                            setRefusing(true);
-                            try {
-                              await updateRequest(selected.id, {
-                                status: "client_refused" as any,
-                                status_comment: refuseComment.trim(),
-                              });
-                              setSelected(null);
-                              toast.success("Заявка отмечена как отказ клиента");
-                            } catch {} finally { setRefusing(false); }
-                          }}
-                          disabled={!refuseComment.trim() || refusing}
-                          className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-40 flex items-center gap-2"
-                        >
-                          {refusing ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить отказ"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
-                    <button onClick={handleComplete} disabled={!canComplete}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center gap-2">
-                      <CheckCircle2 size={16} /> Замер выполнен
-                    </button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          </>
+          isMobile ? (
+            <MobileFullScreen open={true} onClose={handleCloseSelected} title={selected.number}>
+              {selectedContent}
+            </MobileFullScreen>
+          ) : (
+            <Card className="border-t-4 border-t-primary bg-card">
+              <CardContent className="p-0">{selectedContent}</CardContent>
+            </Card>
+          )
         )}
       </div>
     </DashboardLayout>
