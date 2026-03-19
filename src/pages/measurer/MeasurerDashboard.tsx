@@ -22,6 +22,9 @@ const MeasurerDashboard = () => {
   const [dateConfirmed, setDateConfirmed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [refuseOpen, setRefuseOpen] = useState(false);
+  const [refuseComment, setRefuseComment] = useState("");
+  const [refusing, setRefusing] = useState(false);
 
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
