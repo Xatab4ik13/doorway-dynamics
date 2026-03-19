@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
-import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2, Briefcase } from "lucide-react";
+import { Phone, MapPin, Calendar, Upload, CheckCircle2, FileText, Camera, X, ChevronRight, AlertCircle, Loader2, Briefcase, Ban } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
@@ -22,6 +22,9 @@ const MeasurerDashboard = () => {
   const [dateConfirmed, setDateConfirmed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [refuseOpen, setRefuseOpen] = useState(false);
+  const [refuseComment, setRefuseComment] = useState("");
+  const [refusing, setRefusing] = useState(false);
 
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
@@ -183,7 +186,7 @@ const MeasurerDashboard = () => {
                 aria-label="Закрыть заявку"
               />
             )}
-            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
+            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-0 top-0 bottom-0 z-[85] overflow-y-auto shadow-2xl rounded-none" : ""}`} style={isMobile ? { paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)" } : undefined}>
               <CardContent className="p-6 space-y-5">
               <div className="flex items-start justify-between">
                 <div>
@@ -339,6 +342,51 @@ const MeasurerDashboard = () => {
                     <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
                       ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото
                     </p>
+                  )}
+
+                  {/* Client refused section */}
+                  {!refuseOpen ? (
+                    <button
+                      onClick={() => setRefuseOpen(true)}
+                      className="w-full px-4 py-2.5 rounded-lg text-sm font-medium border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Ban size={16} /> Отказ клиента
+                    </button>
+                  ) : (
+                    <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-4 space-y-3">
+                      <p className="text-sm font-medium text-destructive">Причина отказа клиента</p>
+                      <textarea
+                        value={refuseComment}
+                        onChange={(e) => setRefuseComment(e.target.value)}
+                        rows={3}
+                        placeholder="Укажите причину отказа..."
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-destructive/30 resize-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => { setRefuseOpen(false); setRefuseComment(""); }}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
+                          Отмена
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!selected || !refuseComment.trim()) return;
+                            setRefusing(true);
+                            try {
+                              await updateRequest(selected.id, {
+                                status: "client_refused" as any,
+                                status_comment: refuseComment.trim(),
+                              });
+                              setSelected(null);
+                              toast.success("Заявка отмечена как отказ клиента");
+                            } catch {} finally { setRefusing(false); }
+                          }}
+                          disabled={!refuseComment.trim() || refusing}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-40 flex items-center gap-2"
+                        >
+                          {refusing ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить отказ"}
+                        </button>
+                      </div>
+                    </div>
                   )}
 
                   <div className="flex justify-end gap-3 pt-2">

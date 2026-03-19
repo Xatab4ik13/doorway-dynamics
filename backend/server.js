@@ -104,8 +104,8 @@ function isValidTransition(type, fromStatus, toStatus, role) {
   if (['admin', 'manager'].includes(role) && toStatus === 'pending' && fromStatus !== 'closed') {
     return true;
   }
-  // Admin/manager can set client_refused from any status
-  if (['admin', 'manager'].includes(role) && toStatus === 'client_refused') {
+  // Admin/manager/measurer can set client_refused from any status
+  if (['admin', 'manager', 'measurer'].includes(role) && toStatus === 'client_refused') {
     return true;
   }
   const flow = statusFlows[type] || statusFlows.measurement;
