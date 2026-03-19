@@ -183,7 +183,7 @@ const MeasurerDashboard = () => {
                 aria-label="Закрыть заявку"
               />
             )}
-            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
+            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-0 top-0 bottom-0 z-[85] overflow-y-auto shadow-2xl rounded-none" : ""}`} style={isMobile ? { paddingTop: "env(safe-area-inset-top, 0px)", paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 80px)" } : undefined}>
               <CardContent className="p-6 space-y-5">
               <div className="flex items-start justify-between">
                 <div>

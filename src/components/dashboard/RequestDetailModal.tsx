@@ -516,10 +516,33 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   {photos.map((file, i) => (
-                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border">
+                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border group">
                       <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
                         {file.type === "image" ? <img src={file.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-accent/50"><FileText size={24} className="text-muted-foreground" /></div>}
                       </a>
+                      <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
+                        {file.uploaded_at?.split("T")[0]}
+                      </p>
+                      {viewerRole === "admin" && onSave && (
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            const updatedPhotos = photos.filter((_, idx) => idx !== i);
+                            try {
+                              await onSave(request.id, { photos: updatedPhotos as any });
+                              request.photos = updatedPhotos;
+                              toast.success("Файл удалён");
+                            } catch {
+                              toast.error("Ошибка удаления файла");
+                            }
+                          }}
+                          className="absolute top-1.5 right-1.5 p-2 rounded-xl bg-black/60 text-white active:bg-destructive transition-all z-10"
+                          title="Удалить файл"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
