@@ -344,6 +344,51 @@ const MeasurerDashboard = () => {
                     </p>
                   )}
 
+                  {/* Client refused section */}
+                  {!refuseOpen ? (
+                    <button
+                      onClick={() => setRefuseOpen(true)}
+                      className="w-full px-4 py-2.5 rounded-lg text-sm font-medium border border-destructive/30 text-destructive hover:bg-destructive/10 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Ban size={16} /> Отказ клиента
+                    </button>
+                  ) : (
+                    <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-4 space-y-3">
+                      <p className="text-sm font-medium text-destructive">Причина отказа клиента</p>
+                      <textarea
+                        value={refuseComment}
+                        onChange={(e) => setRefuseComment(e.target.value)}
+                        rows={3}
+                        placeholder="Укажите причину отказа..."
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-destructive/30 resize-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button onClick={() => { setRefuseOpen(false); setRefuseComment(""); }}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">
+                          Отмена
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!selected || !refuseComment.trim()) return;
+                            setRefusing(true);
+                            try {
+                              await updateRequest(selected.id, {
+                                status: "client_refused" as any,
+                                status_comment: refuseComment.trim(),
+                              });
+                              setSelected(null);
+                              toast.success("Заявка отмечена как отказ клиента");
+                            } catch {} finally { setRefusing(false); }
+                          }}
+                          disabled={!refuseComment.trim() || refusing}
+                          className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-colors disabled:opacity-40 flex items-center gap-2"
+                        >
+                          {refusing ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить отказ"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-end gap-3 pt-2">
                     <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
                     <button onClick={handleComplete} disabled={!canComplete}
