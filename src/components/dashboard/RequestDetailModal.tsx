@@ -32,7 +32,7 @@ interface RequestDetailModalProps {
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToDoorium, onSyncDoorium, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
