@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
-import { Download, Briefcase, Loader2, Plus, MapPin } from "lucide-react";
+import { Download, Briefcase, Loader2, Plus, MapPin, Link2 } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
