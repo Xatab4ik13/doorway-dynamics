@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Link2, RefreshCw } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
@@ -27,10 +27,12 @@ interface RequestDetailModalProps {
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   onSendToInstallation?: (request: ApiRequest) => Promise<void>;
+  onSendToDoorium?: (request: ApiRequest) => Promise<void>;
+  onSyncDoorium?: (request: ApiRequest) => Promise<void>;
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, viewerRole = "admin" }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToDoorium, onSyncDoorium, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
@@ -52,6 +54,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sendingToInstall, setSendingToInstall] = useState(false);
+  const [sendingToDoorium, setSendingToDoorium] = useState(false);
+  const [syncingDoorium, setSyncingDoorium] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -249,7 +253,33 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           </div>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        {/* Doorium: send */}
+        {canEdit && onSendToDoorium && !request.external_id && (
+          <button
+            onClick={async () => {
+              setSendingToDoorium(true);
+              try { await onSendToDoorium(request); toast.success("Заявка отправлена в Doorium"); } catch (e: any) { toast.error(e.message || "Ошибка отправки"); } finally { setSendingToDoorium(false); }
+            }}
+            disabled={sendingToDoorium}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {sendingToDoorium ? <Loader2 size={16} className="animate-spin" /> : <><Link2 size={16} /> Doorium</>}
+          </button>
+        )}
+        {/* Doorium: sync */}
+        {canEdit && onSyncDoorium && request.external_id && request.external_system === "doorium" && (
+          <button
+            onClick={async () => {
+              setSyncingDoorium(true);
+              try { await onSyncDoorium(request); toast.success("Статус синхронизирован"); } catch (e: any) { toast.error(e.message || "Ошибка синхронизации"); } finally { setSyncingDoorium(false); }
+            }}
+            disabled={syncingDoorium}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-100 text-violet-700 disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {syncingDoorium ? <Loader2 size={16} className="animate-spin" /> : <><RefreshCw size={16} /> Синхр.</>}
+          </button>
+        )}
         {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
           <button
             onClick={async () => {

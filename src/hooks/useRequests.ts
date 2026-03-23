@@ -36,6 +36,8 @@ export interface ApiRequest {
   closed_at?: string;
   created_at: string;
   updated_at?: string;
+  external_id?: string;
+  external_system?: string;
 }
 
 export interface ApiUser {

@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
-import { Download, Briefcase, Loader2, Plus, MapPin } from "lucide-react";
+import { Download, Briefcase, Loader2, Plus, MapPin, Link2 } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
@@ -198,6 +198,11 @@ const AdminRequests = () => {
                               ) : (
                                 <span className="text-muted-foreground">Сайт</span>
                               )}
+                              {r.external_system === "doorium" && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-violet-100 text-violet-700 text-[10px] font-medium ml-1">
+                                  <Link2 size={10} /> DR
+                                </span>
+                              )}
                             </td>
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                               {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
@@ -239,6 +244,14 @@ const AdminRequests = () => {
           onSave={handleSave}
           onDelete={handleDelete}
           viewerRole="admin"
+          onSendToDoorium={async (req) => {
+            await api(`/api/bridge/send/${req.id}`, { method: "POST", auth: true });
+            refetch();
+          }}
+          onSyncDoorium={async (req) => {
+            await api(`/api/bridge/sync/${req.id}`, { method: "POST", auth: true });
+            refetch();
+          }}
           onSendToInstallation={async (req) => {
             await createRequest({
               type: "installation",
