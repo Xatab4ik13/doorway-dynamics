@@ -264,7 +264,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             disabled={sendingToDoorium}
             className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
           >
-            {sendingToDoorium ? <Loader2 size={16} className="animate-spin" /> : <><Link2 size={16} /> Doorium</>}
+            {sendingToDoorium ? <Loader2 size={16} className="animate-spin" /> : <><Link2 size={16} /> В Doorium</>}
           </button>
         )}
         {/* Doorium: sync */}
