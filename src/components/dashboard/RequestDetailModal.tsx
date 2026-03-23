@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Link2, RefreshCw } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
