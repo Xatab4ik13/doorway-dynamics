@@ -1,4 +1,4 @@
-import { MapPin, Calendar, Phone, Briefcase, ChevronRight } from "lucide-react";
+import { MapPin, Calendar, Phone, Briefcase, ChevronRight, Link2 } from "lucide-react";
 import { statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import type { ApiRequest } from "@/hooks/useRequests";
 import { motion } from "framer-motion";
