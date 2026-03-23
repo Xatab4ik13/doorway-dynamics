@@ -198,6 +198,11 @@ const AdminRequests = () => {
                               ) : (
                                 <span className="text-muted-foreground">Сайт</span>
                               )}
+                              {r.external_system === "doorium" && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-violet-100 text-violet-700 text-[10px] font-medium ml-1">
+                                  <Link2 size={10} /> DR
+                                </span>
+                              )}
                             </td>
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                               {getUserName(r.measurer_id) || getUserName(r.installer_id) || "—"}
