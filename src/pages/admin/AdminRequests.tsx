@@ -244,6 +244,14 @@ const AdminRequests = () => {
           onSave={handleSave}
           onDelete={handleDelete}
           viewerRole="admin"
+          onSendToDoorium={async (req) => {
+            await api(`/api/bridge/send/${req.id}`, { method: "POST", auth: true });
+            refetch();
+          }}
+          onSyncDoorium={async (req) => {
+            await api(`/api/bridge/sync/${req.id}`, { method: "POST", auth: true });
+            refetch();
+          }}
           onSendToInstallation={async (req) => {
             await createRequest({
               type: "installation",
