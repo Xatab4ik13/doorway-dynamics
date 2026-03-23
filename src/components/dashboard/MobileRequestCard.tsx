@@ -54,6 +54,11 @@ const MobileRequestCard = ({ request: r, index, onClick, getUserName }: MobileRe
               <Briefcase size={10} /> {partnerLabel}
             </span>
           ) : null}
+          {r.external_system === "doorium" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-violet-100 text-violet-700 text-[10px] font-medium">
+              <Link2 size={10} /> DR
+            </span>
+          )}
           {executor && (
             <span className="text-[11px] text-muted-foreground truncate">{executor}</span>
           )}
