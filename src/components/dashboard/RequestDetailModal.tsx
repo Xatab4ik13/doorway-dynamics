@@ -27,6 +27,8 @@ interface RequestDetailModalProps {
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   onSendToInstallation?: (request: ApiRequest) => Promise<void>;
+  onSendToDoorium?: (request: ApiRequest) => Promise<void>;
+  onSyncDoorium?: (request: ApiRequest) => Promise<void>;
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
