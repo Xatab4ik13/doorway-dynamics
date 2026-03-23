@@ -1223,6 +1223,32 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
             </div>
             <div className="flex gap-3 flex-wrap">
+              {/* Doorium: send */}
+              {canEdit && onSendToDoorium && !request.external_id && (
+                <button
+                  onClick={async () => {
+                    setSendingToDoorium(true);
+                    try { await onSendToDoorium(request); toast.success("Заявка отправлена в Doorium"); } catch (e: any) { toast.error(e.message || "Ошибка отправки"); } finally { setSendingToDoorium(false); }
+                  }}
+                  disabled={sendingToDoorium}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-500 text-white hover:bg-violet-600 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {sendingToDoorium ? <Loader2 size={16} className="animate-spin" /> : <><Link2 size={16} /> В Doorium</>}
+                </button>
+              )}
+              {/* Doorium: sync */}
+              {canEdit && onSyncDoorium && request.external_id && request.external_system === "doorium" && (
+                <button
+                  onClick={async () => {
+                    setSyncingDoorium(true);
+                    try { await onSyncDoorium(request); toast.success("Статус синхронизирован"); } catch (e: any) { toast.error(e.message || "Ошибка синхронизации"); } finally { setSyncingDoorium(false); }
+                  }}
+                  disabled={syncingDoorium}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-100 text-violet-700 hover:bg-violet-200 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {syncingDoorium ? <Loader2 size={16} className="animate-spin" /> : <><RefreshCw size={16} /> Синхр.</>}
+                </button>
+              )}
               {/* Send to installation button */}
               {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
                 <button
