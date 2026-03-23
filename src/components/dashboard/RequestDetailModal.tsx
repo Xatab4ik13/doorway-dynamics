@@ -253,7 +253,33 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           </div>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-wrap">
+        {/* Doorium: send */}
+        {canEdit && onSendToDoorium && !request.external_id && (
+          <button
+            onClick={async () => {
+              setSendingToDoorium(true);
+              try { await onSendToDoorium(request); toast.success("Заявка отправлена в Doorium"); } catch (e: any) { toast.error(e.message || "Ошибка отправки"); } finally { setSendingToDoorium(false); }
+            }}
+            disabled={sendingToDoorium}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {sendingToDoorium ? <Loader2 size={16} className="animate-spin" /> : <><Link2 size={16} /> Doorium</>}
+          </button>
+        )}
+        {/* Doorium: sync */}
+        {canEdit && onSyncDoorium && request.external_id && request.external_system === "doorium" && (
+          <button
+            onClick={async () => {
+              setSyncingDoorium(true);
+              try { await onSyncDoorium(request); toast.success("Статус синхронизирован"); } catch (e: any) { toast.error(e.message || "Ошибка синхронизации"); } finally { setSyncingDoorium(false); }
+            }}
+            disabled={syncingDoorium}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-violet-100 text-violet-700 disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {syncingDoorium ? <Loader2 size={16} className="animate-spin" /> : <><RefreshCw size={16} /> Синхр.</>}
+          </button>
+        )}
         {request.type === "measurement" && (canEdit || viewerRole === "partner") && onSendToInstallation && (
           <button
             onClick={async () => {
