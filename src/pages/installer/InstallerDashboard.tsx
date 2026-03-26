@@ -389,13 +389,11 @@ const InstallerDashboard = () => {
                               </ul>
                             </div>
                           )}
-                          <div className="sticky bottom-0 -mx-4 border-t border-border bg-card/95 px-4 pb-4 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/85">
-                            <div className="flex flex-col gap-3">
-                              <button onClick={() => setSelected(null)} className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
-                              <button onClick={handleComplete} className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
-                                <CheckCircle2 size={16} /> {isReclamation ? "Рекламация закрыта" : "Монтаж выполнен"}
-                              </button>
-                            </div>
+                          <div className="pt-3 space-y-3 pb-6">
+                            <button onClick={handleComplete} className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                              <CheckCircle2 size={16} /> {isReclamation ? "Рекламация закрыта" : "Монтаж выполнен"}
+                            </button>
+                            <button onClick={() => setSelected(null)} className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
                           </div>
                         </div>
                       </div>
