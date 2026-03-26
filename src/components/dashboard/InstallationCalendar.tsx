@@ -231,6 +231,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
       setDetailRequest(prev => prev ? { ...prev, ...updates } : null);
     } else {
       setDetailRequest(null);
+      setSelectedDate(null);
       toast.success("Заявка обновлена");
     }
   }, [updateRequest]);

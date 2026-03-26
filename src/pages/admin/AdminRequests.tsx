@@ -269,6 +269,23 @@ const AdminRequests = () => {
             });
             refetch();
           }}
+          onSendToReclamation={async (req) => {
+            await createRequest({
+              type: "reclamation",
+              client_name: req.client_name,
+              client_phone: req.client_phone,
+              client_address: req.client_address,
+              city: req.city,
+              extra_name: req.extra_name,
+              extra_phone: req.extra_phone,
+              work_description: req.work_description || `Рекламация по заявке ${req.number}`,
+              notes: req.notes,
+              photos: req.photos,
+              source: req.source,
+              partner_id: req.partner_id,
+            });
+            refetch();
+          }}
         />
       )}
 

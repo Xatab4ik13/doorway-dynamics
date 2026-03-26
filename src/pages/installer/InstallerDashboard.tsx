@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
@@ -202,16 +203,14 @@ const InstallerDashboard = () => {
 
         {selected && (
           <>
-            {isMobile && (
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="fixed inset-0 z-[84] bg-foreground/40"
-                aria-label="Закрыть заявку"
-              />
-            )}
-            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
+            {isMobile ? (
+              <MobileFullScreen open={true} onClose={() => setSelected(null)} title={selected.number}>
+                <Card className="border-t-4 border-t-primary bg-card border-0 shadow-none rounded-none min-h-full">
+                  <CardContent className="p-4 space-y-5 pb-24">
+            ) : (
+            <Card className="border-t-4 border-t-primary bg-card">
               <CardContent className="p-6 space-y-5">
+            )}
               <div className="flex items-start justify-between">
                 <div>
                   <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
@@ -457,8 +456,13 @@ const InstallerDashboard = () => {
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            {isMobile ? (
+                </Card>
+              </MobileFullScreen>
+            ) : (
+            </Card>
+            )}
           </>
         )}
       </div>
