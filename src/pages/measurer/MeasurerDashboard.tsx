@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { Card, CardContent } from "@/components/ui/card";
