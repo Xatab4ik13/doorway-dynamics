@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +16,18 @@ const InstallerDashboard = () => {
   const { requests, loading, updateRequest } = useRequests();
   const isMobile = useIsMobile();
   const [selected, setSelected] = useState<ApiRequest | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open request from push notification deep link
+  useEffect(() => {
+    if (loading || requests.length === 0) return;
+    const highlightId = searchParams.get("highlight");
+    if (highlightId) {
+      const found = requests.find(r => r.id === highlightId);
+      if (found) handleSelectRequest(found);
+      setSearchParams({}, { replace: true });
+    }
+  }, [loading, requests]);
 
   const [doorsInstalled, setDoorsInstalled] = useState("");
   const [hardwareInstalled, setHardwareInstalled] = useState("");

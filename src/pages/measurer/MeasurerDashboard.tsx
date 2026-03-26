@@ -31,7 +31,20 @@ const MeasurerDashboard = () => {
   const [refuseComment, setRefuseComment] = useState("");
   const [refusing, setRefusing] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
+
+  // Auto-open request from push notification deep link
+  useEffect(() => {
+    if (loading || requests.length === 0) return;
+    const highlightId = searchParams.get("highlight");
+    if (highlightId) {
+      const found = requests.find(r => r.id === highlightId);
+      if (found) handleSelectRequest(found);
+      setSearchParams({}, { replace: true });
+    }
+  }, [loading, requests]);
 
   const handleSelectRequest = (r: ApiRequest) => {
     setSelected(r);
