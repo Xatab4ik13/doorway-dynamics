@@ -35,17 +35,6 @@ const MeasurerDashboard = () => {
 
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
-  // Auto-open request from push notification deep link
-  useEffect(() => {
-    if (loading || requests.length === 0) return;
-    const highlightId = searchParams.get("highlight");
-    if (highlightId) {
-      const found = requests.find(r => r.id === highlightId);
-      if (found) handleSelectRequest(found);
-      setSearchParams({}, { replace: true });
-    }
-  }, [loading, requests]);
-
   const handleSelectRequest = (r: ApiRequest) => {
     setSelected(r);
     setMeasurementNotes("");
@@ -59,6 +48,17 @@ const MeasurerDashboard = () => {
     setRefuseOpen(false);
     setRefuseComment("");
   };
+
+  // Auto-open request from push notification deep link
+  useEffect(() => {
+    if (loading || requests.length === 0) return;
+    const highlightId = searchParams.get("highlight");
+    if (highlightId) {
+      const found = requests.find(r => r.id === highlightId);
+      if (found) handleSelectRequest(found);
+      setSearchParams({}, { replace: true });
+    }
+  }, [loading, requests]);
 
   const handleCloseSelected = () => {
     setSelected(null);
