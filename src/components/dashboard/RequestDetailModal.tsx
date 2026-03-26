@@ -1181,15 +1181,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
+                            e.preventDefault();
                             const updatedPhotos = photos.filter((_, idx) => idx !== i);
                             try {
                               await onSave(request.id, { photos: updatedPhotos as any });
+                              request.photos = updatedPhotos;
                               toast.success("Файл удалён");
                             } catch {
                               toast.error("Ошибка удаления файла");
                             }
                           }}
-                          className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 hover:bg-destructive transition-all z-10"
+                          className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white hover:bg-destructive transition-all z-10"
                           title="Удалить файл"
                         >
                           <Trash2 size={14} />
