@@ -18,17 +18,6 @@ const InstallerDashboard = () => {
   const [selected, setSelected] = useState<ApiRequest | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Auto-open request from push notification deep link
-  useEffect(() => {
-    if (loading || requests.length === 0) return;
-    const highlightId = searchParams.get("highlight");
-    if (highlightId) {
-      const found = requests.find(r => r.id === highlightId);
-      if (found) handleSelectRequest(found);
-      setSearchParams({}, { replace: true });
-    }
-  }, [loading, requests]);
-
   const [doorsInstalled, setDoorsInstalled] = useState("");
   const [hardwareInstalled, setHardwareInstalled] = useState("");
   const [clientAccepted, setClientAccepted] = useState(false);
@@ -56,6 +45,17 @@ const InstallerDashboard = () => {
     setRescheduleOpen(false);
     setRescheduleComment("");
   };
+
+  // Auto-open request from push notification deep link
+  useEffect(() => {
+    if (loading || requests.length === 0) return;
+    const highlightId = searchParams.get("highlight");
+    if (highlightId) {
+      const found = requests.find(r => r.id === highlightId);
+      if (found) handleSelectRequest(found);
+      setSearchParams({}, { replace: true });
+    }
+  }, [loading, requests]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
