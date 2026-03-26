@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +31,8 @@ const MeasurerDashboard = () => {
   const [refuseComment, setRefuseComment] = useState("");
   const [refusing, setRefusing] = useState(false);
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
   useEffect(() => { document.title = "Мои заявки — Замерщик"; }, []);
 
   const handleSelectRequest = (r: ApiRequest) => {
@@ -45,6 +48,17 @@ const MeasurerDashboard = () => {
     setRefuseOpen(false);
     setRefuseComment("");
   };
+
+  // Auto-open request from push notification deep link
+  useEffect(() => {
+    if (loading || requests.length === 0) return;
+    const highlightId = searchParams.get("highlight");
+    if (highlightId) {
+      const found = requests.find(r => r.id === highlightId);
+      if (found) handleSelectRequest(found);
+      setSearchParams({}, { replace: true });
+    }
+  }, [loading, requests]);
 
   const handleCloseSelected = () => {
     setSelected(null);
@@ -377,22 +391,20 @@ const MeasurerDashboard = () => {
             </div>
           )}
 
-          <div className="sticky bottom-0 -mx-4 mt-2 border-t border-border bg-card/95 px-4 pb-4 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/85 md:mx-0 md:bg-transparent md:px-0 md:pb-0 md:pt-2">
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <button
-                onClick={handleCloseSelected}
-                className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleComplete}
-                disabled={!canComplete}
-                className="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
-              >
-                <CheckCircle2 size={16} /> Замер выполнен
-              </button>
-            </div>
+          <div className="pt-3 space-y-3 pb-6">
+            <button
+              onClick={handleComplete}
+              disabled={!canComplete}
+              className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 size={16} /> Замер выполнен
+            </button>
+            <button
+              onClick={handleCloseSelected}
+              className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+            >
+              Отмена
+            </button>
           </div>
         </>
       )}
