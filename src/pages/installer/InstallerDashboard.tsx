@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
@@ -201,265 +202,401 @@ const InstallerDashboard = () => {
         )}
 
         {selected && (
-          <>
-            {isMobile && (
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="fixed inset-0 z-[84] bg-foreground/40"
-                aria-label="Закрыть заявку"
-              />
-            )}
-            <Card className={`border-t-4 border-t-primary bg-card ${isMobile ? "fixed inset-x-2 top-[calc(env(safe-area-inset-top,0px)+8px)] bottom-[calc(env(safe-area-inset-bottom,0px)+8px)] z-[85] overflow-y-auto shadow-2xl" : ""}`}>
-              <CardContent className="p-6 space-y-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
-                  <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a></div>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
-                  {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {selected.interior_doors != null && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
-                          Межкомнатные: {selected.interior_doors}
-                        </span>
-                      )}
-                      {selected.entrance_doors != null && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
-                          Входные: {selected.entrance_doors}
-                        </span>
-                      )}
-                      {selected.partitions != null && (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">
-                          Перегородка (кол-во створок): {selected.partitions}
-                        </span>
+          isMobile ? (
+            <MobileFullScreen open={true} onClose={() => setSelected(null)} title={selected.number}>
+              <Card className="border-t-4 border-t-primary bg-card border-0 shadow-none rounded-none min-h-full">
+                <CardContent className="p-4 space-y-5 pb-24">
+                  <div className="space-y-5">
+                    <div>
+                      <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+                      <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a></div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
+                    </div>
+
+                    {selected.notes && (
+                      <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                        <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
+                        <p className="text-sm leading-relaxed">{selected.notes}</p>
+                      </div>
+                    )}
+
+                    {selected.work_description && (
+                      <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                        <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
+                        <p className="text-sm leading-relaxed">{selected.work_description}</p>
+                      </div>
+                    )}
+
+                    <div className="border border-border rounded-xl p-4">
+                      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                        <Camera size={14} /> Прикреплённые файлы {(selected.photos || []).length > 0 && `(${selected.photos.length})`}
+                      </h3>
+                      {(selected.photos || []).length > 0 ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          {selected.photos.map((file: any, i: number) => (
+                            <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all">
+                              {file.type === "image" ? (
+                                <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
+                                  <Upload size={20} className="text-muted-foreground" />
+                                  <p className="text-[10px] text-muted-foreground mt-1 px-1 truncate w-full text-center">{file.url.split("/").pop()}</p>
+                                </div>
+                              )}
+                            </a>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">Нет прикреплённых файлов</p>
                       )}
                     </div>
-                  )}
-                  {selected.extra_name && (
-                    <div className="mt-2 p-2 rounded-lg bg-accent/50">
-                      <p className="text-xs text-muted-foreground">Доп. контакт</p>
-                      <p className="text-sm font-medium">{selected.extra_name}</p>
-                      {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
-                    </div>
-                  )}
-                </div>
-                <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
-              </div>
 
-              {/* Notes from admin/manager */}
-              {selected.notes && (
-                <div className="p-4 rounded-xl bg-accent/30 border border-border">
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
-                  <p className="text-sm leading-relaxed">{selected.notes}</p>
-                </div>
-              )}
+                    {!selected.accepted_at && selected.status !== "closed" && (
+                      <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 size={16} className="text-blue-600 mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-blue-800">Подтвердите принятие заявки</p>
+                              <p className="text-xs text-blue-600">Нажмите, чтобы подтвердить что вы приняли эту заявку в работу</p>
+                            </div>
+                          </div>
+                          <button onClick={async () => {
+                            try {
+                              const updated = await updateRequest(selected.id, { accepted_at: new Date().toISOString() } as any);
+                              setSelected(updated);
+                              toast.success("Заявка принята");
+                            } catch {}
+                          }} className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap">
+                            Принял
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
-              {/* Work description */}
-              {selected.work_description && (
-                <div className="p-4 rounded-xl bg-accent/30 border border-border">
-                  <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
-                  <p className="text-sm leading-relaxed">{selected.work_description}</p>
-                </div>
-              )}
+                    {selected.accepted_at && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <CheckCircle2 size={14} className="text-blue-600" />
+                        <span className="text-sm font-medium text-blue-700">Принято: {new Date(selected.accepted_at).toLocaleString("ru-RU")}</span>
+                      </div>
+                    )}
 
-              {/* Existing files from request */}
-              <div className="border border-border rounded-xl p-4">
-                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <Camera size={14} /> Прикреплённые файлы {(selected.photos || []).length > 0 && `(${selected.photos.length})`}
-                </h3>
-                {(selected.photos || []).length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {selected.photos.map((file: any, i: number) => (
-                      <a
-                        key={i}
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all"
-                      >
-                        {file.type === "image" ? (
-                          <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
-                            <Upload size={20} className="text-muted-foreground" />
-                            <p className="text-[10px] text-muted-foreground mt-1 px-1 truncate w-full text-center">{file.url.split("/").pop()}</p>
+                    {!selected.agreed_date && (
+                      <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-amber-800">{selected.type === "reclamation" ? "Ожидание даты визита" : "Ожидание даты монтажа"}</p>
+                            <p className="text-xs text-amber-700">Дата будет назначена менеджером после согласования с клиентом.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {selected.agreed_date && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={14} className="text-primary" />
+                            <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}</span>
+                          </div>
+                          <button onClick={() => setRescheduleOpen(!rescheduleOpen)} className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors">
+                            {rescheduleOpen ? "Отменить перенос" : "Перенести дату"}
+                          </button>
+                        </div>
+
+                        {rescheduleOpen && (
+                          <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+                            <div className="flex items-start gap-2">
+                              <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-amber-800">Перенос даты монтажа</p>
+                                <p className="text-xs text-amber-700">Укажите новую дату и причину переноса.</p>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} min={new Date().toISOString().split("T")[0]} className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                              <textarea value={rescheduleComment} onChange={(e) => setRescheduleComment(e.target.value)} placeholder="Причина переноса (обязательно)..." rows={2} className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+                            </div>
+                            <button onClick={handleConfirmDate} disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0] || !rescheduleComment.trim()} className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40">
+                              Подтвердить перенос
+                            </button>
                           </div>
                         )}
-                      </a>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">Нет прикреплённых файлов</p>
-                )}
-              </div>
-
-              {/* Accept button - only if not yet accepted */}
-              {!selected.accepted_at && selected.status !== "closed" && (
-                <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 size={16} className="text-blue-600 mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-blue-800">Подтвердите принятие заявки</p>
-                        <p className="text-xs text-blue-600">Нажмите, чтобы подтвердить что вы приняли эту заявку в работу</p>
                       </div>
+                    )}
+
+                    {dateConfirmed && (
+                      <div className="border-t border-border pt-4 space-y-4">
+                        <h3 className="text-sm font-semibold flex items-center gap-2"><ClipboardCheck size={16} /> {isReclamation ? "Отчёт о рекламации" : "Отчёт о монтаже"}</h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">{isReclamation ? "Что сделано" : "Установленные двери"} <span className="text-destructive">*</span></label>
+                            <input type="text" value={doorsInstalled} onChange={(e) => setDoorsInstalled(e.target.value)} placeholder={isReclamation ? "Описание выполненных работ" : "3 шт. межкомнатные"} className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                          </div>
+                          {!isReclamation && (
+                            <div>
+                              <label className="text-xs font-medium text-muted-foreground mb-1 block">Фурнитура <span className="text-destructive">*</span></label>
+                              <input type="text" value={hardwareInstalled} onChange={(e) => setHardwareInstalled(e.target.value)} placeholder="Ручки, петли, замки..." className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                            </div>
+                          )}
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-1 block">Дефекты / замечания</label>
+                            <textarea value={defects} onChange={(e) => setDefects(e.target.value)} rows={2} placeholder="Если есть замечания..." className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                          </div>
+                          <div>
+                            <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                              <Camera size={14} /> Фото / файлы <span className="text-destructive">*</span>
+                            </label>
+                            {uploadedFiles.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mb-2">
+                                {uploadedFiles.map((f, i) => (
+                                  <span key={i} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs">
+                                    📎 {f.split("/").pop()}
+                                    <button onClick={() => removeFile(i)} className="hover:text-destructive"><X size={10} /></button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
+                              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
+                              <input type="file" multiple className="hidden" onChange={handleUpload} accept="image/*,video/*,.pdf" />
+                            </label>
+                          </div>
+                          <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                            <input type="checkbox" checked={clientAccepted} onChange={(e) => setClientAccepted(e.target.checked)} className="h-4 w-4 rounded border-primary text-primary focus:ring-primary" />
+                            <span className="text-sm">Клиент принял работу</span>
+                          </label>
+                          {missingFields.length > 0 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                              <p className="text-xs text-amber-700 font-medium mb-1">Не заполнено:</p>
+                              <ul className="text-xs text-amber-600 list-disc pl-4">
+                                {missingFields.map((f, i) => <li key={i}>{f}</li>)}
+                              </ul>
+                            </div>
+                          )}
+                          <div className="sticky bottom-0 -mx-4 border-t border-border bg-card/95 px-4 pb-4 pt-3 backdrop-blur supports-[backdrop-filter]:bg-card/85">
+                            <div className="flex flex-col gap-3">
+                              <button onClick={() => setSelected(null)} className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
+                              <button onClick={handleComplete} className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center justify-center gap-2">
+                                <CheckCircle2 size={16} /> {isReclamation ? "Рекламация закрыта" : "Монтаж выполнен"}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </MobileFullScreen>
+          ) : (
+            <Card className="border-t-4 border-t-primary bg-card">
+              <CardContent className="p-6 space-y-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
+                    <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a></div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
+                    {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selected.interior_doors != null && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">Межкомнатные: {selected.interior_doors}</span>}
+                        {selected.entrance_doors != null && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">Входные: {selected.entrance_doors}</span>}
+                        {selected.partitions != null && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">Перегородка (кол-во створок): {selected.partitions}</span>}
+                      </div>
+                    )}
+                    {selected.extra_name && (
+                      <div className="mt-2 p-2 rounded-lg bg-accent/50">
+                        <p className="text-xs text-muted-foreground">Доп. контакт</p>
+                        <p className="text-sm font-medium">{selected.extra_name}</p>
+                        {selected.extra_phone && <p className="text-xs text-muted-foreground">{selected.extra_phone}</p>}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => setSelected(null)} className="p-1 hover:bg-accent rounded"><X size={18} /></button>
+                </div>
+
+                {selected.notes && (
+                  <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
+                    <p className="text-sm leading-relaxed">{selected.notes}</p>
+                  </div>
+                )}
+
+                {selected.work_description && (
+                  <div className="p-4 rounded-xl bg-accent/30 border border-border">
+                    <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Описание работ</p>
+                    <p className="text-sm leading-relaxed">{selected.work_description}</p>
+                  </div>
+                )}
+
+                <div className="border border-border rounded-xl p-4">
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Camera size={14} /> Прикреплённые файлы {(selected.photos || []).length > 0 && `(${selected.photos.length})`}
+                  </h3>
+                  {(selected.photos || []).length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {selected.photos.map((file: any, i: number) => (
+                        <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all">
+                          {file.type === "image" ? (
+                            <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
+                              <Upload size={20} className="text-muted-foreground" />
+                              <p className="text-[10px] text-muted-foreground mt-1 px-1 truncate w-full text-center">{file.url.split("/").pop()}</p>
+                            </div>
+                          )}
+                        </a>
+                      ))}
                     </div>
-                    <button
-                      onClick={async () => {
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">Нет прикреплённых файлов</p>
+                  )}
+                </div>
+
+                {!selected.accepted_at && selected.status !== "closed" && (
+                  <div className="border border-blue-200 bg-blue-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-start gap-2">
+                        <CheckCircle2 size={16} className="text-blue-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-blue-800">Подтвердите принятие заявки</p>
+                          <p className="text-xs text-blue-600">Нажмите, чтобы подтвердить что вы приняли эту заявку в работу</p>
+                        </div>
+                      </div>
+                      <button onClick={async () => {
                         try {
                           const updated = await updateRequest(selected.id, { accepted_at: new Date().toISOString() } as any);
                           setSelected(updated);
                           toast.success("Заявка принята");
                         } catch {}
-                      }}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap"
-                    >
-                      Принял
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {selected.accepted_at && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
-                  <CheckCircle2 size={14} className="text-blue-600" />
-                  <span className="text-sm font-medium text-blue-700">Принято: {new Date(selected.accepted_at).toLocaleString("ru-RU")}</span>
-                </div>
-              )}
-
-              {!selected.agreed_date && (
-                <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-sm font-medium text-amber-800">{selected.type === "reclamation" ? "Ожидание даты визита" : "Ожидание даты монтажа"}</p>
-                      <p className="text-xs text-amber-700">Дата будет назначена менеджером после согласования с клиентом.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {selected.agreed_date && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
-                    <div className="flex items-center gap-2">
-                      <Calendar size={14} className="text-primary" />
-                      <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}</span>
-                    </div>
-                    <button
-                      onClick={() => setRescheduleOpen(!rescheduleOpen)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors"
-                    >
-                      {rescheduleOpen ? "Отменить перенос" : "Перенести дату"}
-                    </button>
-                  </div>
-
-                  {rescheduleOpen && (
-                    <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
-                      <div className="flex items-start gap-2">
-                        <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium text-amber-800">Перенос даты монтажа</p>
-                          <p className="text-xs text-amber-700">Укажите новую дату и причину переноса.</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)}
-                          min={new Date().toISOString().split("T")[0]}
-                          className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
-                        <textarea
-                          value={rescheduleComment}
-                          onChange={(e) => setRescheduleComment(e.target.value)}
-                          placeholder="Причина переноса (обязательно)..."
-                          rows={2}
-                          className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                        />
-                      </div>
-                      <button
-                        onClick={handleConfirmDate}
-                        disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0] || !rescheduleComment.trim()}
-                        className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40"
-                      >
-                        Подтвердить перенос
+                      }} className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-colors whitespace-nowrap">
+                        Принял
                       </button>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                )}
 
-              {dateConfirmed && (
-                <div className="border-t border-border pt-4 space-y-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2"><ClipboardCheck size={16} /> {isReclamation ? "Отчёт о рекламации" : "Отчёт о монтаже"}</h3>
+                {selected.accepted_at && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                    <CheckCircle2 size={14} className="text-blue-600" />
+                    <span className="text-sm font-medium text-blue-700">Принято: {new Date(selected.accepted_at).toLocaleString("ru-RU")}</span>
+                  </div>
+                )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                     <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">{isReclamation ? "Что сделано" : "Установленные двери"} <span className="text-destructive">*</span></label>
-                      <input type="text" value={doorsInstalled} onChange={(e) => setDoorsInstalled(e.target.value)} placeholder={isReclamation ? "Описание выполненных работ" : "3 шт. межкомнатные"}
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                    </div>
-                    {!isReclamation && (
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Фурнитура <span className="text-destructive">*</span></label>
-                      <input type="text" value={hardwareInstalled} onChange={(e) => setHardwareInstalled(e.target.value)} placeholder="Ручки, петли, замки..."
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                    </div>
-                    )}
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Дефекты / замечания</label>
-                      <textarea value={defects} onChange={(e) => setDefects(e.target.value)} rows={2} placeholder="Если есть замечания..."
-                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                {!selected.agreed_date && (
+                  <div className="border border-amber-300 bg-amber-50 rounded-xl p-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-sm font-medium text-amber-800">{selected.type === "reclamation" ? "Ожидание даты визита" : "Ожидание даты монтажа"}</p>
+                        <p className="text-xs text-amber-700">Дата будет назначена менеджером после согласования с клиентом.</p>
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
-                      <Camera size={14} /> Фото / файлы <span className="text-destructive">*</span>
-                    </label>
-                    {uploadedFiles.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {uploadedFiles.map((f, i) => (
-                          <span key={i} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs">
-                            📎 {f.split("/").pop()}
-                            <button onClick={() => removeFile(i)} className="hover:text-destructive"><X size={10} /></button>
-                          </span>
-                        ))}
+                {selected.agreed_date && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                      <div className="flex items-center gap-2">
+                        <Calendar size={14} className="text-primary" />
+                        <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}</span>
+                      </div>
+                      <button onClick={() => setRescheduleOpen(!rescheduleOpen)} className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors">
+                        {rescheduleOpen ? "Отменить перенос" : "Перенести дату"}
+                      </button>
+                    </div>
+
+                    {rescheduleOpen && (
+                      <div className="border border-amber-200 bg-amber-50 rounded-xl p-4 space-y-3">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle size={16} className="text-amber-600 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-sm font-medium text-amber-800">Перенос даты монтажа</p>
+                            <p className="text-xs text-amber-700">Укажите новую дату и причину переноса.</p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} min={new Date().toISOString().split("T")[0]} className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                          <textarea value={rescheduleComment} onChange={(e) => setRescheduleComment(e.target.value)} placeholder="Причина переноса (обязательно)..." rows={2} className="w-full px-3 py-2 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none" />
+                        </div>
+                        <button onClick={handleConfirmDate} disabled={!agreedDate || agreedDate === selected.agreed_date?.split("T")[0] || !rescheduleComment.trim()} className="w-full px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-40">
+                          Подтвердить перенос
+                        </button>
                       </div>
                     )}
-                    <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
-                      {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
-                      <input type="file" multiple className="hidden" onChange={handleUpload} accept="image/*,video/*,.pdf" />
-                    </label>
                   </div>
+                )}
 
-                  <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
-                    <input type="checkbox" checked={clientAccepted} onChange={(e) => setClientAccepted(e.target.checked)}
-                      className="h-4 w-4 rounded border-primary text-primary focus:ring-primary" />
-                    <span className="text-sm">Клиент принял работу</span>
-                  </label>
+                {dateConfirmed && (
+                  <div className="border-t border-border pt-4 space-y-4">
+                    <h3 className="text-sm font-semibold flex items-center gap-2"><ClipboardCheck size={16} /> {isReclamation ? "Отчёт о рекламации" : "Отчёт о монтаже"}</h3>
 
-                  {missingFields.length > 0 && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-                      <p className="text-xs text-amber-700 font-medium mb-1">Не заполнено:</p>
-                      <ul className="text-xs text-amber-600 list-disc pl-4">
-                        {missingFields.map((f, i) => <li key={i}>{f}</li>)}
-                      </ul>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">{isReclamation ? "Что сделано" : "Установленные двери"} <span className="text-destructive">*</span></label>
+                        <input type="text" value={doorsInstalled} onChange={(e) => setDoorsInstalled(e.target.value)} placeholder={isReclamation ? "Описание выполненных работ" : "3 шт. межкомнатные"} className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                      </div>
+                      {!isReclamation && (
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Фурнитура <span className="text-destructive">*</span></label>
+                          <input type="text" value={hardwareInstalled} onChange={(e) => setHardwareInstalled(e.target.value)} placeholder="Ручки, петли, замки..." className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+                        </div>
+                      )}
+                      <div className="sm:col-span-2">
+                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Дефекты / замечания</label>
+                        <textarea value={defects} onChange={(e) => setDefects(e.target.value)} rows={2} placeholder="Если есть замечания..." className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none" />
+                      </div>
                     </div>
-                  )}
 
-                  <div className="flex justify-end gap-3 pt-2">
-                    <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
-                    <button onClick={handleComplete}
-                      className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
-                      <CheckCircle2 size={16} /> {isReclamation ? "Рекламация закрыта" : "Монтаж выполнен"}
-                    </button>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-2 block flex items-center gap-1">
+                        <Camera size={14} /> Фото / файлы <span className="text-destructive">*</span>
+                      </label>
+                      {uploadedFiles.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {uploadedFiles.map((f, i) => (
+                            <span key={i} className="flex items-center gap-1 px-2 py-1 bg-accent rounded text-xs">
+                              📎 {f.split("/").pop()}
+                              <button onClick={() => removeFile(i)} className="hover:text-destructive"><X size={10} /></button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <label className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-primary hover:text-primary transition-colors w-full justify-center cursor-pointer">
+                        {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить
+                        <input type="file" multiple className="hidden" onChange={handleUpload} accept="image/*,video/*,.pdf" />
+                      </label>
+                    </div>
+
+                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
+                      <input type="checkbox" checked={clientAccepted} onChange={(e) => setClientAccepted(e.target.checked)} className="h-4 w-4 rounded border-primary text-primary focus:ring-primary" />
+                      <span className="text-sm">Клиент принял работу</span>
+                    </label>
+
+                    {missingFields.length > 0 && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                        <p className="text-xs text-amber-700 font-medium mb-1">Не заполнено:</p>
+                        <ul className="text-xs text-amber-600 list-disc pl-4">
+                          {missingFields.map((f, i) => <li key={i}>{f}</li>)}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="flex justify-end gap-3 pt-2">
+                      <button onClick={() => setSelected(null)} className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors">Отмена</button>
+                      <button onClick={handleComplete} className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors flex items-center gap-2">
+                        <CheckCircle2 size={16} /> {isReclamation ? "Рекламация закрыта" : "Монтаж выполнен"}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-          </>
+                )}
+              </CardContent>
+            </Card>
+          )
         )}
       </div>
     </DashboardLayout>

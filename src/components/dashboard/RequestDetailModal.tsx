@@ -27,12 +27,13 @@ interface RequestDetailModalProps {
   onSave?: (id: string, updates: Partial<ApiRequest>) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
   onSendToInstallation?: (request: ApiRequest) => Promise<void>;
+  onSendToReclamation?: (request: ApiRequest) => Promise<void>;
   onSendToDoorium?: (request: ApiRequest) => Promise<void>;
   onSyncDoorium?: (request: ApiRequest) => Promise<void>;
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToDoorium, onSyncDoorium, viewerRole = "admin" }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToReclamation, onSendToDoorium, onSyncDoorium, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
@@ -54,6 +55,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [sendingToInstall, setSendingToInstall] = useState(false);
+  const [sendingToReclamation, setSendingToReclamation] = useState(false);
   const [sendingToDoorium, setSendingToDoorium] = useState(false);
   const [syncingDoorium, setSyncingDoorium] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -290,6 +292,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             className="px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500 text-white disabled:opacity-50 flex items-center gap-2 active:opacity-80"
           >
             {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
+          </button>
+        )}
+        {request.type === "installation" && canEdit && onSendToReclamation && (
+          <button
+            onClick={async () => {
+              setSendingToReclamation(true);
+              try { await onSendToReclamation(request); toast.success("Рекламация создана"); } catch {} finally { setSendingToReclamation(false); }
+            }}
+            disabled={sendingToReclamation}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-destructive text-destructive-foreground disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {sendingToReclamation ? <Loader2 size={16} className="animate-spin" /> : <><AlertTriangle size={16} /> На рекламацию</>}
           </button>
         )}
         {(canEdit || canChangeDateInstaller || canChangeDateMeasurer || canPartnerEdit) && (
@@ -1263,6 +1277,21 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   className="px-4 py-2.5 rounded-xl text-sm font-medium bg-orange-500 text-white hover:bg-orange-600 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
+                </button>
+              )}
+              {request.type === "installation" && canEdit && onSendToReclamation && (
+                <button
+                  onClick={async () => {
+                    setSendingToReclamation(true);
+                    try {
+                      await onSendToReclamation(request);
+                      toast.success("Рекламация создана");
+                    } catch {} finally { setSendingToReclamation(false); }
+                  }}
+                  disabled={sendingToReclamation}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {sendingToReclamation ? <Loader2 size={16} className="animate-spin" /> : <><AlertTriangle size={16} /> На рекламацию</>}
                 </button>
               )}
               {viewerRole !== "partner" && (

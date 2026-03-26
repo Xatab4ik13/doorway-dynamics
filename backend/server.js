@@ -100,6 +100,14 @@ const statusFlows = {
 };
 
 function isValidTransition(type, fromStatus, toStatus, role) {
+  if (['admin', 'manager'].includes(role)) {
+    return true;
+  }
+
+  if (role === 'measurer' && type === 'measurement' && ['pending', 'client_refused'].includes(toStatus) && !['closed', 'cancelled'].includes(fromStatus)) {
+    return true;
+  }
+
   // Admin/manager can set pending from any non-closed status
   if (['admin', 'manager'].includes(role) && toStatus === 'pending' && fromStatus !== 'closed') {
     return true;
@@ -144,9 +152,11 @@ const s3 = new S3Client({
   forcePathStyle: true,
 });
 
+const MAX_UPLOAD_SIZE = 80 * 1024 * 1024;
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: MAX_UPLOAD_SIZE },
 });
 
 const auth = (req, res, next) => {
@@ -201,6 +211,17 @@ app.delete('/api/files', auth, async (req, res) => {
     console.error('Delete error:', err);
     res.status(500).json({ error: 'Ошибка удаления' });
   }
+});
+
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({ error: `Файл слишком большой. Максимум ${Math.round(MAX_UPLOAD_SIZE / (1024 * 1024))} МБ` });
+    }
+    return res.status(400).json({ error: 'Ошибка загрузки файла' });
+  }
+
+  return next(err);
 });
 
 // === Auth ===
@@ -700,6 +721,14 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     if (updates.agreed_date && role === 'measurer' && request.agreed_date && request.type === 'measurement' && request.status === 'date_agreed') {
       // Allow measurer to reschedule measurement date - keep status as date_agreed
       updates.status = 'date_agreed';
+    }
+
+    if (role === 'measurer' && request.type === 'measurement' && updates.status && ['pending', 'client_refused'].includes(updates.status)) {
+      const trimmedComment = typeof updates.status_comment === 'string' ? updates.status_comment.trim() : '';
+      if (!trimmedComment) {
+        return res.status(400).json({ error: 'Для этого статуса нужен комментарий' });
+      }
+      updates.status_comment = trimmedComment;
     }
 
     // Валидация перехода статуса

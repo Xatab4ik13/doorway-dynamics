@@ -38,7 +38,8 @@ const SearchableUserSelect = ({ value, onChange, users, placeholder = "Не на
 
   useEffect(() => {
     if (open && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const timer = window.setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 100);
+      return () => window.clearTimeout(timer);
     }
   }, [open]);
 
@@ -63,7 +64,7 @@ const SearchableUserSelect = ({ value, onChange, users, placeholder = "Не на
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 300 }}
-          className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[70vh] flex flex-col"
+          className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[70dvh] flex flex-col"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           onClick={(e) => e.stopPropagation()}
         >

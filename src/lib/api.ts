@@ -1,4 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL || "https://api.primedoor.ru";
+const MAX_UPLOAD_SIZE = 80 * 1024 * 1024;
 
 interface ApiOptions {
   method?: string;
@@ -26,16 +27,27 @@ export async function api<T = any>(endpoint: string, options: ApiOptions = {}): 
     body: body ? JSON.stringify(body) : undefined,
   });
 
-  const data = await res.json();
+  const raw = await res.text();
+  const data = raw ? (() => {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  })() : null;
 
   if (!res.ok) {
-    throw new Error(data.error || "Ошибка сервера");
+    throw new Error(typeof data === "object" && data && "error" in data ? String(data.error) : typeof data === "string" && data ? data : "Ошибка сервера");
   }
 
-  return data;
+  return data as T;
 }
 
 export async function uploadFile(file: File, folder: string = "uploads"): Promise<{ url: string; key: string }> {
+  if (file.size > MAX_UPLOAD_SIZE) {
+    throw new Error(`Файл \"${file.name}\" больше ${Math.round(MAX_UPLOAD_SIZE / (1024 * 1024))} МБ`);
+  }
+
   const token = localStorage.getItem("token");
   const formData = new FormData();
   formData.append("file", file);
@@ -49,9 +61,17 @@ export async function uploadFile(file: File, folder: string = "uploads"): Promis
     body: formData,
   });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Ошибка загрузки");
-  return data;
+  const raw = await res.text();
+  const data = raw ? (() => {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  })() : null;
+
+  if (!res.ok) throw new Error(typeof data === "object" && data && "error" in data ? String(data.error) : typeof data === "string" && data ? data : "Ошибка загрузки");
+  return data as { url: string; key: string };
 }
 
 export default api;

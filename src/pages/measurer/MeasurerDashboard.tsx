@@ -23,6 +23,9 @@ const MeasurerDashboard = () => {
   const [dateConfirmed, setDateConfirmed] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [pendingOpen, setPendingOpen] = useState(false);
+  const [pendingComment, setPendingComment] = useState("");
+  const [sendingPending, setSendingPending] = useState(false);
   const [refuseOpen, setRefuseOpen] = useState(false);
   const [refuseComment, setRefuseComment] = useState("");
   const [refusing, setRefusing] = useState(false);
@@ -37,6 +40,8 @@ const MeasurerDashboard = () => {
     setAgreedDate(r.agreed_date?.split("T")[0] || "");
     setDateConfirmed(!!r.agreed_date);
     setRescheduleOpen(false);
+    setPendingOpen(false);
+    setPendingComment("");
     setRefuseOpen(false);
     setRefuseComment("");
   };
@@ -44,6 +49,8 @@ const MeasurerDashboard = () => {
   const handleCloseSelected = () => {
     setSelected(null);
     setRescheduleOpen(false);
+    setPendingOpen(false);
+    setPendingComment("");
     setRefuseOpen(false);
     setRefuseComment("");
   };
@@ -103,8 +110,8 @@ const MeasurerDashboard = () => {
     } catch {}
   };
 
-  const activeRequests = requests.filter((r) => !["measurement_done", "closed", "cancelled"].includes(r.status));
-  const doneRequests = requests.filter((r) => ["measurement_done", "closed"].includes(r.status));
+  const activeRequests = requests.filter((r) => !["measurement_done", "closed", "cancelled", "client_refused"].includes(r.status));
+  const doneRequests = requests.filter((r) => ["measurement_done", "closed", "client_refused"].includes(r.status));
 
   const selectedContent = selected && (
     <div className="p-4 md:p-6 space-y-5">
@@ -270,6 +277,55 @@ const MeasurerDashboard = () => {
             <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
               ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото
             </p>
+          )}
+
+          {!pendingOpen ? (
+            <button
+              onClick={() => setPendingOpen(true)}
+              className="w-full px-4 py-2.5 rounded-lg text-sm font-medium border border-primary/30 text-primary hover:bg-primary/10 transition-colors flex items-center justify-center gap-2"
+            >
+              <AlertCircle size={16} /> В ожидание
+            </button>
+          ) : (
+            <div className="border border-primary/30 bg-primary/5 rounded-lg p-4 space-y-3">
+              <p className="text-sm font-medium text-primary">Причина ожидания</p>
+              <textarea
+                value={pendingComment}
+                onChange={(e) => setPendingComment(e.target.value)}
+                rows={3}
+                placeholder="Укажите причину ожидания..."
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setPendingOpen(false);
+                    setPendingComment("");
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!selected || !pendingComment.trim()) return;
+                    setSendingPending(true);
+                    try {
+                      await updateRequest(selected.id, {
+                        status: "pending" as any,
+                        status_comment: pendingComment.trim(),
+                      });
+                      handleCloseSelected();
+                      toast.success("Заявка переведена в ожидание");
+                    } catch {} finally { setSendingPending(false); }
+                  }}
+                  disabled={!pendingComment.trim() || sendingPending}
+                  className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center gap-2"
+                >
+                  {sendingPending ? <Loader2 size={14} className="animate-spin" /> : "Подтвердить"}
+                </button>
+              </div>
+            </div>
           )}
 
           {!refuseOpen ? (
