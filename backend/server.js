@@ -144,9 +144,11 @@ const s3 = new S3Client({
   forcePathStyle: true,
 });
 
+const MAX_UPLOAD_SIZE = 80 * 1024 * 1024;
+
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 20 * 1024 * 1024 },
+  limits: { fileSize: MAX_UPLOAD_SIZE },
 });
 
 const auth = (req, res, next) => {
