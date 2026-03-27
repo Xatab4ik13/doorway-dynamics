@@ -1627,6 +1627,72 @@ app.get('/api/bridge/status/:externalId', bridgeAuth, async (req, res) => {
   }
 });
 
+// Receive updates from Doorium for a linked request (auto-sync from their side)
+app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
+  try {
+    const externalId = req.params.id;
+    const { status, agreed_date, amount, status_comment, notes, work_description, source_id, source_number } = req.body;
+
+    // Find our request by external_id (their id) or by our id (if they sent source_id)
+    let row;
+    const byExt = await pool.query('SELECT * FROM requests WHERE external_id = $1', [externalId]);
+    if (byExt.rows.length) {
+      row = byExt.rows[0];
+    } else {
+      // Maybe externalId is our own id (we are the source)
+      const byId = await pool.query('SELECT * FROM requests WHERE id = $1 AND external_system IS NOT NULL', [externalId]);
+      if (byId.rows.length) row = byId.rows[0];
+    }
+
+    if (!row) return res.status(404).json({ error: 'Request not found' });
+
+    const updates = {};
+    if (status) {
+      const mapped = statusFromDoorium[status] || status;
+      if (mapped !== row.status) updates.status = mapped;
+    }
+    if (agreed_date !== undefined && agreed_date !== row.agreed_date) updates.agreed_date = agreed_date;
+    if (amount !== undefined && amount !== row.amount) updates.amount = amount;
+    if (status_comment !== undefined) updates.status_comment = status_comment;
+    if (notes !== undefined) updates.notes = notes;
+    if (work_description !== undefined) updates.work_description = work_description;
+
+    // Auto-set closed_at
+    if (updates.status === 'closed' && row.status !== 'closed') {
+      updates.closed_at = new Date().toISOString();
+    }
+    if (updates.status && updates.status !== 'closed' && row.status === 'closed') {
+      updates.closed_at = null;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.json({ message: 'No changes', id: row.id });
+    }
+
+    const fields = [];
+    const values = [];
+    let idx = 1;
+    for (const [key, value] of Object.entries(updates)) {
+      fields.push(`${key} = $${idx}`);
+      values.push(value);
+      idx++;
+    }
+    fields.push(`updated_at = NOW()`);
+    values.push(row.id);
+
+    const result = await pool.query(
+      `UPDATE requests SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+      values
+    );
+
+    console.log(`Bridge update received for ${row.number}: ${JSON.stringify(updates)}`);
+    res.json({ id: result.rows[0].id, number: result.rows[0].number, updated: true });
+  } catch (err) {
+    console.error('Bridge update error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
 });
