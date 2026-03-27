@@ -235,6 +235,16 @@ const ManagerDashboard = () => {
               partner_id: req.partner_id,
             });
           }}
+          onSendToDoorium={async (req) => {
+            const result = await api(`/api/bridge/send/${req.id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, external_id: result.external_id, external_system: 'doorium' } : null);
+            refetch();
+          }}
+          onSyncDoorium={async (req) => {
+            const result = await api(`/api/bridge/sync/${req.id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, ...result } : null);
+            refetch();
+          }}
         />
       )}
 
