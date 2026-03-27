@@ -904,6 +904,38 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       });
     }
 
+    // === AUTO-SYNC: push changes to Doorium if this request is linked ===
+    if (updated.external_id && updated.external_system === 'doorium' && DOORIUM_API_URL && DOORIUM_API_KEY) {
+      try {
+        const syncPayload = {
+          source_id: updated.id,
+          source_number: updated.number,
+          status: statusToDoorium[updated.status] || updated.status,
+          agreed_date: updated.agreed_date || null,
+          amount: updated.amount || null,
+          status_comment: updated.status_comment || null,
+          notes: updated.notes || null,
+          work_description: updated.work_description || null,
+        };
+        const syncRes = await fetch(`${DOORIUM_API_URL}/api/bridge/update/${updated.external_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Bridge-Key': DOORIUM_API_KEY,
+          },
+          body: JSON.stringify(syncPayload),
+        });
+        if (!syncRes.ok) {
+          const errBody = await syncRes.text();
+          console.error(`Bridge auto-sync failed [${syncRes.status}]:`, errBody);
+        } else {
+          console.log(`Bridge auto-sync OK for request ${updated.number} → Doorium ${updated.external_id}`);
+        }
+      } catch (syncErr) {
+        console.error('Bridge auto-sync error:', syncErr.message);
+      }
+    }
+
     res.json(updated);
   } catch (err) {
     console.error('Update request error:', err);
