@@ -1320,6 +1320,281 @@ async function sendPushToUser(userId, payload) {
   }
 }
 
+// === Bridge (Doorium integration) ===
+
+const DOORIUM_API_URL = process.env.DOORIUM_API_URL;
+const DOORIUM_API_KEY = process.env.DOORIUM_API_KEY;
+const BRIDGE_API_KEY = process.env.BRIDGE_API_KEY;
+
+// Auto-create external_id / external_system columns
+(async () => {
+  try {
+    await pool.query(`
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_id TEXT;
+      ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_system TEXT;
+    `);
+    console.log('Bridge: external_id/external_system columns ready');
+  } catch (err) {
+    console.error('Bridge columns error:', err.message);
+  }
+})();
+
+// Status mapping: PrimeDoor → Doorium
+const statusToDoorium = {
+  new: 'new',
+  pending: 'pending',
+  measurer_assigned: 'measurer_assigned',
+  installer_assigned: 'installer_assigned',
+  date_agreed: 'date_agreed',
+  installation_rescheduled: 'installation_rescheduled',
+  measurement_done: 'measurement_done',
+  closed: 'closed',
+  cancelled: 'cancelled',
+  client_refused: 'client_refused',
+};
+
+// Status mapping: Doorium → PrimeDoor
+const statusFromDoorium = {};
+Object.entries(statusToDoorium).forEach(([k, v]) => { statusFromDoorium[v] = k; });
+
+// Bridge auth middleware (for incoming requests from Doorium)
+const bridgeAuth = (req, res, next) => {
+  const key = req.headers['x-bridge-key'] || req.headers['x-api-key'];
+  if (!BRIDGE_API_KEY || key !== BRIDGE_API_KEY) {
+    return res.status(401).json({ error: 'Invalid bridge key' });
+  }
+  next();
+};
+
+// Send request to Doorium (admin clicks "В Doorium")
+app.post('/api/bridge/send/:id', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Нет доступа' });
+  }
+  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) {
+    return res.status(500).json({ error: 'Doorium не настроен (DOORIUM_API_URL / DOORIUM_API_KEY)' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+    const r = rows[0];
+    if (r.external_id) return res.status(400).json({ error: 'Заявка уже передана в Doorium' });
+
+    const payload = {
+      source_system: 'primedoor',
+      source_id: r.id,
+      source_number: r.number,
+      type: r.type,
+      status: statusToDoorium[r.status] || r.status,
+      client_name: r.client_name,
+      client_phone: r.client_phone,
+      client_address: r.client_address,
+      city: r.city,
+      extra_name: r.extra_name,
+      extra_phone: r.extra_phone,
+      work_description: r.work_description,
+      notes: r.notes,
+      agreed_date: r.agreed_date,
+      interior_doors: r.interior_doors,
+      entrance_doors: r.entrance_doors,
+      partitions: r.partitions,
+      amount: r.amount,
+      photos: r.photos,
+    };
+
+    const response = await fetch(`${DOORIUM_API_URL}/api/bridge/receive`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Bridge-Key': DOORIUM_API_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `Doorium returned ${response.status}`);
+
+    // Save external_id
+    await pool.query(
+      'UPDATE requests SET external_id = $1, external_system = $2, updated_at = NOW() WHERE id = $3',
+      [result.id || result.external_id, 'doorium', r.id]
+    );
+
+    const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [r.id]);
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error('Bridge send error:', err);
+    res.status(500).json({ error: err.message || 'Ошибка отправки в Doorium' });
+  }
+});
+
+// Sync status from Doorium (admin clicks "Синхр.")
+app.post('/api/bridge/sync/:id', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Нет доступа' });
+  }
+  if (!DOORIUM_API_URL || !DOORIUM_API_KEY) {
+    return res.status(500).json({ error: 'Doorium не настроен' });
+  }
+  try {
+    const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+    const r = rows[0];
+    if (!r.external_id || r.external_system !== 'doorium') {
+      return res.status(400).json({ error: 'Заявка не связана с Doorium' });
+    }
+
+    // Fetch status from Doorium
+    const response = await fetch(`${DOORIUM_API_URL}/api/bridge/status/${r.external_id}`, {
+      headers: { 'X-Bridge-Key': DOORIUM_API_KEY },
+    });
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || `Doorium returned ${response.status}`);
+
+    const updates = [];
+    const params = [];
+    let idx = 1;
+
+    // Map status
+    if (result.status) {
+      const mapped = statusFromDoorium[result.status] || result.status;
+      updates.push(`status = $${idx++}`);
+      params.push(mapped);
+    }
+    // Map agreed_date
+    if (result.agreed_date !== undefined) {
+      updates.push(`agreed_date = $${idx++}`);
+      params.push(result.agreed_date);
+    }
+    // Map amount
+    if (result.amount !== undefined) {
+      updates.push(`amount = $${idx++}`);
+      params.push(result.amount);
+    }
+    // Map status_comment
+    if (result.status_comment) {
+      updates.push(`status_comment = $${idx++}`);
+      params.push(result.status_comment);
+    }
+
+    if (updates.length > 0) {
+      updates.push(`updated_at = NOW()`);
+      params.push(r.id);
+      await pool.query(`UPDATE requests SET ${updates.join(', ')} WHERE id = $${idx}`, params);
+    }
+
+    const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [r.id]);
+    res.json(updated.rows[0]);
+  } catch (err) {
+    console.error('Bridge sync error:', err);
+    res.status(500).json({ error: err.message || 'Ошибка синхронизации' });
+  }
+});
+
+// Receive request from Doorium (Doorium pushes to us)
+app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
+  try {
+    const {
+      source_system, source_id, source_number,
+      type, status, client_name, client_phone: rawPhone,
+      client_address, city, extra_name, extra_phone: rawExtraPhone,
+      work_description, notes, agreed_date,
+      interior_doors, entrance_doors, partitions, amount, photos,
+    } = req.body;
+
+    if (!client_name || !rawPhone) {
+      return res.status(400).json({ error: 'client_name and client_phone required' });
+    }
+
+    const client_phone = normalizePhone(rawPhone) || rawPhone;
+    const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
+
+    // Check if already received (by source_id + source_system)
+    if (source_id && source_system) {
+      const existing = await pool.query(
+        'SELECT id FROM requests WHERE external_id = $1 AND external_system = $2',
+        [source_id, source_system]
+      );
+      if (existing.rows.length > 0) {
+        // Update existing request instead of creating duplicate
+        const existingId = existing.rows[0].id;
+        const mappedStatus = statusFromDoorium[status] || status || 'new';
+        await pool.query(
+          `UPDATE requests SET status = $1, agreed_date = $2, amount = $3, 
+           status_comment = $4, notes = $5, updated_at = NOW() WHERE id = $6`,
+          [mappedStatus, agreed_date || null, amount || null, null, notes || null, existingId]
+        );
+        const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [existingId]);
+        return res.json({ id: existingId, number: updated.rows[0].number, updated: true });
+      }
+    }
+
+    // Generate new request number
+    const countResult = await pool.query(
+      "SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests"
+    );
+    const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
+    const mappedStatus = statusFromDoorium[status] || status || 'new';
+
+    const { rows } = await pool.query(
+      `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, 
+       work_description, extra_name, extra_phone, source, photos, status, notes,
+       agreed_date, interior_doors, entrance_doors, partitions, amount,
+       external_id, external_system)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'site', $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *`,
+      [
+        number, client_name, client_phone, client_address || null, city || null,
+        type || 'installation', work_description || null, extra_name || null, extra_phone,
+        photos ? JSON.stringify(photos) : '[]', mappedStatus, notes || null,
+        agreed_date || null, interior_doors || null, entrance_doors || null, partitions || null,
+        amount || null, source_id || null, source_system || null,
+      ]
+    );
+
+    // Notify managers about incoming bridge request
+    const sysLabel = source_system ? ` из ${source_system.charAt(0).toUpperCase() + source_system.slice(1)}` : '';
+    await notifyManagersAndAdmins(pool,
+      `🔗 <b>Входящая заявка${sysLabel}</b>\n\n№ ${number}\nКлиент: ${client_name}\nТелефон: ${client_phone}\nАдрес: ${client_address || '—'}\n\n👉 <a href="${SITE_URL}/admin/requests">Открыть заявки</a>`
+    );
+
+    res.json({ id: rows[0].id, number: rows[0].number, created: true });
+  } catch (err) {
+    console.error('Bridge receive error:', err);
+    res.status(500).json({ error: err.message || 'Ошибка приёма заявки' });
+  }
+});
+
+// Return status of a request to external system (Doorium calls this to sync)
+app.get('/api/bridge/status/:externalId', bridgeAuth, async (req, res) => {
+  try {
+    // externalId here is OUR request id (we are the source)
+    const { rows } = await pool.query('SELECT * FROM requests WHERE id = $1', [req.params.externalId]);
+    if (!rows.length) {
+      // Try by external_id
+      const alt = await pool.query('SELECT * FROM requests WHERE external_id = $1', [req.params.externalId]);
+      if (!alt.rows.length) return res.status(404).json({ error: 'Request not found' });
+      const r = alt.rows[0];
+      return res.json({
+        status: statusToDoorium[r.status] || r.status,
+        agreed_date: r.agreed_date,
+        amount: r.amount,
+        status_comment: r.status_comment,
+      });
+    }
+    const r = rows[0];
+    res.json({
+      status: statusToDoorium[r.status] || r.status,
+      agreed_date: r.agreed_date,
+      amount: r.amount,
+      status_comment: r.status_comment,
+    });
+  } catch (err) {
+    console.error('Bridge status error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
 });
