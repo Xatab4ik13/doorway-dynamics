@@ -12,6 +12,7 @@ import MobileRequestCard from "@/components/dashboard/MobileRequestCard";
 import { useUsers, useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
