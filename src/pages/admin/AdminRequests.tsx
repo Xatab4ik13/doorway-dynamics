@@ -245,11 +245,13 @@ const AdminRequests = () => {
           onDelete={handleDelete}
           viewerRole="admin"
           onSendToDoorium={async (req) => {
-            await api(`/api/bridge/send/${req.id}`, { method: "POST", auth: true });
+            const result = await api(`/api/bridge/send/${req.id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, external_id: result.external_id, external_system: 'doorium' } : null);
             refetch();
           }}
           onSyncDoorium={async (req) => {
-            await api(`/api/bridge/sync/${req.id}`, { method: "POST", auth: true });
+            const result = await api(`/api/bridge/sync/${req.id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, ...result } : null);
             refetch();
           }}
           onSendToInstallation={async (req) => {

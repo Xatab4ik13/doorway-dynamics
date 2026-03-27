@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
@@ -12,6 +12,7 @@ import MobileRequestCard from "@/components/dashboard/MobileRequestCard";
 import { useUsers, useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { usePaginatedRequests } from "@/hooks/usePaginatedRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
@@ -233,6 +234,16 @@ const ManagerDashboard = () => {
               source: req.source,
               partner_id: req.partner_id,
             });
+          }}
+          onSendToDoorium={async (req) => {
+            const result = await api(`/api/bridge/send/${req.id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, external_id: result.external_id, external_system: 'doorium' } : null);
+            refetch();
+          }}
+          onSyncDoorium={async (req) => {
+            const result = await api(`/api/bridge/sync/${req.id}`, { method: "POST", auth: true });
+            setSelectedRequest(prev => prev ? { ...prev, ...result } : null);
+            refetch();
           }}
         />
       )}
