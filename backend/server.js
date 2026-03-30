@@ -916,6 +916,16 @@ app.put('/api/requests/:id', auth, async (req, res) => {
           status_comment: updated.status_comment || null,
           notes: updated.notes || null,
           work_description: updated.work_description || null,
+          client_name: updated.client_name || null,
+          client_phone: updated.client_phone || null,
+          client_address: updated.client_address || null,
+          city: updated.city || null,
+          extra_name: updated.extra_name || null,
+          extra_phone: updated.extra_phone || null,
+          interior_doors: updated.interior_doors ?? null,
+          entrance_doors: updated.entrance_doors ?? null,
+          partitions: updated.partitions ?? null,
+          photos: updated.photos || null,
         };
         const syncRes = await fetch(`${DOORIUM_API_URL}/api/bridge/update/${updated.external_id}`, {
           method: 'PUT',
@@ -1631,7 +1641,9 @@ app.get('/api/bridge/status/:externalId', bridgeAuth, async (req, res) => {
 app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
   try {
     const externalId = req.params.id;
-    const { status, agreed_date, amount, status_comment, notes, work_description, source_id, source_number } = req.body;
+    const { status, agreed_date, amount, status_comment, notes, work_description, source_id, source_number,
+            client_name, client_phone, client_address, city, extra_name, extra_phone,
+            interior_doors, entrance_doors, partitions, photos } = req.body;
 
     // Find our request by external_id (their id) or by our id (if they sent source_id)
     let row;
@@ -1656,6 +1668,16 @@ app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
     if (status_comment !== undefined) updates.status_comment = status_comment;
     if (notes !== undefined) updates.notes = notes;
     if (work_description !== undefined) updates.work_description = work_description;
+    if (client_name !== undefined && client_name !== row.client_name) updates.client_name = client_name;
+    if (client_phone !== undefined && client_phone !== row.client_phone) updates.client_phone = client_phone;
+    if (client_address !== undefined && client_address !== row.client_address) updates.client_address = client_address;
+    if (city !== undefined && city !== row.city) updates.city = city;
+    if (extra_name !== undefined) updates.extra_name = extra_name;
+    if (extra_phone !== undefined) updates.extra_phone = extra_phone;
+    if (interior_doors !== undefined) updates.interior_doors = interior_doors;
+    if (entrance_doors !== undefined) updates.entrance_doors = entrance_doors;
+    if (partitions !== undefined) updates.partitions = partitions;
+    if (photos !== undefined) updates.photos = photos;
 
     // Auto-set closed_at
     if (updates.status === 'closed' && row.status !== 'closed') {
@@ -1673,8 +1695,13 @@ app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
     const values = [];
     let idx = 1;
     for (const [key, value] of Object.entries(updates)) {
-      fields.push(`${key} = $${idx}`);
-      values.push(value);
+      if (key === 'photos') {
+        fields.push(`${key} = $${idx}::jsonb`);
+        values.push(JSON.stringify(value));
+      } else {
+        fields.push(`${key} = $${idx}`);
+        values.push(value);
+      }
       idx++;
     }
     fields.push(`updated_at = NOW()`);
