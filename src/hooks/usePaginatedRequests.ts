@@ -39,6 +39,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
     if (filters.measurerId !== "all") params.set("measurer_id", filters.measurerId);
     if (filters.installerId !== "all") params.set("installer_id", filters.installerId);
     if (filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
+    if (filters.sourceFilter && filters.sourceFilter !== "all") params.set("source_filter", filters.sourceFilter);
     if (filters.dateFrom) params.set("date_from", filters.dateFrom);
     if (filters.dateTo) params.set("date_to", filters.dateTo);
     if (filters.dateField && filters.dateField !== "created_at") params.set("date_field", filters.dateField);
@@ -76,6 +77,11 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         if (filters.measurerId !== "all") filtered = filtered.filter(r => r.measurer_id === filters.measurerId);
         if (filters.installerId !== "all") filtered = filtered.filter(r => r.installer_id === filters.installerId);
         if (filters.partnerId !== "all") filtered = filtered.filter(r => r.partner_id === filters.partnerId);
+        if (filters.sourceFilter && filters.sourceFilter !== "all") {
+          if (filters.sourceFilter === "doorium") filtered = filtered.filter(r => r.external_system === "doorium");
+          else if (filters.sourceFilter === "partner") filtered = filtered.filter(r => !!r.partner_id && r.external_system !== "doorium");
+          else if (filters.sourceFilter === "site") filtered = filtered.filter(r => !r.partner_id && r.external_system !== "doorium");
+        }
         const dateField = filters.dateField || "created_at";
         if (dateField === "closed_at") {
           filtered = filtered.filter(r => r.status === "closed");
@@ -134,7 +140,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
   useEffect(() => {
     setPage(1);
     prevTotalRef.current = null;
-  }, [filters.search, filters.status, filters.type, filters.measurerId, filters.installerId, filters.partnerId, filters.dateFrom, filters.dateTo, filters.dateField, quickFilter]);
+  }, [filters.search, filters.status, filters.type, filters.measurerId, filters.installerId, filters.partnerId, filters.sourceFilter, filters.dateFrom, filters.dateTo, filters.dateField, quickFilter]);
 
   useEffect(() => {
     fetchRequests();

@@ -29,7 +29,7 @@ const AdminRequests = () => {
   const quickFromUrl = searchParams.get("quick") || undefined;
   const searchFromUrl = searchParams.get("search") || "";
   const [city, setCity] = useState<CityFilter>("Москва");
-  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва", search: searchFromUrl });
+  const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва", search: searchFromUrl, sourceFilter: "all" });
   const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter: quickFromUrl });
   const { createRequest, deleteRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
@@ -50,6 +50,7 @@ const AdminRequests = () => {
       if (filters.measurerId !== "all") params.set("measurer_id", filters.measurerId);
       if (filters.installerId !== "all") params.set("installer_id", filters.installerId);
       if (filters.partnerId !== "all") params.set("partner_id", filters.partnerId);
+      if (filters.sourceFilter && filters.sourceFilter !== "all") params.set("source_filter", filters.sourceFilter);
       if (filters.dateFrom) params.set("date_from", filters.dateFrom);
       if (filters.dateTo) params.set("date_to", filters.dateTo);
       if (filters.dateField && filters.dateField !== "created_at") params.set("date_field", filters.dateField);

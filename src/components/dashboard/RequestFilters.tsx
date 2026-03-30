@@ -15,6 +15,7 @@ export interface FilterState {
   dateFrom: string;
   dateTo: string;
   dateField: "created_at" | "closed_at";
+  sourceFilter: string;
 }
 
 export const defaultFilters: FilterState = {
@@ -28,6 +29,7 @@ export const defaultFilters: FilterState = {
   dateFrom: "",
   dateTo: "",
   dateField: "created_at",
+  sourceFilter: "all",
 };
 
 interface RequestFiltersProps {
@@ -53,6 +55,7 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
     filters.measurerId !== "all",
     filters.installerId !== "all",
     filters.partnerId !== "all",
+    filters.sourceFilter !== "all",
     !!filters.dateFrom,
     !!filters.dateTo,
   ].filter(Boolean).length;
@@ -141,6 +144,15 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
                 <select value={filters.partnerId} onChange={(e) => set("partnerId", e.target.value)} className={selectClass + " w-full"}>
                   <option value="all">Все</option>
                   {partners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Filter size={11} /> Источник</label>
+                <select value={filters.sourceFilter} onChange={(e) => set("sourceFilter", e.target.value)} className={selectClass + " w-full"}>
+                  <option value="all">Все источники</option>
+                  <option value="site">Сайт</option>
+                  <option value="partner">Партнёр</option>
+                  <option value="doorium">Doorium</option>
                 </select>
               </div>
               <div>
