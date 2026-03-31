@@ -293,6 +293,33 @@ const MeasurerDashboard = () => {
             </p>
           )}
 
+          {!canComplete && (
+            <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+              ⚠ Заполните все обязательные поля и загрузите хотя бы одно фото
+            </p>
+          )}
+
+          <div className="pt-3 space-y-3 pb-6">
+            <button
+              onClick={handleComplete}
+              disabled={!canComplete}
+              className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+            >
+              <CheckCircle2 size={16} /> Замер выполнен
+            </button>
+            <button
+              onClick={handleCloseSelected}
+              className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
+            >
+              Отмена
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Status actions — always visible regardless of date confirmation */}
+      {selected.status !== "measurement_done" && selected.status !== "closed" && selected.status !== "client_refused" && (
+        <div className="space-y-3 border-t border-border pt-4">
           {!pendingOpen ? (
             <button
               onClick={() => setPendingOpen(true)}
@@ -312,10 +339,7 @@ const MeasurerDashboard = () => {
               />
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => {
-                    setPendingOpen(false);
-                    setPendingComment("");
-                  }}
+                  onClick={() => { setPendingOpen(false); setPendingComment(""); }}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
                 >
                   Отмена
@@ -325,10 +349,7 @@ const MeasurerDashboard = () => {
                     if (!selected || !pendingComment.trim()) return;
                     setSendingPending(true);
                     try {
-                      await updateRequest(selected.id, {
-                        status: "pending" as any,
-                        status_comment: pendingComment.trim(),
-                      });
+                      await updateRequest(selected.id, { status: "pending" as any, status_comment: pendingComment.trim() });
                       handleCloseSelected();
                       toast.success("Заявка переведена в ожидание");
                     } catch {} finally { setSendingPending(false); }
@@ -361,10 +382,7 @@ const MeasurerDashboard = () => {
               />
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => {
-                    setRefuseOpen(false);
-                    setRefuseComment("");
-                  }}
+                  onClick={() => { setRefuseOpen(false); setRefuseComment(""); }}
                   className="px-4 py-2 rounded-lg text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
                 >
                   Отмена
@@ -374,10 +392,7 @@ const MeasurerDashboard = () => {
                     if (!selected || !refuseComment.trim()) return;
                     setRefusing(true);
                     try {
-                      await updateRequest(selected.id, {
-                        status: "client_refused" as any,
-                        status_comment: refuseComment.trim(),
-                      });
+                      await updateRequest(selected.id, { status: "client_refused" as any, status_comment: refuseComment.trim() });
                       handleCloseSelected();
                       toast.success("Заявка отмечена как отказ клиента");
                     } catch {} finally { setRefusing(false); }
@@ -390,23 +405,7 @@ const MeasurerDashboard = () => {
               </div>
             </div>
           )}
-
-          <div className="pt-3 space-y-3 pb-6">
-            <button
-              onClick={handleComplete}
-              disabled={!canComplete}
-              className="w-full px-4 py-3 rounded-xl text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
-            >
-              <CheckCircle2 size={16} /> Замер выполнен
-            </button>
-            <button
-              onClick={handleCloseSelected}
-              className="w-full px-4 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-colors"
-            >
-              Отмена
-            </button>
-          </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -421,18 +420,18 @@ const MeasurerDashboard = () => {
         ) : activeRequests.length === 0 && doneRequests.length === 0 ? (
           <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">Нет активных заявок</CardContent></Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4 w-full min-w-0 overflow-hidden">
             {activeRequests.map((r) => (
               <Card
                 key={r.id}
-                className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
+                className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 overflow-hidden ${
                   selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-amber-400"
                 }`}
                 onClick={() => handleSelectRequest(r)}
               >
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
+                  <div className="flex items-start justify-between gap-3 min-w-0">
+                    <div className="space-y-1 min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
