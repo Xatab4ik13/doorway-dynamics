@@ -425,7 +425,7 @@ const MeasurerDashboard = () => {
             {activeRequests.map((r) => (
               <Card
                 key={r.id}
-                className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
+                className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 overflow-hidden ${
                   selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-amber-400"
                 }`}
                 onClick={() => handleSelectRequest(r)}
