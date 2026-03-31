@@ -64,7 +64,7 @@ const SearchableUserSelect = ({ value, onChange, users, placeholder = "Не на
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 300 }}
-          className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[70dvh] flex flex-col"
+          className="absolute bottom-0 left-0 right-0 bg-card rounded-t-2xl max-h-[90dvh] flex flex-col"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           onClick={(e) => e.stopPropagation()}
         >
