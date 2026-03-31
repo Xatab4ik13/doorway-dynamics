@@ -421,7 +421,7 @@ const MeasurerDashboard = () => {
         ) : activeRequests.length === 0 && doneRequests.length === 0 ? (
           <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">Нет активных заявок</CardContent></Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-4 w-full min-w-0 overflow-hidden">
             {activeRequests.map((r) => (
               <Card
                 key={r.id}
