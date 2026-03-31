@@ -80,6 +80,8 @@ const SearchableUserSelect = ({ value, onChange, users, placeholder = "Не на
               <input
                 ref={inputRef}
                 type="text"
+                inputMode="search"
+                enterKeyHint="done"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Поиск..."
