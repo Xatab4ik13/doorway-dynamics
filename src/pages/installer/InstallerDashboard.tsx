@@ -227,6 +227,28 @@ const InstallerDashboard = () => {
                       <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
                     </div>
 
+                    {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
+                      <div className="flex flex-wrap gap-2">
+                        {selected.interior_doors != null && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">Межкомнатные: {selected.interior_doors}</span>}
+                        {selected.entrance_doors != null && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">Входные: {selected.entrance_doors}</span>}
+                        {selected.partitions != null && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">Перегородки: {selected.partitions}</span>}
+                      </div>
+                    )}
+
+                    {selected.extra_name && (
+                      <div className="p-3 rounded-xl bg-accent/50">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Доп. контакт</p>
+                        <p className="text-sm font-medium">{selected.extra_name}</p>
+                        {selected.extra_phone && <a href={`tel:${selected.extra_phone.replace(/\s/g, "")}`} className="text-xs text-primary hover:underline">{selected.extra_phone}</a>}
+                      </div>
+                    )}
+
+                    {selected.amount != null && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
+                        <span className="text-sm font-medium text-primary">{selected.amount.toLocaleString("ru-RU")} ₽</span>
+                      </div>
+                    )}
+
                     {selected.notes && (
                       <div className="p-4 rounded-xl bg-accent/30 border border-border">
                         <p className="text-[10px] font-medium text-muted-foreground mb-1 uppercase tracking-wider">Заметки</p>
