@@ -600,6 +600,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           {renderFooter()}
           {renderConfirmation()}
         </MobileFullScreen>
+        {viewingFile && (
+          <FileViewer url={viewingFile.url} type={viewingFile.type} onClose={() => setViewingFile(null)} />
+        )}
       </>
     );
   }
