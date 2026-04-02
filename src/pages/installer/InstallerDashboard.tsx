@@ -635,6 +635,9 @@ const InstallerDashboard = () => {
           )
         )}
       </div>
+      {viewingFile && (
+        <FileViewer url={viewingFile.url} type={viewingFile.type} onClose={() => setViewingFile(null)} />
+      )}
     </DashboardLayout>
   );
 };
