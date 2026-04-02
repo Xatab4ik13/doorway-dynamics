@@ -2,6 +2,7 @@ import { MapPin, Calendar, Phone, Briefcase, ChevronRight, Link2 } from "lucide-
 import { statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import type { ApiRequest } from "@/hooks/useRequests";
 import { motion } from "framer-motion";
+import { formatDate } from "@/lib/formatDate";
 
 interface MobileRequestCardProps {
   request: ApiRequest;
@@ -64,7 +65,7 @@ const MobileRequestCard = ({ request: r, index, onClick, getUserName }: MobileRe
           )}
         </div>
         <div className="flex items-center gap-1.5 text-muted-foreground shrink-0">
-          <span className="text-[11px]">{r.created_at?.split("T")[0]}</span>
+          <span className="text-[11px]">{formatDate(r.created_at)}</span>
           <ChevronRight size={14} />
         </div>
       </div>
