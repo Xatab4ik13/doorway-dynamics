@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadFile } from "@/lib/api";
 import { formatPhone } from "@/lib/formatPhone";
+import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
 
@@ -452,12 +453,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       </InfoRow>
                     )}
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
-                      <p className="text-sm font-medium text-foreground">{request.created_at?.split("T")[0]}</p>
+                      <p className="text-sm font-medium text-foreground">{formatDate(request.created_at)}</p>
                     </InfoRow>
                     {showDateField && (
                       <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
                         {canChangeDate ? (
-                          <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-primary" />
+                          <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
                         ) : (
                           <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                         )}
@@ -565,7 +566,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         {file.type === "image" ? <img src={file.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-accent/50"><FileText size={24} className="text-muted-foreground" /></div>}
                       </a>
                       <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
-                        {file.uploaded_at?.split("T")[0]}
+                        {formatDate(file.uploaded_at)}
                       </p>
                       {viewerRole === "admin" && onSave && (
                         <button
@@ -634,7 +635,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 )}
                 {request.accepted_at && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-100 text-blue-700">
-                    ✓ Принято монтажником {new Date(request.accepted_at).toLocaleDateString("ru-RU")}
+                    ✓ Принято монтажником {formatDate(request.accepted_at)}
                   </span>
                 )}
               </div>
@@ -864,7 +865,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <Calendar size={16} className="text-primary mt-0.5 shrink-0" />
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Создана</p>
-                      <p className="text-sm font-medium">{request.created_at?.split("T")[0]}</p>
+                      <p className="text-sm font-medium">{formatDate(request.created_at)}</p>
                     </div>
                   </div>
                   <div className="p-3 rounded-xl bg-accent/50">
@@ -1174,7 +1175,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
-                          {file.uploaded_at?.split("T")[0]}
+                          {formatDate(file.uploaded_at)}
                         </p>
                       </a>
                       {viewerRole === "admin" && onSave && (
