@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useRequests } from "@/hooks/useRequests";
 import api from "@/lib/api";
+import { formatDate } from "@/lib/formatDate";
 import type { PaginatedResponse } from "@/hooks/usePaginatedRequests";
 
 const AdminRequests = () => {
@@ -214,7 +215,7 @@ const AdminRequests = () => {
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                               {r.amount != null ? `${r.amount.toLocaleString("ru-RU")} ₽` : "—"}
                             </td>
-                            <td className="py-3.5 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
+                            <td className="py-3.5 text-xs text-muted-foreground">{formatDate(r.created_at)}</td>
                           </motion.tr>
                         ))}
                       </tbody>

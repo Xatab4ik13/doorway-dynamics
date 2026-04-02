@@ -63,12 +63,19 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         // Apply client-side filters if API doesn't support them
         if (filters.search) {
           const s = filters.search.toLowerCase();
+          // Smart phone search: normalize 8xxx to +7xxx
+          const searchNorm = filters.search.replace(/\s/g, '');
+          let phoneAlt = '';
+          if (/^8\d{10}$/.test(searchNorm)) phoneAlt = '+7' + searchNorm.slice(1);
+          else if (/^\+?7\d{10}$/.test(searchNorm)) phoneAlt = '8' + searchNorm.replace(/^\+?7/, '');
+
           filtered = filtered.filter(r =>
             r.client_name.toLowerCase().includes(s) ||
             r.number.toLowerCase().includes(s) ||
             (r.client_address || "").toLowerCase().includes(s) ||
             (r.client_phone || "").toLowerCase().includes(s) ||
-            (r.city || "").toLowerCase().includes(s)
+            (r.city || "").toLowerCase().includes(s) ||
+            (phoneAlt && (r.client_phone || "").includes(phoneAlt))
           );
         }
         if (filters.status !== "all") filtered = filtered.filter(r => r.status === filters.status);

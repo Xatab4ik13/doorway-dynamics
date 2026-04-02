@@ -4,6 +4,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { MapPin, Calendar, Search, Loader2, CheckCircle2 } from "lucide-react";
+import { formatDate } from "@/lib/formatDate";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
@@ -116,7 +117,7 @@ const PartnerDashboard = () => {
                         {statusLabels[r.status as RequestStatus] || r.status}
                       </span>
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Calendar size={12} /> {r.created_at?.split("T")[0]}
+                        <Calendar size={12} /> {formatDate(r.created_at)}
                       </span>
                     </div>
                   </div>
@@ -147,7 +148,7 @@ const PartnerDashboard = () => {
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
                           {statusLabels[r.status as RequestStatus] || r.status}
                         </span>
-                        <span className="text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</span>
+                        <span className="text-xs text-muted-foreground">{formatDate(r.created_at)}</span>
                       </div>
                     </CardContent>
                   </Card>
