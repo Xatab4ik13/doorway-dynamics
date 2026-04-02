@@ -3,6 +3,7 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { ClipboardList, Clock, CheckCircle, AlertTriangle, Briefcase, Loader2, Plus, MapPin } from "lucide-react";
+import { formatDate } from "@/lib/formatDate";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
@@ -189,7 +190,7 @@ const ManagerDashboard = () => {
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                               {r.amount != null ? `${r.amount.toLocaleString("ru-RU")} ₽` : "—"}
                             </td>
-                            <td className="py-3.5 text-xs text-muted-foreground">{r.created_at?.split("T")[0]}</td>
+                            <td className="py-3.5 text-xs text-muted-foreground">{formatDate(r.created_at)}</td>
                           </motion.tr>
                         ))}
                       </tbody>
