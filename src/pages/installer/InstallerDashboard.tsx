@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
+import FileViewer from "@/components/dashboard/FileViewer";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
@@ -30,6 +31,7 @@ const InstallerDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
   const [rescheduleComment, setRescheduleComment] = useState("");
+  const [viewingFile, setViewingFile] = useState<{ url: string; type: string } | null>(null);
 
   useEffect(() => { document.title = "Мои заявки — Монтажник"; }, []);
 
