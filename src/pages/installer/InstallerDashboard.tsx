@@ -5,6 +5,7 @@ import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
 import { Phone, MapPin, Calendar, Upload, CheckCircle2, Camera, X, ChevronRight, AlertCircle, ClipboardCheck, Loader2 } from "lucide-react";
+import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
@@ -178,13 +179,13 @@ const InstallerDashboard = () => {
                       <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground"><MapPin size={12} /> <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a></div>
                       {r.agreed_date && (
-                        <div className="flex items-center gap-1 text-xs text-primary font-medium">
-                          <Calendar size={12} /> Согласовано: {r.agreed_date.split("T")[0]}
+                         <div className="flex items-center gap-1 text-xs text-primary font-medium">
+                          <Calendar size={12} /> Согласовано: {formatDate(r.agreed_date)}
                         </div>
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar size={14} /><span className="text-xs">{r.created_at?.split("T")[0]}</span><ChevronRight size={16} />
+                      <Calendar size={14} /><span className="text-xs">{formatDate(r.created_at)}</span><ChevronRight size={16} />
                     </div>
                   </div>
                 </CardContent>
@@ -313,7 +314,7 @@ const InstallerDashboard = () => {
                     {selected.accepted_at && (
                       <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
                         <CheckCircle2 size={14} className="text-blue-600" />
-                        <span className="text-sm font-medium text-blue-700">Принято: {new Date(selected.accepted_at).toLocaleString("ru-RU")}</span>
+                        <span className="text-sm font-medium text-blue-700">Принято: {formatDateTime(selected.accepted_at)}</span>
                       </div>
                     )}
 
@@ -334,7 +335,7 @@ const InstallerDashboard = () => {
                         <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
                           <div className="flex items-center gap-2">
                             <Calendar size={14} className="text-primary" />
-                            <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}</span>
+                            <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {formatDate(selected.agreed_date)}</span>
                           </div>
                           <button onClick={() => setRescheduleOpen(!rescheduleOpen)} className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors">
                             {rescheduleOpen ? "Отменить перенос" : "Перенести дату"}
