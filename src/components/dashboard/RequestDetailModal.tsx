@@ -10,6 +10,7 @@ import { formatPhone } from "@/lib/formatPhone";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileFullScreen from "./MobileFullScreen";
+import FileViewer from "./FileViewer";
 
 /** iOS-style grouped row for mobile detail view */
 const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
@@ -80,6 +81,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   // Confirmation dialog
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingUpdates, setPendingUpdates] = useState<any>(null);
+  const [viewingFile, setViewingFile] = useState<{ url: string; type: string } | null>(null);
 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
