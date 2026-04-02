@@ -564,8 +564,8 @@ app.get('/api/requests', auth, async (req, res) => {
     const dateCol = requestedDateField === 'closed_at'
       ? (hasClosedAtColumn ? 'closed_at' : 'updated_at')
       : 'created_at';
-    if (date_from) { conds.push(`${dateCol} >= $${idx++}`); params.push(date_from); }
-    if (date_to) { conds.push(`${dateCol} <= $${idx++}::date + interval '1 day'`); params.push(date_to); }
+    if (date_from) { conds.push(`${dateCol}::date >= $${idx++}::date`); params.push(date_from); }
+    if (date_to) { conds.push(`${dateCol}::date <= $${idx++}::date`); params.push(date_to); }
 
     if (quick === 'new') conds.push(`status = 'new'`);
     else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
@@ -1601,18 +1601,33 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
     const number = 'REQ-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
     const mappedStatus = statusFromDoorium[status] || status || 'new';
 
+    // Auto-assign partner: look for Doorium's default partner by phone
+    let autoPartnerId = null;
+    const DOORIUM_PARTNER_PHONE = '+79168191996';
+    try {
+      const partnerRes = await pool.query(
+        "SELECT id FROM users WHERE phone = $1 AND role = 'partner' AND active = true LIMIT 1",
+        [DOORIUM_PARTNER_PHONE]
+      );
+      if (partnerRes.rows.length > 0) {
+        autoPartnerId = partnerRes.rows[0].id;
+      }
+    } catch (err) {
+      console.error('Auto-assign partner lookup error:', err.message);
+    }
+
     const { rows } = await pool.query(
       `INSERT INTO requests (number, client_name, client_phone, client_address, city, type, 
        work_description, extra_name, extra_phone, source, photos, status, notes,
        agreed_date, interior_doors, entrance_doors, partitions, amount,
-       external_id, external_system)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'site', $10::jsonb, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *`,
+       external_id, external_system, partner_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::jsonb, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21) RETURNING *`,
       [
         number, client_name, client_phone, client_address || null, city || null,
         type || 'installation', work_description || null, extra_name || null, extra_phone,
-        photos ? JSON.stringify(photos) : '[]', mappedStatus, notes || null,
+        autoPartnerId ? 'partner' : 'site', photos ? JSON.stringify(photos) : '[]', mappedStatus, notes || null,
         agreed_date || null, interior_doors || null, entrance_doors || null, partitions || null,
-        amount || null, source_id || null, source_system || null,
+        amount || null, source_id || null, source_system || null, autoPartnerId,
       ]
     );
 
