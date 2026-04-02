@@ -141,6 +141,11 @@ app.use(express.json());
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 let hasClosedAtColumn = false;
+const REPORT_TIMEZONE = 'Europe/Moscow';
+
+function dateFilterExpr(column) {
+  return `timezone('${REPORT_TIMEZONE}', ${column})::date`;
+}
 
 const s3 = new S3Client({
   endpoint: process.env.S3_ENDPOINT,
@@ -561,11 +566,11 @@ app.get('/api/requests', auth, async (req, res) => {
     if (requestedDateField === 'closed_at') {
       conds.push(`status = 'closed'`);
     }
-    const dateCol = requestedDateField === 'closed_at'
-      ? (hasClosedAtColumn ? 'closed_at' : 'updated_at')
-      : 'created_at';
-    if (date_from) { conds.push(`${dateCol}::date >= $${idx++}::date`); params.push(date_from); }
-    if (date_to) { conds.push(`${dateCol}::date <= $${idx++}::date`); params.push(date_to); }
+    const dateColExpr = requestedDateField === 'closed_at'
+      ? (hasClosedAtColumn ? dateFilterExpr('closed_at') : dateFilterExpr('updated_at'))
+      : dateFilterExpr('created_at');
+    if (date_from) { conds.push(`${dateColExpr} >= $${idx++}::date`); params.push(date_from); }
+    if (date_to) { conds.push(`${dateColExpr} <= $${idx++}::date`); params.push(date_to); }
 
     if (quick === 'new') conds.push(`status = 'new'`);
     else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
@@ -1101,28 +1106,19 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
   }
 });
 
-// === Startup check: closed_at column ===
+// === Startup check: ensure closed_at exists and is backfilled ===
 (async () => {
   try {
-    const { rows } = await pool.query(`
-      SELECT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_schema = 'public'
-          AND table_name = 'requests'
-          AND column_name = 'closed_at'
-      ) AS exists
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ`);
+    hasClosedAtColumn = true;
+    await pool.query(`
+      UPDATE requests
+      SET closed_at = COALESCE(closed_at, updated_at, created_at)
+      WHERE status = 'closed' AND closed_at IS NULL
     `);
-
-    hasClosedAtColumn = !!rows[0]?.exists;
-
-    if (hasClosedAtColumn) {
-      await pool.query(`UPDATE requests SET closed_at = COALESCE(updated_at, created_at) WHERE status = 'closed' AND closed_at IS NULL`);
-      console.log('Startup check: closed_at column ready');
-    } else {
-      console.warn('Startup check: closed_at column is missing. Date filter uses updated_at for closed requests.');
-    }
+    console.log('Startup check: closed_at column ready');
   } catch (err) {
+    hasClosedAtColumn = false;
     console.error('Startup check closed_at error:', err.message);
   }
 })();
