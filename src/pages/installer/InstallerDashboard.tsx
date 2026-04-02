@@ -539,7 +539,7 @@ const InstallerDashboard = () => {
                     <div className="flex items-center justify-between px-3 py-2 bg-primary/5 rounded-lg border border-primary/20">
                       <div className="flex items-center gap-2">
                         <Calendar size={14} className="text-primary" />
-                        <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {selected.agreed_date.split("T")[0]}</span>
+                        <span className="text-sm font-medium text-primary">{selected.type === "reclamation" ? "Дата визита" : "Дата монтажа"}: {formatDate(selected.agreed_date)}</span>
                       </div>
                       <button onClick={() => setRescheduleOpen(!rescheduleOpen)} className="text-xs px-3 py-1.5 rounded-lg border border-border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40 transition-colors">
                         {rescheduleOpen ? "Отменить перенос" : "Перенести дату"}
