@@ -3,6 +3,7 @@ import { Search, Filter, X, Download, Calendar, Users, ChevronDown } from "lucid
 import { statusLabels, requestTypeLabels, type RequestStatus } from "@/data/mockDashboard";
 import { type ApiUser } from "@/hooks/useRequests";
 import { motion, AnimatePresence } from "framer-motion";
+import SearchableUserSelect from "./SearchableUserSelect";
 
 export interface FilterState {
   search: string;
@@ -127,24 +128,30 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl bg-accent/50 border border-border">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Замерщик</label>
-                <select value={filters.measurerId} onChange={(e) => set("measurerId", e.target.value)} className={selectClass + " w-full"}>
-                  <option value="all">Все</option>
-                  {measurers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
+                <SearchableUserSelect
+                  value={filters.measurerId === "all" ? "" : filters.measurerId}
+                  onChange={(val) => set("measurerId", val || "all")}
+                  users={measurers}
+                  placeholder="Все"
+                />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Монтажник</label>
-                <select value={filters.installerId} onChange={(e) => set("installerId", e.target.value)} className={selectClass + " w-full"}>
-                  <option value="all">Все</option>
-                  {installers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
+                <SearchableUserSelect
+                  value={filters.installerId === "all" ? "" : filters.installerId}
+                  onChange={(val) => set("installerId", val || "all")}
+                  users={installers}
+                  placeholder="Все"
+                />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Партнёр</label>
-                <select value={filters.partnerId} onChange={(e) => set("partnerId", e.target.value)} className={selectClass + " w-full"}>
-                  <option value="all">Все</option>
-                  {partners.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                </select>
+                <SearchableUserSelect
+                  value={filters.partnerId === "all" ? "" : filters.partnerId}
+                  onChange={(val) => set("partnerId", val || "all")}
+                  users={partners}
+                  placeholder="Все"
+                />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Filter size={11} /> Источник</label>
