@@ -526,8 +526,25 @@ app.get('/api/requests', auth, async (req, res) => {
     const baseParams = [...params];
 
     if (search) {
-      conds.push(`(client_name ILIKE $${idx} OR number ILIKE $${idx} OR client_address ILIKE $${idx} OR client_phone ILIKE $${idx} OR city ILIKE $${idx})`);
-      params.push(`%${search}%`); idx++;
+      // Smart phone search: normalize 8xxx to +7xxx for phone matching
+      const searchNorm = search.replace(/\s/g, '');
+      const phoneVariants = [];
+      if (/^8\d{10}$/.test(searchNorm)) {
+        phoneVariants.push('+7' + searchNorm.slice(1));
+        phoneVariants.push(searchNorm);
+      } else if (/^\+?7\d{10}$/.test(searchNorm)) {
+        phoneVariants.push(searchNorm.startsWith('+') ? searchNorm : '+' + searchNorm);
+        phoneVariants.push('8' + searchNorm.replace(/^\+?7/, ''));
+      }
+      
+      if (phoneVariants.length > 0) {
+        conds.push(`(client_name ILIKE $${idx} OR number ILIKE $${idx} OR client_address ILIKE $${idx} OR city ILIKE $${idx} OR client_phone ILIKE $${idx} OR client_phone ILIKE $${idx+1})`);
+        params.push(`%${search}%`); idx++;
+        params.push(`%${phoneVariants[0]}%`); idx++;
+      } else {
+        conds.push(`(client_name ILIKE $${idx} OR number ILIKE $${idx} OR client_address ILIKE $${idx} OR client_phone ILIKE $${idx} OR city ILIKE $${idx})`);
+        params.push(`%${search}%`); idx++;
+      }
     }
     if (status && status !== 'all') { conds.push(`status = $${idx++}`); params.push(status); }
     if (type && type !== 'all') { conds.push(`type = $${idx++}`); params.push(type); }
