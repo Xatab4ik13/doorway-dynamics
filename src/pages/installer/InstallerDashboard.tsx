@@ -273,7 +273,7 @@ const InstallerDashboard = () => {
                       {(selected.photos || []).length > 0 ? (
                         <div className="grid grid-cols-2 gap-2">
                           {selected.photos.map((file: any, i: number) => (
-                            <a key={i} href={file.url} target="_blank" rel="noopener noreferrer" className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all">
+                            <button key={i} onClick={() => setViewingFile({ url: file.url, type: file.type })} className="group relative aspect-square rounded-lg overflow-hidden border border-border hover:border-primary/40 transition-all text-left">
                               {file.type === "image" ? (
                                 <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                               ) : (
@@ -282,7 +282,7 @@ const InstallerDashboard = () => {
                                   <p className="text-[10px] text-muted-foreground mt-1 px-1 truncate w-full text-center">{file.url.split("/").pop()}</p>
                                 </div>
                               )}
-                            </a>
+                            </button>
                           ))}
                         </div>
                       ) : (
