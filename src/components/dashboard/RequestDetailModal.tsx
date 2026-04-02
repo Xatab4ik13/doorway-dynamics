@@ -564,9 +564,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 <div className="grid grid-cols-2 gap-2">
                   {photos.map((file, i) => (
                     <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border group">
-                      <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full h-full">
+                      <button onClick={() => setViewingFile({ url: file.url, type: file.type })} className="block w-full h-full text-left">
                         {file.type === "image" ? <img src={file.url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-accent/50"><FileText size={24} className="text-muted-foreground" /></div>}
-                      </a>
+                      </button>
                       <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
                         {formatDate(file.uploaded_at)}
                       </p>
