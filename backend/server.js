@@ -779,11 +779,13 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // Автоматизация: закрытие → проставляем closed_at (если колонка доступна)
     if (hasClosedAtColumn) {
-      if (updates.status === 'closed' && request.status !== 'closed') {
+      // If admin explicitly sent closed_at, respect it; otherwise auto-set on close
+      const hasExplicitClosedAt = Object.prototype.hasOwnProperty.call(req.body, 'closed_at');
+      if (updates.status === 'closed' && request.status !== 'closed' && !hasExplicitClosedAt) {
         updates.closed_at = new Date().toISOString();
       }
       // Если заявку переоткрывают — сбрасываем closed_at
-      if (updates.status && updates.status !== 'closed' && request.status === 'closed') {
+      if (updates.status && updates.status !== 'closed' && request.status === 'closed' && !hasExplicitClosedAt) {
         updates.closed_at = null;
       }
     } else if (Object.prototype.hasOwnProperty.call(updates, 'closed_at')) {
