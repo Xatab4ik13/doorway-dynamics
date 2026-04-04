@@ -95,12 +95,12 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         }
         const getDateValue = (r: ApiRequest) => {
           const val = dateField === "closed_at"
-            ? ((r as any).closed_at || r.updated_at)
+            ? (r as any).closed_at
             : r.created_at;
           return val?.split("T")[0] || "";
         };
-        if (filters.dateFrom) filtered = filtered.filter(r => getDateValue(r) >= filters.dateFrom);
-        if (filters.dateTo) filtered = filtered.filter(r => getDateValue(r) <= filters.dateTo);
+        if (filters.dateFrom) filtered = filtered.filter(r => { const v = getDateValue(r); return v && v >= filters.dateFrom; });
+        if (filters.dateTo) filtered = filtered.filter(r => { const v = getDateValue(r); return v && v <= filters.dateTo; });
 
         if (quickFilter === "new") filtered = filtered.filter(r => r.status === "new");
         else if (quickFilter === "pending") filtered = filtered.filter(r => r.status === "pending");
