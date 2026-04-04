@@ -74,6 +74,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [source, setSource] = useState<string>(request.source || "site");
   const [partnerId, setPartnerId] = useState<string>(request.partner_id || "");
   const [requestType, setRequestType] = useState<string>(request.type || "measurement");
+  const [closedAt, setClosedAt] = useState(request.closed_at?.split("T")[0] || "");
   
   // Edit mode toggle for admin/manager
   const [isEditing, setIsEditing] = useState(false);
@@ -134,6 +135,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      // Allow editing closed_at for closed requests
+      if (status === "closed" || request.status === "closed") {
+        const originalClosedAt = request.closed_at?.split("T")[0] || "";
+        if (closedAt !== originalClosedAt) {
+          updates.closed_at = closedAt ? closedAt + "T23:59:59.000Z" : null;
+        }
+      }
     }
     
     if (canPartnerEdit) {
@@ -457,6 +465,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
                       <p className="text-sm font-medium text-foreground">{formatDate(request.created_at)}</p>
                     </InfoRow>
+                    {(request.status === "closed" || status === "closed") && (
+                      <InfoRow icon={<Calendar size={16} className="text-red-500" />} label="Дата закрытия">
+                        {canEdit && isEditing ? (
+                          <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
+                        ) : (
+                          <p className="text-sm font-medium text-foreground">{closedAt ? formatDate(closedAt) : "—"}</p>
+                        )}
+                      </InfoRow>
+                    )}
                     {showDateField && (
                       <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
                         {canChangeDate ? (
@@ -873,6 +890,19 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm font-medium">{formatDate(request.created_at)}</p>
                     </div>
                   </div>
+                  {(request.status === "closed" || status === "closed") && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <Calendar size={16} className="text-red-500 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Дата закрытия</p>
+                        {canEdit && isEditing ? (
+                          <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                        ) : (
+                          <p className="text-sm font-medium text-foreground">{closedAt ? formatDate(closedAt) : "—"}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="p-3 rounded-xl bg-accent/50">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Тип</p>
                     <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-card text-foreground border border-border">
