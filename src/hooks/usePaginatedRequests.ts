@@ -116,7 +116,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         const counts: Record<string, number> = {
           all: allData.length,
           new: allData.filter(r => r.status === "new").length,
-          in_progress: allData.filter(r => !["new", "closed", "cancelled"].includes(r.status)).length,
+          in_progress: allData.filter(r => ["pending", "measurer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"].includes(r.status)).length,
           reclamation: allData.filter(r => r.type === "reclamation").length,
         };
 
