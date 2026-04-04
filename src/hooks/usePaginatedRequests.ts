@@ -105,7 +105,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         if (quickFilter === "new") filtered = filtered.filter(r => r.status === "new");
         else if (quickFilter === "pending") filtered = filtered.filter(r => r.status === "pending");
         else if (quickFilter === "closed") filtered = filtered.filter(r => r.status === "closed");
-        else if (quickFilter === "in_progress") filtered = filtered.filter(r => !["new", "closed", "cancelled"].includes(r.status));
+        else if (quickFilter === "in_progress") filtered = filtered.filter(r => ["measurer_assigned", "installer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"].includes(r.status));
         else if (quickFilter === "reclamation") filtered = filtered.filter(r => r.type === "reclamation");
 
         const total = filtered.length;
