@@ -567,7 +567,7 @@ app.get('/api/requests', auth, async (req, res) => {
       conds.push(`status = 'closed'`);
     }
     const dateColExpr = requestedDateField === 'closed_at'
-      ? (hasClosedAtColumn ? dateFilterExpr('closed_at') : dateFilterExpr('updated_at'))
+      ? dateFilterExpr('closed_at')
       : dateFilterExpr('created_at');
     if (date_from) { conds.push(`${dateColExpr} >= $${idx++}::date`); params.push(date_from); }
     if (date_to) { conds.push(`${dateColExpr} <= $${idx++}::date`); params.push(date_to); }
@@ -1106,16 +1106,11 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
   }
 });
 
-// === Startup check: ensure closed_at exists and is backfilled ===
+// === Startup check: ensure closed_at column exists ===
 (async () => {
   try {
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ`);
     hasClosedAtColumn = true;
-    await pool.query(`
-      UPDATE requests
-      SET closed_at = COALESCE(closed_at, updated_at, created_at)
-      WHERE status = 'closed' AND closed_at IS NULL
-    `);
     console.log('Startup check: closed_at column ready');
   } catch (err) {
     hasClosedAtColumn = false;
