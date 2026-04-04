@@ -105,7 +105,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         if (quickFilter === "new") filtered = filtered.filter(r => r.status === "new");
         else if (quickFilter === "pending") filtered = filtered.filter(r => r.status === "pending");
         else if (quickFilter === "closed") filtered = filtered.filter(r => r.status === "closed");
-        else if (quickFilter === "in_progress") filtered = filtered.filter(r => !["new", "closed", "cancelled"].includes(r.status));
+        else if (quickFilter === "in_progress") filtered = filtered.filter(r => ["pending", "measurer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"].includes(r.status));
         else if (quickFilter === "reclamation") filtered = filtered.filter(r => r.type === "reclamation");
 
         const total = filtered.length;
@@ -116,7 +116,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         const counts: Record<string, number> = {
           all: allData.length,
           new: allData.filter(r => r.status === "new").length,
-          in_progress: allData.filter(r => !["new", "closed", "cancelled"].includes(r.status)).length,
+          in_progress: allData.filter(r => ["pending", "measurer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"].includes(r.status)).length,
           reclamation: allData.filter(r => r.type === "reclamation").length,
         };
 
