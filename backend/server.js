@@ -1109,6 +1109,29 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ`);
     hasClosedAtColumn = true;
     console.log('Startup check: closed_at column ready');
+
+    // One-time backfill: set closed_at = agreed_date for closed requests that have no closed_at
+    const backfill = await pool.query(`
+      UPDATE requests
+      SET closed_at = agreed_date::timestamptz
+      WHERE status = 'closed'
+        AND closed_at IS NULL
+        AND agreed_date IS NOT NULL
+    `);
+    if (backfill.rowCount > 0) {
+      console.log('Backfill closed_at from agreed_date:', backfill.rowCount, 'rows updated');
+    }
+
+    // For closed requests without agreed_date either — use updated_at as last resort
+    const backfill2 = await pool.query(`
+      UPDATE requests
+      SET closed_at = COALESCE(updated_at, created_at)
+      WHERE status = 'closed'
+        AND closed_at IS NULL
+    `);
+    if (backfill2.rowCount > 0) {
+      console.log('Backfill closed_at from updated_at (fallback):', backfill2.rowCount, 'rows updated');
+    }
   } catch (err) {
     hasClosedAtColumn = false;
     console.error('Startup check closed_at error:', err.message);
