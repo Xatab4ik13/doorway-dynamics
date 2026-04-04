@@ -20,7 +20,7 @@ const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
   { status: "closed", fill: "hsl(142, 71%, 45%)" },
 ];
 
-const IN_PROGRESS_STATUSES: RequestStatus[] = ["measurer_assigned", "installer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"];
+const IN_PROGRESS_STATUSES: RequestStatus[] = ["measurer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"];
 const DONE_STATUSES: RequestStatus[] = ["closed"];
 const DAY_NAMES = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
