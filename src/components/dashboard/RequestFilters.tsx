@@ -123,9 +123,9 @@ const RequestFilters = ({ filters, onChange, users, onExport, resultCount }: Req
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden"
+            className="overflow-visible"
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl bg-accent/50 border border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-4 rounded-xl bg-accent/50 border border-border overflow-visible">
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><Users size={11} /> Замерщик</label>
                 <SearchableUserSelect
