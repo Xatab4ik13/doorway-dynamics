@@ -132,7 +132,7 @@ const SearchableUserSelect = ({ value, onChange, users, placeholder = "Не на
 
   // Desktop dropdown (unchanged logic)
   const desktopDropdown = !isMobile && open ? (
-    <div className="absolute z-50 mt-1 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden">
+    <div className="absolute z-[60] mt-1 w-full bg-card border border-border rounded-xl shadow-lg overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <Search size={14} className="text-muted-foreground shrink-0" />
         <input
