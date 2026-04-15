@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, Mail, Phone } from "lucide-react";
 import PhoneMessengers from "@/components/PhoneMessengers";
 import logo from "@/assets/logo.png";
 import menuBg from "@/assets/menu-bg.jpg";
@@ -23,7 +23,6 @@ const Header = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Reset servicesOpen to true whenever menu opens
   useEffect(() => {
     if (menuOpen) {
       setServicesOpen(true);
@@ -36,8 +35,51 @@ const Header = () => {
 
   return (
     <>
+      {/* Top contact bar — desktop only */}
+      <div
+        className="fixed top-0 left-0 right-0 z-[51] hidden md:block transition-all duration-500"
+        style={{
+          background: scrolled ? "rgba(0, 0, 0, 0.8)" : "rgba(0, 0, 0, 0.95)",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+        }}
+      >
+        <div className="flex items-center justify-between px-10 h-9 text-[11px] text-white/60 max-w-[1400px] mx-auto">
+          <div className="flex items-center gap-6">
+            <span className="text-white/40 uppercase tracking-wider text-[9px]">Москва</span>
+            <a href="tel:+79261663062" className="hover:text-white transition-colors tracking-wider">+7 926 166 30 62</a>
+            <a href="tel:+79255700609" className="hover:text-white transition-colors tracking-wider">+7 925 570 06 09</a>
+            <span className="text-white/20">|</span>
+            <span className="text-white/40 uppercase tracking-wider text-[9px]">СПб</span>
+            <a href="tel:+79932663504" className="hover:text-white transition-colors tracking-wider">+7 993 266 35 04</a>
+          </div>
+          <div className="flex items-center gap-4">
+            <a href="mailto:service@primedoor.ru" className="flex items-center gap-1.5 hover:text-white transition-colors">
+              <Mail size={12} />
+              service@primedoor.ru
+            </a>
+            <span className="text-white/20">|</span>
+            <a
+              href="https://wa.me/79261663062"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              WhatsApp
+            </a>
+            <a
+              href="https://t.me/+79261663062"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors"
+            >
+              Telegram
+            </a>
+          </div>
+        </div>
+      </div>
+
       <header
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
+        className="fixed top-0 md:top-9 left-0 right-0 z-50 transition-all duration-500"
         style={{
           background: scrolled ? "rgba(0, 0, 0, 0.65)" : "hsl(0 0% 0%)",
           backdropFilter: scrolled ? "blur(12px)" : "none",
@@ -54,35 +96,18 @@ const Header = () => {
           </Link>
 
           <div className="absolute right-4 md:right-10 z-[110] flex items-center gap-3 md:gap-4">
-            {/* Заявка buttons */}
-            <Link
-              to="/request"
-              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 bg-foreground text-background hover:bg-foreground/80 transition-colors duration-300 hidden md:inline-block"
-            >
-              Заявка
-            </Link>
+            {/* Mobile phone icon */}
+            <a href="tel:+79261663062" className="md:hidden text-white/70 hover:text-white transition-colors">
+              <Phone size={18} />
+            </a>
 
-            {/* Burger */}
+            {/* Меню button */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex flex-col items-center justify-center w-10 h-10 gap-[6px]"
+              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 text-foreground hover:text-foreground/70 transition-colors duration-300"
               aria-label="Меню"
             >
-              <motion.span
-                animate={menuOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="block w-7 h-[1.5px] bg-foreground origin-center"
-              />
-              <motion.span
-                animate={menuOpen ? { opacity: 0, scaleX: 0 } : { opacity: 1, scaleX: 1 }}
-                transition={{ duration: 0.2 }}
-                className="block w-7 h-[1.5px] bg-foreground"
-              />
-              <motion.span
-                animate={menuOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="block w-7 h-[1.5px] bg-foreground origin-center"
-              />
+              {menuOpen ? "Закрыть" : "Меню"}
             </button>
           </div>
         </div>
@@ -195,29 +220,12 @@ const Header = () => {
                     </AnimatePresence>
                   </motion.div>
 
-                  {/* Заявка */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 40 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.5 }}
-                  >
-                    <Link
-                      to="/request"
-                      onClick={closeMenu}
-                      className="block py-3 font-bold text-white text-2xl md:text-3xl transition-colors duration-300 hover:text-white/50"
-                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
-                    >
-                      Заявка
-                    </Link>
-                  </motion.div>
-
                   {/* Новости */}
                   <motion.div
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.55 }}
+                    transition={{ duration: 0.6, delay: 0.5 }}
                   >
                     <Link
                       to="/news"
@@ -234,7 +242,7 @@ const Header = () => {
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.6 }}
+                    transition={{ duration: 0.6, delay: 0.55 }}
                   >
                     <Link
                       to="/contacts"
@@ -251,7 +259,7 @@ const Header = () => {
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.65 }}
+                    transition={{ duration: 0.6, delay: 0.6 }}
                   >
                     <Link
                       to="/vacancies"
@@ -268,7 +276,7 @@ const Header = () => {
                     initial={{ opacity: 0, x: 40 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.6, delay: 0.7 }}
+                    transition={{ duration: 0.6, delay: 0.65 }}
                   >
                     <Link
                       to="/become-partner"
@@ -307,6 +315,12 @@ const Header = () => {
                       +7 993 266 35 04
                     </a>
                     <PhoneMessengers phone="+79932663504" variant="light" />
+                  </div>
+                  <div className="mt-3">
+                    <a href="mailto:service@primedoor.ru" className="flex items-center gap-2 text-white/60 text-sm hover:text-white transition-colors">
+                      <Mail size={14} />
+                      service@primedoor.ru
+                    </a>
                   </div>
                   <Link
                     to="/login"
