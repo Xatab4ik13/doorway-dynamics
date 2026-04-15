@@ -1092,10 +1092,21 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
       return res.status(403).json({ error: "Только администратор может удалять заявки" });
     }
     const { id } = req.params;
-    const result = await pool.query("DELETE FROM requests WHERE id = $1 RETURNING id", [id]);
-    if (result.rows.length === 0) {
+    // Fetch request before deleting to check for external_id (bridge blacklist)
+    const existing = await pool.query("SELECT id, external_id, external_system FROM requests WHERE id = $1", [id]);
+    if (existing.rows.length === 0) {
       return res.status(404).json({ error: "Заявка не найдена" });
     }
+    const req_data = existing.rows[0];
+    // If this is a Doorium-linked request, add to bridge_rejected blacklist
+    if (req_data.external_id && req_data.external_system) {
+      await pool.query(
+        `INSERT INTO bridge_rejected (external_id, external_system) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        [req_data.external_id, req_data.external_system]
+      );
+      console.log(`Bridge blacklist: added ${req_data.external_system}/${req_data.external_id}`);
+    }
+    await pool.query("DELETE FROM requests WHERE id = $1", [id]);
     res.json({ success: true });
   } catch (err) {
     console.error("Delete request error:", err);
@@ -1401,14 +1412,20 @@ const DOORIUM_API_URL = process.env.DOORIUM_API_URL;
 const DOORIUM_API_KEY = process.env.DOORIUM_API_KEY;
 const BRIDGE_API_KEY = process.env.BRIDGE_API_KEY;
 
-// Auto-create external_id / external_system columns
+// Auto-create external_id / external_system columns + bridge_rejected table
 (async () => {
   try {
     await pool.query(`
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_id TEXT;
       ALTER TABLE requests ADD COLUMN IF NOT EXISTS external_system TEXT;
+      CREATE TABLE IF NOT EXISTS bridge_rejected (
+        external_id TEXT NOT NULL,
+        external_system TEXT NOT NULL DEFAULT 'doorium',
+        rejected_at TIMESTAMPTZ DEFAULT NOW(),
+        PRIMARY KEY (external_id, external_system)
+      );
     `);
-    console.log('Bridge: external_id/external_system columns ready');
+    console.log('Bridge: columns + bridge_rejected table ready');
   } catch (err) {
     console.error('Bridge columns error:', err.message);
   }
@@ -1582,6 +1599,18 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
       return res.status(400).json({ error: 'client_name and client_phone required' });
     }
 
+    // Check bridge_rejected blacklist
+    if (source_id && source_system) {
+      const rejected = await pool.query(
+        'SELECT 1 FROM bridge_rejected WHERE external_id = $1 AND external_system = $2',
+        [source_id, source_system]
+      );
+      if (rejected.rows.length > 0) {
+        console.log(`Bridge receive BLOCKED (blacklisted): ${source_system}/${source_id}`);
+        return res.json({ blocked: true, reason: 'rejected', source_id });
+      }
+    }
+
     const client_phone = normalizePhone(rawPhone) || rawPhone;
     const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
 
@@ -1692,6 +1721,16 @@ app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
     const { status, agreed_date, amount, status_comment, notes, work_description, source_id, source_number,
             client_name, client_phone, client_address, city, extra_name, extra_phone,
             interior_doors, entrance_doors, partitions, photos } = req.body;
+
+    // Check bridge_rejected blacklist first
+    const rejected = await pool.query(
+      'SELECT 1 FROM bridge_rejected WHERE external_id = $1',
+      [externalId]
+    );
+    if (rejected.rows.length > 0) {
+      console.log(`Bridge update BLOCKED (blacklisted): ${externalId}`);
+      return res.json({ blocked: true, reason: 'rejected', external_id: externalId });
+    }
 
     // Find our request by external_id (their id) or by our id (if they sent source_id)
     let row;
