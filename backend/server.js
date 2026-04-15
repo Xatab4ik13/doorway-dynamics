@@ -1599,6 +1599,18 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
       return res.status(400).json({ error: 'client_name and client_phone required' });
     }
 
+    // Check bridge_rejected blacklist
+    if (source_id && source_system) {
+      const rejected = await pool.query(
+        'SELECT 1 FROM bridge_rejected WHERE external_id = $1 AND external_system = $2',
+        [source_id, source_system]
+      );
+      if (rejected.rows.length > 0) {
+        console.log(`Bridge receive BLOCKED (blacklisted): ${source_system}/${source_id}`);
+        return res.json({ blocked: true, reason: 'rejected', source_id });
+      }
+    }
+
     const client_phone = normalizePhone(rawPhone) || rawPhone;
     const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
 
@@ -1709,6 +1721,16 @@ app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
     const { status, agreed_date, amount, status_comment, notes, work_description, source_id, source_number,
             client_name, client_phone, client_address, city, extra_name, extra_phone,
             interior_doors, entrance_doors, partitions, photos } = req.body;
+
+    // Check bridge_rejected blacklist first
+    const rejected = await pool.query(
+      'SELECT 1 FROM bridge_rejected WHERE external_id = $1',
+      [externalId]
+    );
+    if (rejected.rows.length > 0) {
+      console.log(`Bridge update BLOCKED (blacklisted): ${externalId}`);
+      return res.json({ blocked: true, reason: 'rejected', external_id: externalId });
+    }
 
     // Find our request by external_id (their id) or by our id (if they sent source_id)
     let row;
