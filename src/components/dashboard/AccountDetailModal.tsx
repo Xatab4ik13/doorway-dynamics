@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { X, Save, Loader2, Phone, Mail, StickyNote, Send, Lock, Eye, EyeOff, Power } from "lucide-react";
+import { X, Save, Loader2, Phone, Mail, StickyNote, Send, Lock, Eye, EyeOff, Power, IdCard } from "lucide-react";
+import EmployeeProfileModal from "./EmployeeProfileModal";
 import { roleLabels, type UserRole } from "@/data/mockDashboard";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -43,7 +44,8 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
   const [active, setActive] = useState(user.active);
   const [showPin, setShowPin] = useState(false);
   const [saving, setSaving] = useState(false);
-
+  const [showEmployeeProfile, setShowEmployeeProfile] = useState(false);
+  const isFieldEmployee = user.role === "measurer" || user.role === "installer";
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 hover:border-primary/40 transition-all";
 
   const handleSave = async () => {
@@ -198,6 +200,16 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
               </div>
             )}
 
+            {isFieldEmployee && (
+              <button
+                type="button"
+                onClick={() => setShowEmployeeProfile(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
+              >
+                <IdCard size={16} /> Карточка сотрудника
+              </button>
+            )}
+
             <div className="text-[10px] text-muted-foreground">
               Создан: {user.created_at?.split("T")[0]} · ID: {user.id}
             </div>
@@ -214,6 +226,13 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
           </div>
         </motion.div>
       </div>
+      {showEmployeeProfile && (
+        <EmployeeProfileModal
+          userId={user.id}
+          userName={user.name}
+          onClose={() => setShowEmployeeProfile(false)}
+        />
+      )}
     </AnimatePresence>
   );
 };
