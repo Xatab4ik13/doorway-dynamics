@@ -200,6 +200,16 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
               </div>
             )}
 
+            {isFieldEmployee && (
+              <button
+                type="button"
+                onClick={() => setShowEmployeeProfile(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 text-primary text-sm font-medium hover:bg-primary/5 transition-colors"
+              >
+                <IdCard size={16} /> Карточка сотрудника
+              </button>
+            )}
+
             <div className="text-[10px] text-muted-foreground">
               Создан: {user.created_at?.split("T")[0]} · ID: {user.id}
             </div>
