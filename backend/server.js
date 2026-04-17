@@ -1898,6 +1898,133 @@ app.put('/api/employee-profiles/:userId', auth, async (req, res) => {
   }
 });
 
+// ============= AVAILABILITY (журнал занятости) =============
+
+// GET /api/availability?month=YYYY-MM&city=Москва|Санкт-Петербург
+app.get('/api/availability', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    const { month, city } = req.query;
+    if (!month || !/^\d{4}-\d{2}$/.test(month)) {
+      return res.status(400).json({ error: 'Неверный month (ожидается YYYY-MM)' });
+    }
+    const start = `${month}-01`;
+    // Конец месяца — первое число следующего
+    const [y, m] = month.split('-').map(Number);
+    const nextY = m === 12 ? y + 1 : y;
+    const nextM = m === 12 ? 1 : m + 1;
+    const end = `${nextY}-${String(nextM).padStart(2, '0')}-01`;
+
+    // Сотрудники: монтажники + замерщики, активные
+    const userParams = [];
+    let userWhere = `role IN ('installer', 'measurer') AND COALESCE(is_active, true) = true`;
+    if (city && city !== 'all') {
+      userParams.push(city);
+      userWhere += ` AND (city = $${userParams.length} OR city IS NULL)`;
+    }
+    const usersRes = await pool.query(
+      `SELECT id, name, role, city FROM users WHERE ${userWhere} ORDER BY role DESC, name ASC`,
+      userParams
+    );
+    const users = usersRes.rows;
+    const userIds = users.map(u => u.id);
+
+    // Заявки: считаем по agreed_date в диапазоне месяца
+    let requestsByUserDay = {};
+    if (userIds.length) {
+      const reqRes = await pool.query(
+        `SELECT id, number, type, status, agreed_date, client_name, client_address, city,
+                measurer_id, installer_id, installer_2_id, installer_3_id, installer_4_id
+         FROM requests
+         WHERE agreed_date IS NOT NULL
+           AND agreed_date >= $1::date
+           AND agreed_date < $2::date
+           AND (
+             measurer_id = ANY($3::uuid[]) OR
+             installer_id = ANY($3::uuid[]) OR
+             installer_2_id = ANY($3::uuid[]) OR
+             installer_3_id = ANY($3::uuid[]) OR
+             installer_4_id = ANY($3::uuid[])
+           )`,
+        [start, end, userIds]
+      );
+
+      // Группируем: { userId: { 'YYYY-MM-DD': [{ id, number, type, status, client_name, ... }] } }
+      for (const r of reqRes.rows) {
+        const dateKey = r.agreed_date.toISOString().slice(0, 10);
+        const involved = [r.measurer_id, r.installer_id, r.installer_2_id, r.installer_3_id, r.installer_4_id]
+          .filter(Boolean);
+        for (const uid of involved) {
+          if (!userIds.includes(uid)) continue;
+          if (!requestsByUserDay[uid]) requestsByUserDay[uid] = {};
+          if (!requestsByUserDay[uid][dateKey]) requestsByUserDay[uid][dateKey] = [];
+          requestsByUserDay[uid][dateKey].push({
+            id: r.id,
+            number: r.number,
+            type: r.type,
+            status: r.status,
+            client_name: r.client_name,
+            client_address: r.client_address,
+            city: r.city,
+          });
+        }
+      }
+    }
+
+    // Отсутствия
+    let absences = {};
+    if (userIds.length) {
+      const absRes = await pool.query(
+        `SELECT user_id, date, kind FROM employee_absences
+         WHERE user_id = ANY($1::uuid[]) AND date >= $2::date AND date < $3::date`,
+        [userIds, start, end]
+      );
+      for (const a of absRes.rows) {
+        const dateKey = a.date.toISOString().slice(0, 10);
+        if (!absences[a.user_id]) absences[a.user_id] = {};
+        absences[a.user_id][dateKey] = a.kind;
+      }
+    }
+
+    res.json({ users, requestsByUserDay, absences });
+  } catch (err) {
+    console.error('Availability error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
+// POST /api/availability/absence — { user_id, date, kind | null } (null = удалить)
+app.post('/api/availability/absence', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    const { user_id, date, kind } = req.body;
+    if (!user_id || !date) return res.status(400).json({ error: 'user_id и date обязательны' });
+
+    if (kind === null || kind === undefined || kind === '') {
+      await pool.query(`DELETE FROM employee_absences WHERE user_id = $1 AND date = $2`, [user_id, date]);
+      return res.json({ ok: true, deleted: true });
+    }
+    if (!['dayoff', 'vacation', 'sick'].includes(kind)) {
+      return res.status(400).json({ error: 'kind должен быть dayoff|vacation|sick' });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO employee_absences (user_id, date, kind, created_by)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, date) DO UPDATE SET kind = EXCLUDED.kind, created_by = EXCLUDED.created_by, created_at = NOW()
+       RETURNING *`,
+      [user_id, date, kind, req.user.id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Save absence error:', err);
+    res.status(500).json({ error: 'Ошибка сохранения' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
 });
