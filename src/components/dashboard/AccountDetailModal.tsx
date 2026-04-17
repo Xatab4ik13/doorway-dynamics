@@ -44,7 +44,8 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
   const [active, setActive] = useState(user.active);
   const [showPin, setShowPin] = useState(false);
   const [saving, setSaving] = useState(false);
-
+  const [showEmployeeProfile, setShowEmployeeProfile] = useState(false);
+  const isFieldEmployee = user.role === "measurer" || user.role === "installer";
   const inputClass = "w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 hover:border-primary/40 transition-all";
 
   const handleSave = async () => {
