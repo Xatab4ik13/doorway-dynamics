@@ -1917,19 +1917,26 @@ app.get('/api/availability', auth, async (req, res) => {
     const nextM = m === 12 ? 1 : m + 1;
     const end = `${nextY}-${String(nextM).padStart(2, '0')}-01`;
 
-    // Сотрудники: монтажники + замерщики, активные
+    // Сотрудники: монтажники + замерщики, активные. Город хранится в employee_profiles.
     const userParams = [];
-    let userWhere = `role IN ('installer', 'measurer') AND COALESCE(is_active, true) = true`;
+    let cityCond = '';
     if (city && city !== 'all') {
       userParams.push(city);
-      userWhere += ` AND (city = $${userParams.length} OR city IS NULL)`;
+      cityCond = ` AND (ep.city = $${userParams.length} OR ep.city IS NULL)`;
     }
     const usersRes = await pool.query(
-      `SELECT id, name, role, city FROM users WHERE ${userWhere} ORDER BY role DESC, name ASC`,
+      `SELECT u.id, u.name, u.role, ep.city
+         FROM users u
+         LEFT JOIN employee_profiles ep ON ep.user_id = u.id
+        WHERE u.role IN ('installer', 'measurer')
+          AND COALESCE(u.is_active, true) = true
+          ${cityCond}
+        ORDER BY u.role DESC, u.name ASC`,
       userParams
     );
     const users = usersRes.rows;
     const userIds = users.map(u => u.id);
+
 
     // Заявки: считаем по agreed_date в диапазоне месяца
     let requestsByUserDay = {};
