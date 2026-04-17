@@ -4,108 +4,106 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp, Loader2, Pause, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
+import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, subDays, parseISO, startOfDay } from "date-fns";
-import { ru } from "date-fns/locale";
+import { format, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { api } from "@/lib/api";
 
-const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
-  { status: "new", fill: "hsl(217, 91%, 50%)" },
-  { status: "pending", fill: "hsl(45, 93%, 47%)" },
-  { status: "measurer_assigned", fill: "hsl(38, 92%, 50%)" },
-  { status: "date_agreed", fill: "hsl(190, 80%, 45%)" },
-  { status: "measurement_done", fill: "hsl(280, 65%, 50%)" },
-  { status: "closed", fill: "hsl(142, 71%, 45%)" },
-];
+const FUNNEL_FILLS: Record<string, string> = {
+  new: "hsl(217, 91%, 50%)",
+  pending: "hsl(45, 93%, 47%)",
+  measurer_assigned: "hsl(38, 92%, 50%)",
+  date_agreed: "hsl(190, 80%, 45%)",
+  measurement_done: "hsl(280, 65%, 50%)",
+  closed: "hsl(142, 71%, 45%)",
+};
 
-const IN_PROGRESS_STATUSES: RequestStatus[] = ["measurer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"];
-const DONE_STATUSES: RequestStatus[] = ["closed"];
 const DAY_NAMES = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
-function computeStats(requests: ApiRequest[]) {
-  const total = requests.length;
-  const newCount = requests.filter(r => r.status === "new").length;
-  const pendingCount = requests.filter(r => r.status === "pending").length;
-  const inProgress = requests.filter(r => IN_PROGRESS_STATUSES.includes(r.status as RequestStatus)).length;
-  const completed = requests.filter(r => DONE_STATUSES.includes(r.status as RequestStatus)).length;
-  const reclamations = requests.filter(r => r.type === "reclamation").length;
-  return { total, newCount, pendingCount, inProgress, completed, reclamations };
+interface DashboardStats {
+  totals: {
+    total: number;
+    new_count: number;
+    pending_count: number;
+    in_progress: number;
+    completed: number;
+    reclamations: number;
+  };
+  weekly: { day: string; created: number; done: number }[];
+  funnel: { status: string; value: number }[];
 }
 
-function computeWeeklyChart(requests: ApiRequest[]) {
-  const today = startOfDay(new Date());
-  const days: { name: string; заявки: number; выполнено: number }[] = [];
-
-  for (let i = 6; i >= 0; i--) {
-    const day = subDays(today, i);
-    const dayStr = format(day, "yyyy-MM-dd");
-    const dayName = DAY_NAMES[day.getDay()];
-    const created = requests.filter(r => r.created_at?.startsWith(dayStr)).length;
-    const done = requests.filter(r =>
-      DONE_STATUSES.includes(r.status as RequestStatus) &&
-      r.updated_at?.startsWith(dayStr)
-    ).length;
-    days.push({ name: dayName, заявки: created, выполнено: done });
-  }
-  return days;
-}
-
-function computeFunnel(requests: ApiRequest[]) {
-  const statusOrder: RequestStatus[] = FUNNEL_STAGES.map(s => s.status);
-
-  return FUNNEL_STAGES.map((stage, idx) => {
-    const cumulativeValue = idx === 0 ? requests.length : requests.filter(r => {
-      const rIdx = statusOrder.indexOf(r.status as RequestStatus);
-      return rIdx >= idx;
-    }).length;
-    return { stage: statusLabels[stage.status], value: cumulativeValue, fill: stage.fill };
-  });
-}
-
-function computeTopEmployees(requests: ApiRequest[], getUserName: (id?: string) => string | undefined) {
-  const counts: Record<string, { name: string; role: string; completed: number }> = {};
-
-  requests.forEach(r => {
-    if (!DONE_STATUSES.includes(r.status as RequestStatus)) return;
-    
-    const checkUser = (id?: string, role?: string) => {
-      if (!id) return;
-      const name = getUserName(id) || id;
-      if (!counts[id]) counts[id] = { name, role: role || "", completed: 0 };
-      counts[id].completed++;
-    };
-
-    checkUser(r.measurer_id, "Замерщик");
-    checkUser(r.installer_id, "Монтажник");
-  });
-
-  return Object.values(counts).sort((a, b) => b.completed - a.completed).slice(0, 5);
+interface TopEmployee {
+  id: string;
+  name: string;
+  role: string;
+  completed: number;
 }
 
 const AdminDashboard = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  const { requests, loading } = useRequests();
-  const { getUserName } = useUsers();
+  const { requests, loading: reqLoading } = useRequests();
   const navigate = useNavigate();
+
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [topEmployees, setTopEmployees] = useState<TopEmployee[]>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => { document.title = "Админ-панель — PrimeDoor Service"; }, []);
 
-  const stats = useMemo(() => computeStats(requests), [requests]);
-  const chartData = useMemo(() => computeWeeklyChart(requests), [requests]);
-  const funnelData = useMemo(() => computeFunnel(requests), [requests]);
-  const topEmployees = useMemo(() => computeTopEmployees(requests, getUserName), [requests, getUserName]);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const [s, t] = await Promise.all([
+          api<DashboardStats>("/api/dashboard/stats", { auth: true }),
+          api<TopEmployee[]>("/api/dashboard/top-employees", { auth: true }),
+        ]);
+        if (cancelled) return;
+        setStats(s);
+        setTopEmployees(t);
+      } catch (e) {
+        // ошибки покажет toast в api()
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    };
+    load();
+    const id = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
 
+  const chartData = useMemo(() => {
+    if (!stats) return [];
+    return stats.weekly.map((d) => {
+      const date = new Date(d.day);
+      return { name: DAY_NAMES[date.getDay()], заявки: d.created, выполнено: d.done };
+    });
+  }, [stats]);
+
+  const funnelData = useMemo(() => {
+    if (!stats) return [];
+    return stats.funnel.map((f) => ({
+      stage: statusLabels[f.status as RequestStatus] || f.status,
+      value: f.value,
+      fill: FUNNEL_FILLS[f.status] || "hsl(220, 13%, 60%)",
+    }));
+  }, [stats]);
+
+  const t = stats?.totals;
   const statCards = [
-    { label: "Всего заявок", value: stats.total, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50", onClick: () => navigate("/admin/requests") },
-    { label: "Новые", value: stats.newCount, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50", onClick: () => navigate("/admin/requests?quick=new") },
-    { label: "В ожидании", value: stats.pendingCount, icon: <Pause size={20} />, color: "text-yellow-600 bg-yellow-50", onClick: () => navigate("/admin/requests?quick=pending") },
-    { label: "В работе", value: stats.inProgress, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50", onClick: () => navigate("/admin/requests?quick=in_progress") },
-    { label: "Выполнено", value: stats.completed, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50", onClick: () => navigate("/admin/requests?quick=closed") },
-    { label: "Рекламации", value: stats.reclamations, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50", onClick: () => navigate("/admin/requests?quick=reclamation") },
+    { label: "Всего заявок", value: t?.total ?? 0, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50", onClick: () => navigate("/admin/requests") },
+    { label: "Новые", value: t?.new_count ?? 0, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50", onClick: () => navigate("/admin/requests?quick=new") },
+    { label: "В ожидании", value: t?.pending_count ?? 0, icon: <Pause size={20} />, color: "text-yellow-600 bg-yellow-50", onClick: () => navigate("/admin/requests?quick=pending") },
+    { label: "В работе", value: t?.in_progress ?? 0, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50", onClick: () => navigate("/admin/requests?quick=in_progress") },
+    { label: "Выполнено", value: t?.completed ?? 0, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50", onClick: () => navigate("/admin/requests?quick=closed") },
+    { label: "Рекламации", value: t?.reclamations ?? 0, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50", onClick: () => navigate("/admin/requests?quick=reclamation") },
   ];
+
+  const loading = reqLoading || statsLoading;
 
   if (loading) {
     return (
@@ -189,24 +187,25 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Top employees */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Топ сотрудников</CardTitle>
+              <span className="text-xs text-muted-foreground">{topEmployees.length}</span>
             </CardHeader>
             <CardContent>
               {topEmployees.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Нет данных</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                   {topEmployees.map((emp, i) => (
-                    <div key={emp.name} className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                    <div key={emp.id} className="flex items-center gap-3">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{emp.name}</p>
                         <p className="text-xs text-muted-foreground">{emp.role}</p>
                       </div>
-                      <span className="text-sm font-bold">{emp.completed}</span>
+                      <span className="text-sm font-bold tabular-nums">{emp.completed}</span>
                     </div>
                   ))}
                 </div>
