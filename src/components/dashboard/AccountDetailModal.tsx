@@ -226,6 +226,13 @@ const AccountDetailModal = ({ user, onClose, onSave }: AccountDetailModalProps) 
           </div>
         </motion.div>
       </div>
+      {showEmployeeProfile && (
+        <EmployeeProfileModal
+          userId={user.id}
+          userName={user.name}
+          onClose={() => setShowEmployeeProfile(false)}
+        />
+      )}
     </AnimatePresence>
   );
 };
