@@ -61,7 +61,43 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [sendingToDoorium, setSendingToDoorium] = useState(false);
   const [syncingDoorium, setSyncingDoorium] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canDragDrop = (viewerRole === "admin" || viewerRole === "manager") && !!onSave;
+
+  const processFiles = async (selectedFiles: File[]) => {
+    if (!selectedFiles.length || !onSave) return;
+    setUploadingFile(true);
+    toast.info(`Загрузка ${selectedFiles.length} файл(ов)...`);
+    try {
+      let successCount = 0;
+      const uploaded: any[] = [];
+      for (const f of selectedFiles) {
+        try {
+          const result = await uploadFile(f, "requests");
+          uploaded.push({
+            url: result.url,
+            type: f.type.startsWith("image/") ? "image" : "document",
+            stage: "general",
+            uploaded_at: new Date().toISOString(),
+          });
+          successCount++;
+        } catch {
+          toast.error(`Не удалось загрузить: ${f.name}`);
+        }
+      }
+      if (uploaded.length > 0) {
+        const updatedPhotos = [...(request.photos || []), ...uploaded];
+        await onSave(request.id, { photos: updatedPhotos as any });
+        request.photos = updatedPhotos;
+        toast.success(`Загружено: ${successCount} из ${selectedFiles.length}`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка загрузки");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
   
   // Editable client fields for admin/manager/partner
   const [clientName, setClientName] = useState(request.client_name || "");
