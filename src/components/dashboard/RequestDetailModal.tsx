@@ -61,7 +61,43 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [sendingToDoorium, setSendingToDoorium] = useState(false);
   const [syncingDoorium, setSyncingDoorium] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canDragDrop = (viewerRole === "admin" || viewerRole === "manager") && !!onSave;
+
+  const processFiles = async (selectedFiles: File[]) => {
+    if (!selectedFiles.length || !onSave) return;
+    setUploadingFile(true);
+    toast.info(`Загрузка ${selectedFiles.length} файл(ов)...`);
+    try {
+      let successCount = 0;
+      const uploaded: any[] = [];
+      for (const f of selectedFiles) {
+        try {
+          const result = await uploadFile(f, "requests");
+          uploaded.push({
+            url: result.url,
+            type: f.type.startsWith("image/") ? "image" : "document",
+            stage: "general",
+            uploaded_at: new Date().toISOString(),
+          });
+          successCount++;
+        } catch {
+          toast.error(`Не удалось загрузить: ${f.name}`);
+        }
+      }
+      if (uploaded.length > 0) {
+        const updatedPhotos = [...(request.photos || []), ...uploaded];
+        await onSave(request.id, { photos: updatedPhotos as any });
+        request.photos = updatedPhotos;
+        toast.success(`Загружено: ${successCount} из ${selectedFiles.length}`);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Ошибка загрузки");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
   
   // Editable client fields for admin/manager/partner
   const [clientName, setClientName] = useState(request.client_name || "");
@@ -1126,9 +1162,20 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
           {activeTab === "files" && (
             <div className="p-5 space-y-4">
-              {/* Upload button */}
+              {/* Upload zone (drag & drop for admin/manager) */}
               {(canEdit || viewerRole === "partner") && onSave && (
-                <div>
+                <div
+                  onDragEnter={canDragDrop ? (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); } : undefined}
+                  onDragOver={canDragDrop ? (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); } : undefined}
+                  onDragLeave={canDragDrop ? (e) => { e.preventDefault(); e.stopPropagation(); if (e.currentTarget.contains(e.relatedTarget as Node)) return; setIsDragging(false); } : undefined}
+                  onDrop={canDragDrop ? async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsDragging(false);
+                    const dropped = Array.from(e.dataTransfer.files || []);
+                    if (dropped.length) await processFiles(dropped);
+                  } : undefined}
+                >
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -1137,48 +1184,29 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt"
                     onChange={async (e) => {
                       const selectedFiles = Array.from(e.target.files || []);
-                      if (!selectedFiles.length) return;
-                      setUploadingFile(true);
-                      toast.info(`Загрузка ${selectedFiles.length} файл(ов)...`);
-                      try {
-                        let successCount = 0;
-                        const uploaded: typeof photos = [];
-                        for (const f of selectedFiles) {
-                          try {
-                            const result = await uploadFile(f, "requests");
-                            uploaded.push({
-                              url: result.url,
-                              type: f.type.startsWith("image/") ? "image" : "document",
-                              stage: "general",
-                              uploaded_at: new Date().toISOString(),
-                            });
-                            successCount++;
-                          } catch {
-                            toast.error(`Не удалось загрузить: ${f.name}`);
-                          }
-                        }
-                        if (uploaded.length > 0) {
-                          const updatedPhotos = [...photos, ...uploaded];
-                          await onSave(request.id, { photos: updatedPhotos as any });
-                          // Re-read updated photos into local state to prevent modal from closing
-                          request.photos = updatedPhotos;
-                          toast.success(`Загружено: ${successCount} из ${selectedFiles.length}`);
-                        }
-                      } catch (err: any) {
-                        toast.error(err.message || "Ошибка загрузки");
-                      } finally {
-                        setUploadingFile(false);
-                        e.target.value = "";
-                      }
+                      e.target.value = "";
+                      if (selectedFiles.length) await processFiles(selectedFiles);
                     }}
                   />
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingFile}
-                    className="w-full py-3 border-2 border-dashed border-border rounded-xl text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className={`w-full py-6 border-2 border-dashed rounded-xl text-xs transition-all flex flex-col items-center justify-center gap-2 disabled:opacity-50 ${
+                      isDragging
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+                    }`}
                   >
-                    {uploadingFile ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
-                    {uploadingFile ? "Загрузка..." : "Загрузить файлы"}
+                    {uploadingFile ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+                    <span>
+                      {uploadingFile
+                        ? "Загрузка..."
+                        : isDragging
+                        ? "Отпустите файлы для загрузки"
+                        : canDragDrop
+                        ? "Перетащите файлы сюда или нажмите для выбора"
+                        : "Загрузить файлы"}
+                    </span>
                   </button>
                 </div>
               )}
