@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ClipboardList, Users, Newspaper, FileSpreadsheet,
   Ruler, Wrench, Briefcase, LogOut, Menu, X, ChevronLeft,
-  History, Upload, PlusCircle, Eye, Calculator, Bell, CalendarDays, Handshake,
+  History, Upload, PlusCircle, Eye, Calculator, Bell, CalendarDays, Handshake, UserCheck,
 } from "lucide-react";
 
 import type { UserRole } from "@/data/mockDashboard";
@@ -29,6 +29,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Дашборд", href: "/admin", icon: <LayoutDashboard size={20} /> },
     { label: "Заявки", href: "/admin/requests", icon: <ClipboardList size={20} /> },
     { label: "Календарь", href: "/admin/calendar", icon: <CalendarDays size={20} /> },
+    { label: "Занятость", href: "/admin/availability", icon: <UserCheck size={20} /> },
     { label: "Сметы", href: "/admin/estimates", icon: <FileSpreadsheet size={20} /> },
     { label: "Аккаунты", href: "/admin/accounts", icon: <Users size={20} /> },
     { label: "Партнёры", href: "/admin/partners", icon: <Handshake size={20} /> },
@@ -37,6 +38,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
   manager: [
     { label: "Заявки", href: "/manager", icon: <ClipboardList size={20} /> },
     { label: "Календарь", href: "/manager/calendar", icon: <CalendarDays size={20} /> },
+    { label: "Занятость", href: "/manager/availability", icon: <UserCheck size={20} /> },
     { label: "Распределение", href: "/manager/assign", icon: <Users size={20} /> },
     { label: "Файлы", href: "/manager/files", icon: <Upload size={20} /> },
     { label: "Сметы", href: "/manager/estimates", icon: <Calculator size={20} /> },
