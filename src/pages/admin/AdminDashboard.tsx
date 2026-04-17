@@ -187,24 +187,25 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Top employees */}
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Топ сотрудников</CardTitle>
+              <span className="text-xs text-muted-foreground">{topEmployees.length}</span>
             </CardHeader>
             <CardContent>
               {topEmployees.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Нет данных</p>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                   {topEmployees.map((emp, i) => (
-                    <div key={emp.name} className="flex items-center gap-3">
-                      <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold">
+                    <div key={emp.id} className="flex items-center gap-3">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{emp.name}</p>
                         <p className="text-xs text-muted-foreground">{emp.role}</p>
                       </div>
-                      <span className="text-sm font-bold">{emp.completed}</span>
+                      <span className="text-sm font-bold tabular-nums">{emp.completed}</span>
                     </div>
                   ))}
                 </div>
