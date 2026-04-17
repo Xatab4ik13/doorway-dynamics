@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { X, Save, Loader2, Phone, Mail, StickyNote, Send, Lock, Eye, EyeOff, Power } from "lucide-react";
+import { X, Save, Loader2, Phone, Mail, StickyNote, Send, Lock, Eye, EyeOff, Power, IdCard } from "lucide-react";
+import EmployeeProfileModal from "./EmployeeProfileModal";
 import { roleLabels, type UserRole } from "@/data/mockDashboard";
 import { motion, AnimatePresence } from "framer-motion";
 
