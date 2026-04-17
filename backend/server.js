@@ -1929,7 +1929,7 @@ app.get('/api/availability', auth, async (req, res) => {
          FROM users u
          LEFT JOIN employee_profiles ep ON ep.user_id = u.id
         WHERE u.role IN ('installer', 'measurer')
-          AND COALESCE(u.is_active, true) = true
+          AND COALESCE(u.active, true) = true
           ${cityCond}
         ORDER BY u.role DESC, u.name ASC`,
       userParams
