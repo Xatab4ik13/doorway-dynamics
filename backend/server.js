@@ -1807,6 +1807,97 @@ app.put('/api/bridge/update/:id', bridgeAuth, async (req, res) => {
   }
 });
 
+// === Карточки сотрудников (монтажников и замерщиков) ===
+// Доступно только админу
+app.get('/api/employee-profiles', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    const { rows } = await pool.query(
+      `SELECT u.id AS user_id, u.name, u.role, u.phone AS user_phone, u.active,
+              ep.id, ep.full_name, ep.phone, ep.birth_date, ep.city, ep.car_plate,
+              ep.passport_files, ep.license_files, ep.comment, ep.updated_at
+         FROM users u
+         LEFT JOIN employee_profiles ep ON ep.user_id = u.id
+        WHERE u.role IN ('measurer', 'installer')
+        ORDER BY u.name ASC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Get employee profiles error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
+app.get('/api/employee-profiles/:userId', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    const { userId } = req.params;
+    const { rows } = await pool.query(
+      `SELECT u.id AS user_id, u.name, u.role, u.phone AS user_phone,
+              ep.id, ep.full_name, ep.phone, ep.birth_date, ep.city, ep.car_plate,
+              ep.passport_files, ep.license_files, ep.comment, ep.updated_at
+         FROM users u
+         LEFT JOIN employee_profiles ep ON ep.user_id = u.id
+        WHERE u.id = $1 AND u.role IN ('measurer', 'installer')`,
+      [userId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Не найден' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Get employee profile error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
+app.put('/api/employee-profiles/:userId', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  try {
+    const { userId } = req.params;
+    const {
+      full_name, phone, birth_date, city, car_plate,
+      passport_files, license_files, comment,
+    } = req.body;
+
+    const userCheck = await pool.query(
+      `SELECT id FROM users WHERE id = $1 AND role IN ('measurer', 'installer')`,
+      [userId]
+    );
+    if (!userCheck.rows.length) return res.status(404).json({ error: 'Сотрудник не найден' });
+
+    const { rows } = await pool.query(
+      `INSERT INTO employee_profiles
+         (user_id, full_name, phone, birth_date, city, car_plate, passport_files, license_files, comment, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, NOW())
+       ON CONFLICT (user_id) DO UPDATE SET
+         full_name = EXCLUDED.full_name,
+         phone = EXCLUDED.phone,
+         birth_date = EXCLUDED.birth_date,
+         city = EXCLUDED.city,
+         car_plate = EXCLUDED.car_plate,
+         passport_files = EXCLUDED.passport_files,
+         license_files = EXCLUDED.license_files,
+         comment = EXCLUDED.comment,
+         updated_at = NOW()
+       RETURNING *`,
+      [
+        userId,
+        full_name || null,
+        normalizePhone(phone) || null,
+        birth_date || null,
+        city || null,
+        car_plate || null,
+        JSON.stringify(passport_files || []),
+        JSON.stringify(license_files || []),
+        comment || null,
+      ]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Save employee profile error:', err);
+    res.status(500).json({ error: 'Ошибка сохранения' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
 });
