@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS employee_profiles (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   full_name TEXT,
   phone TEXT,
   birth_date DATE,
