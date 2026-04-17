@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { ClipboardList, Clock, CheckCircle, AlertTriangle, TrendingUp, Loader2, Pause, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
+import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format, subDays, parseISO, startOfDay } from "date-fns";
-import { ru } from "date-fns/locale";
+import { format, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
+import { api } from "@/lib/api";
 
 const FUNNEL_STAGES: { status: RequestStatus; fill: string }[] = [
   { status: "new", fill: "hsl(217, 91%, 50%)" },
