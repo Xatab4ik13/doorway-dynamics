@@ -2032,6 +2032,128 @@ app.post('/api/availability/absence', auth, async (req, res) => {
   }
 });
 
+// ============= DASHBOARD (агрегации напрямую в БД, без лимита 1000) =============
+
+// GET /api/dashboard/stats — статусы, типы, недельная динамика, воронка
+app.get('/api/dashboard/stats', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    const IN_PROGRESS = ['measurer_assigned', 'date_agreed', 'installation_rescheduled', 'measurement_done'];
+    const FUNNEL_ORDER = ['new', 'pending', 'measurer_assigned', 'date_agreed', 'measurement_done', 'closed'];
+
+    const [totalsRes, weeklyRes, funnelRes] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*)::bigint AS total,
+           COUNT(*) FILTER (WHERE status = 'new')::bigint AS new_count,
+           COUNT(*) FILTER (WHERE status = 'pending')::bigint AS pending_count,
+           COUNT(*) FILTER (WHERE status = ANY($1::text[]))::bigint AS in_progress,
+           COUNT(*) FILTER (WHERE status = 'closed')::bigint AS completed,
+           COUNT(*) FILTER (WHERE type = 'reclamation')::bigint AS reclamations
+         FROM requests`,
+        [IN_PROGRESS]
+      ),
+      pool.query(
+        `WITH days AS (
+           SELECT generate_series(
+             (CURRENT_DATE - INTERVAL '6 days')::date,
+             CURRENT_DATE,
+             INTERVAL '1 day'
+           )::date AS day
+         )
+         SELECT
+           d.day,
+           COUNT(c.*)::bigint AS created,
+           COUNT(cl.*)::bigint AS done
+         FROM days d
+         LEFT JOIN requests c ON c.created_at::date = d.day
+         LEFT JOIN requests cl ON cl.status = 'closed' AND COALESCE(cl.closed_at, cl.updated_at)::date = d.day
+         GROUP BY d.day
+         ORDER BY d.day ASC`
+      ),
+      pool.query(
+        `SELECT status, COUNT(*)::bigint AS cnt
+         FROM requests
+         WHERE status = ANY($1::text[])
+         GROUP BY status`,
+        [FUNNEL_ORDER]
+      ),
+    ]);
+
+    // Накопительная воронка: на каждом этапе = сумма по всем последующим (включая текущий)
+    const funnelMap = Object.fromEntries(funnelRes.rows.map(r => [r.status, Number(r.cnt)]));
+    const totalAll = Number(totalsRes.rows[0].total);
+    const funnel = FUNNEL_ORDER.map((status, idx) => {
+      if (idx === 0) {
+        return { status, value: totalAll };
+      }
+      let v = 0;
+      for (let i = idx; i < FUNNEL_ORDER.length; i++) v += funnelMap[FUNNEL_ORDER[i]] || 0;
+      return { status, value: v };
+    });
+
+    res.json({
+      totals: {
+        total: Number(totalsRes.rows[0].total),
+        new_count: Number(totalsRes.rows[0].new_count),
+        pending_count: Number(totalsRes.rows[0].pending_count),
+        in_progress: Number(totalsRes.rows[0].in_progress),
+        completed: Number(totalsRes.rows[0].completed),
+        reclamations: Number(totalsRes.rows[0].reclamations),
+      },
+      weekly: weeklyRes.rows.map(r => ({
+        day: r.day.toISOString().slice(0, 10),
+        created: Number(r.created),
+        done: Number(r.done),
+      })),
+      funnel,
+    });
+  } catch (err) {
+    console.error('Dashboard stats error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки статистики' });
+  }
+});
+
+// GET /api/dashboard/top-employees — полный список с количеством закрытых заявок
+app.get('/api/dashboard/top-employees', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    // Считаем по measurer_id и installer_id (1..4) — сколько закрытых заявок
+    const { rows } = await pool.query(
+      `WITH involved AS (
+         SELECT measurer_id AS user_id FROM requests WHERE status = 'closed' AND measurer_id IS NOT NULL
+         UNION ALL
+         SELECT installer_id   FROM requests WHERE status = 'closed' AND installer_id   IS NOT NULL
+         UNION ALL
+         SELECT installer_2_id FROM requests WHERE status = 'closed' AND installer_2_id IS NOT NULL
+         UNION ALL
+         SELECT installer_3_id FROM requests WHERE status = 'closed' AND installer_3_id IS NOT NULL
+         UNION ALL
+         SELECT installer_4_id FROM requests WHERE status = 'closed' AND installer_4_id IS NOT NULL
+       )
+       SELECT u.id, u.name, u.role, COUNT(i.user_id)::bigint AS completed
+       FROM users u
+       JOIN involved i ON i.user_id = u.id
+       WHERE u.role IN ('measurer', 'installer')
+       GROUP BY u.id, u.name, u.role
+       ORDER BY completed DESC, u.name ASC`
+    );
+    res.json(rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      role: r.role === 'measurer' ? 'Замерщик' : 'Монтажник',
+      completed: Number(r.completed),
+    })));
+  } catch (err) {
+    console.error('Top employees error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('PrimeDoor API running on port ' + PORT);
 });
