@@ -167,12 +167,14 @@ const SiteRoutes = () => (
         <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminPartners /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/availability" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAvailability /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Manager */}
         <Route path="/manager" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAssign /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerFiles /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/availability" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAvailability /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Measurer */}
         <Route path="/measurer" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/measurer/history" element={<ProtectedRoute allowedRoles={["measurer"]}><DashboardErrorBoundary><MeasurerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
