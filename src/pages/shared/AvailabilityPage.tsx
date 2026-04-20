@@ -110,8 +110,16 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, city]);
 
-  const installers = (data?.users || []).filter((u) => u.role === "installer");
-  const measurers = (data?.users || []).filter((u) => u.role === "measurer");
+  const allUsers = data?.users || [];
+  const filterUsers = (list: AvailUser[]) => {
+    let res = list;
+    if (selectedIds.size > 0) res = res.filter((u) => selectedIds.has(u.id));
+    const q = search.trim().toLowerCase();
+    if (q) res = res.filter((u) => u.name.toLowerCase().includes(q));
+    return res;
+  };
+  const installers = filterUsers(allUsers.filter((u) => u.role === "installer"));
+  const measurers = filterUsers(allUsers.filter((u) => u.role === "measurer"));
 
   const getCellStatus = (userId: string, dateKey: string): keyof typeof STATUS_STYLES => {
     const abs = data?.absences[userId]?.[dateKey];
