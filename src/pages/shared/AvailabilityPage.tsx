@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Search, Users } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import CityToggle, { type CityFilter } from "@/components/dashboard/CityToggle";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
@@ -74,6 +74,9 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
   const [loading, setLoading] = useState(false);
   const [activeCell, setActiveCell] = useState<{ userId: string; date: string } | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { requests, updateRequest } = useRequests();
 
@@ -107,8 +110,16 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [month, city]);
 
-  const installers = (data?.users || []).filter((u) => u.role === "installer");
-  const measurers = (data?.users || []).filter((u) => u.role === "measurer");
+  const allUsers = data?.users || [];
+  const filterUsers = (list: AvailUser[]) => {
+    let res = list;
+    if (selectedIds.size > 0) res = res.filter((u) => selectedIds.has(u.id));
+    const q = search.trim().toLowerCase();
+    if (q) res = res.filter((u) => u.name.toLowerCase().includes(q));
+    return res;
+  };
+  const installers = filterUsers(allUsers.filter((u) => u.role === "installer"));
+  const measurers = filterUsers(allUsers.filter((u) => u.role === "measurer"));
 
   const getCellStatus = (userId: string, dateKey: string): keyof typeof STATUS_STYLES => {
     const abs = data?.absences[userId]?.[dateKey];
@@ -236,8 +247,37 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
           ))}
         </div>
 
+        {/* Поиск + выбор сотрудников */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Поиск сотрудника…"
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border/50 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-border/50 bg-card hover:bg-accent transition-colors"
+          >
+            <Users size={14} />
+            {selectedIds.size > 0 ? `Выбрано: ${selectedIds.size}` : "Показать только…"}
+          </button>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="px-3 py-2 text-xs rounded-lg border border-border/50 hover:bg-accent transition-colors text-muted-foreground"
+            >
+              Сбросить
+            </button>
+          )}
+        </div>
+
         {/* Таблица */}
-        <div className="rounded-xl border border-border/50 bg-card overflow-auto">
+        <div className="rounded-xl border border-border/50 bg-card overflow-auto max-h-[calc(100vh-260px)]">
           <table className="border-collapse">
             <thead className="sticky top-0 z-20 bg-card">
               <tr className="border-b border-border/50">
@@ -379,6 +419,84 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
           }}
           viewerRole={role}
         />
+      )}
+
+      {/* Picker сотрудников */}
+      {pickerOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div
+            className="bg-card rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+              <p className="text-sm font-semibold">Показать только выбранных</p>
+              <button onClick={() => setPickerOpen(false)} className="p-1 rounded hover:bg-accent">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-4 py-2 border-b border-border/50 flex items-center gap-2">
+              <button
+                onClick={() => setSelectedIds(new Set(allUsers.map((u) => u.id)))}
+                className="text-xs px-2 py-1 rounded hover:bg-accent text-muted-foreground"
+              >
+                Все
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs px-2 py-1 rounded hover:bg-accent text-muted-foreground"
+              >
+                Сбросить
+              </button>
+            </div>
+            <div className="overflow-auto flex-1 p-2 space-y-1">
+              {(["installer", "measurer"] as const).map((roleKey) => {
+                const list = allUsers.filter((u) => u.role === roleKey);
+                if (list.length === 0) return null;
+                return (
+                  <div key={roleKey}>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 pt-2 pb-1">
+                      {roleKey === "installer" ? "Монтажники" : "Замерщики"}
+                    </p>
+                    {list.map((u) => {
+                      const checked = selectedIds.has(u.id);
+                      return (
+                        <label
+                          key={u.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(u.id)) next.delete(u.id);
+                                else next.add(u.id);
+                                return next;
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{u.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="px-4 py-3 border-t border-border/50 flex justify-end">
+              <button
+                onClick={() => setPickerOpen(false)}
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90"
+              >
+                Применить
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </DashboardLayout>
   );
