@@ -420,6 +420,84 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
           viewerRole={role}
         />
       )}
+
+      {/* Picker сотрудников */}
+      {pickerOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 flex items-center justify-center p-4"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div
+            className="bg-card rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+              <p className="text-sm font-semibold">Показать только выбранных</p>
+              <button onClick={() => setPickerOpen(false)} className="p-1 rounded hover:bg-accent">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="px-4 py-2 border-b border-border/50 flex items-center gap-2">
+              <button
+                onClick={() => setSelectedIds(new Set(allUsers.map((u) => u.id)))}
+                className="text-xs px-2 py-1 rounded hover:bg-accent text-muted-foreground"
+              >
+                Все
+              </button>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs px-2 py-1 rounded hover:bg-accent text-muted-foreground"
+              >
+                Сбросить
+              </button>
+            </div>
+            <div className="overflow-auto flex-1 p-2 space-y-1">
+              {(["installer", "measurer"] as const).map((roleKey) => {
+                const list = allUsers.filter((u) => u.role === roleKey);
+                if (list.length === 0) return null;
+                return (
+                  <div key={roleKey}>
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-2 pt-2 pb-1">
+                      {roleKey === "installer" ? "Монтажники" : "Замерщики"}
+                    </p>
+                    {list.map((u) => {
+                      const checked = selectedIds.has(u.id);
+                      return (
+                        <label
+                          key={u.id}
+                          className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-accent cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(u.id)) next.delete(u.id);
+                                else next.add(u.id);
+                                return next;
+                              });
+                            }}
+                          />
+                          <span className="text-sm">{u.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="px-4 py-3 border-t border-border/50 flex justify-end">
+              <button
+                onClick={() => setPickerOpen(false)}
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:opacity-90"
+              >
+                Применить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 };
