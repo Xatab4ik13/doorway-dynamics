@@ -104,7 +104,7 @@ const Header = () => {
             {/* Меню button */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 text-foreground hover:text-foreground/70 transition-colors duration-300"
+              className="text-sm md:text-base uppercase tracking-[0.15em] font-medium px-5 py-2.5 text-foreground hover:text-foreground/70 transition-colors duration-300"
               aria-label="Меню"
             >
               {menuOpen ? "Закрыть" : "Меню"}
