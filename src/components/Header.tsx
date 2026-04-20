@@ -79,7 +79,7 @@ const Header = () => {
       </div>
 
       <header
-        className="fixed top-0 md:top-9 left-0 right-0 z-50 transition-all duration-500"
+        className="fixed top-0 md:top-11 left-0 right-0 z-50 transition-all duration-500"
         style={{
           background: scrolled ? "rgba(0, 0, 0, 0.65)" : "hsl(0 0% 0%)",
           backdropFilter: scrolled ? "blur(12px)" : "none",
