@@ -74,6 +74,9 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
   const [loading, setLoading] = useState(false);
   const [activeCell, setActiveCell] = useState<{ userId: string; date: string } | null>(null);
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
+  const [search, setSearch] = useState("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const { requests, updateRequest } = useRequests();
 
