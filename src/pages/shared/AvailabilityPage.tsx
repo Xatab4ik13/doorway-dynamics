@@ -247,8 +247,37 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
           ))}
         </div>
 
+        {/* Поиск + выбор сотрудников */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Поиск сотрудника…"
+              className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-border/50 bg-card focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </div>
+          <button
+            onClick={() => setPickerOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border border-border/50 bg-card hover:bg-accent transition-colors"
+          >
+            <Users size={14} />
+            {selectedIds.size > 0 ? `Выбрано: ${selectedIds.size}` : "Показать только…"}
+          </button>
+          {selectedIds.size > 0 && (
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="px-3 py-2 text-xs rounded-lg border border-border/50 hover:bg-accent transition-colors text-muted-foreground"
+            >
+              Сбросить
+            </button>
+          )}
+        </div>
+
         {/* Таблица */}
-        <div className="rounded-xl border border-border/50 bg-card overflow-auto">
+        <div className="rounded-xl border border-border/50 bg-card overflow-auto max-h-[calc(100vh-260px)]">
           <table className="border-collapse">
             <thead className="sticky top-0 z-20 bg-card">
               <tr className="border-b border-border/50">
