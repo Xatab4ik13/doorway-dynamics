@@ -43,18 +43,18 @@ const Header = () => {
           backdropFilter: scrolled ? "blur(12px)" : "none",
         }}
       >
-        <div className="flex items-center justify-between px-10 h-9 text-[11px] text-white/60 max-w-[1400px] mx-auto">
+        <div className="flex items-center justify-between px-10 h-11 text-sm text-white/75 max-w-[1400px] mx-auto">
           <div className="flex items-center gap-6">
-            <span className="text-white/40 uppercase tracking-wider text-[9px]">Москва</span>
+            <span className="text-white/50 uppercase tracking-wider text-xs">Москва</span>
             <a href="tel:+79261663062" className="hover:text-white transition-colors tracking-wider">+7 926 166 30 62</a>
             <a href="tel:+79255700609" className="hover:text-white transition-colors tracking-wider">+7 925 570 06 09</a>
             <span className="text-white/20">|</span>
-            <span className="text-white/40 uppercase tracking-wider text-[9px]">СПб</span>
+            <span className="text-white/50 uppercase tracking-wider text-xs">СПб</span>
             <a href="tel:+79932663504" className="hover:text-white transition-colors tracking-wider">+7 993 266 35 04</a>
           </div>
           <div className="flex items-center gap-4">
             <a href="mailto:service@primedoor.ru" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Mail size={12} />
+              <Mail size={14} />
               service@primedoor.ru
             </a>
             <span className="text-white/20">|</span>
