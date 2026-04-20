@@ -43,18 +43,18 @@ const Header = () => {
           backdropFilter: scrolled ? "blur(12px)" : "none",
         }}
       >
-        <div className="flex items-center justify-between px-10 h-9 text-[11px] text-white/60 max-w-[1400px] mx-auto">
+        <div className="flex items-center justify-between px-10 h-11 text-sm text-white/75 max-w-[1400px] mx-auto">
           <div className="flex items-center gap-6">
-            <span className="text-white/40 uppercase tracking-wider text-[9px]">Москва</span>
+            <span className="text-white/50 uppercase tracking-wider text-xs">Москва</span>
             <a href="tel:+79261663062" className="hover:text-white transition-colors tracking-wider">+7 926 166 30 62</a>
             <a href="tel:+79255700609" className="hover:text-white transition-colors tracking-wider">+7 925 570 06 09</a>
             <span className="text-white/20">|</span>
-            <span className="text-white/40 uppercase tracking-wider text-[9px]">СПб</span>
+            <span className="text-white/50 uppercase tracking-wider text-xs">СПб</span>
             <a href="tel:+79932663504" className="hover:text-white transition-colors tracking-wider">+7 993 266 35 04</a>
           </div>
           <div className="flex items-center gap-4">
             <a href="mailto:service@primedoor.ru" className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Mail size={12} />
+              <Mail size={14} />
               service@primedoor.ru
             </a>
             <span className="text-white/20">|</span>
@@ -79,7 +79,7 @@ const Header = () => {
       </div>
 
       <header
-        className="fixed top-0 md:top-9 left-0 right-0 z-50 transition-all duration-500"
+        className="fixed top-0 md:top-11 left-0 right-0 z-50 transition-all duration-500"
         style={{
           background: scrolled ? "rgba(0, 0, 0, 0.65)" : "hsl(0 0% 0%)",
           backdropFilter: scrolled ? "blur(12px)" : "none",
@@ -104,7 +104,7 @@ const Header = () => {
             {/* Меню button */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="text-xs uppercase tracking-[0.15em] font-medium px-4 py-2 text-foreground hover:text-foreground/70 transition-colors duration-300"
+              className="text-sm md:text-base uppercase tracking-[0.15em] font-medium px-5 py-2.5 text-foreground hover:text-foreground/70 transition-colors duration-300"
               aria-label="Меню"
             >
               {menuOpen ? "Закрыть" : "Меню"}
