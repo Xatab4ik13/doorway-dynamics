@@ -1222,13 +1222,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   {photos.map((file, i) => (
                     <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-all">
                       <a
-                        href={file.url}
+                        href={proxyFileUrl(file.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="block w-full h-full"
                       >
                         {file.type === "image" ? (
-                          <img src={file.url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <img src={proxyFileUrl(file.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
                             <FileText size={24} className="text-muted-foreground" />
