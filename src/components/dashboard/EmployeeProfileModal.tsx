@@ -279,7 +279,7 @@ const EmployeeProfileModal = ({ userId, userName, onClose }: Props) => {
         </motion.div>
 
         {viewingFile && (
-          <FileViewer url={viewingFile.url} type={viewingFile.type} onClose={() => setViewingFile(null)} />
+          <FileViewer url={proxyFileUrl(viewingFile.url)} type={viewingFile.type} onClose={() => setViewingFile(null)} />
         )}
       </div>
     </AnimatePresence>
