@@ -500,7 +500,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
                       <p className="text-sm font-medium text-foreground">{formatDate(request.created_at)}</p>
                     </InfoRow>
-                    {(request.status === "closed" || status === "closed") && (
+                    {(request.status === "closed" || status === "closed" || (canEdit && isEditing)) && (
                       <InfoRow icon={<Calendar size={16} className="text-red-500" />} label="Дата закрытия">
                         {canEdit && isEditing ? (
                           <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
