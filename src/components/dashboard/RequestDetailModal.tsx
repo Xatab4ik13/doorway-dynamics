@@ -172,12 +172,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
-      // Allow editing closed_at for closed requests
-      if (status === "closed" || request.status === "closed") {
-        const originalClosedAt = request.closed_at?.split("T")[0] || "";
-        if (closedAt !== originalClosedAt) {
-          updates.closed_at = closedAt ? closedAt + "T23:59:59.000Z" : null;
-        }
+      // Allow editing closed_at (admin/manager via pencil)
+      const originalClosedAt = request.closed_at?.split("T")[0] || "";
+      if (closedAt !== originalClosedAt) {
+        updates.closed_at = closedAt ? closedAt + "T23:59:59.000Z" : null;
       }
     }
     
