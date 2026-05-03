@@ -541,7 +541,7 @@ app.post('/api/upload/reclamation', upload.single('file'), async (req, res) => {
       ContentType: req.file.mimetype,
       ACL: 'public-read',
     }));
-    const url = process.env.S3_ENDPOINT + '/' + process.env.S3_BUCKET + '/' + key;
+    const url = buildFileUrl(req, key);
     res.json({ url, key });
   } catch (err) {
     console.error('Public reclamation upload error:', err);
