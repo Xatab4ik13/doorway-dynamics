@@ -172,12 +172,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
-      // Allow editing closed_at for closed requests
-      if (status === "closed" || request.status === "closed") {
-        const originalClosedAt = request.closed_at?.split("T")[0] || "";
-        if (closedAt !== originalClosedAt) {
-          updates.closed_at = closedAt ? closedAt + "T23:59:59.000Z" : null;
-        }
+      // Allow editing closed_at (admin/manager via pencil)
+      const originalClosedAt = request.closed_at?.split("T")[0] || "";
+      if (closedAt !== originalClosedAt) {
+        updates.closed_at = closedAt ? closedAt + "T23:59:59.000Z" : null;
       }
     }
     
@@ -502,7 +500,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
                       <p className="text-sm font-medium text-foreground">{formatDate(request.created_at)}</p>
                     </InfoRow>
-                    {(request.status === "closed" || status === "closed") && (
+                    {(request.status === "closed" || status === "closed" || (canEdit && isEditing)) && (
                       <InfoRow icon={<Calendar size={16} className="text-red-500" />} label="Дата закрытия">
                         {canEdit && isEditing ? (
                           <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
@@ -927,7 +925,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm font-medium">{formatDate(request.created_at)}</p>
                     </div>
                   </div>
-                  {(request.status === "closed" || status === "closed") && (
+                  {(request.status === "closed" || status === "closed" || (canEdit && isEditing)) && (
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
                       <Calendar size={16} className="text-red-500 mt-0.5 shrink-0" />
                       <div className="flex-1">
