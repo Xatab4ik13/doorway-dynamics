@@ -461,6 +461,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                       )}
                     </div>
+                   )}
+                  {canEdit && (
+                    <div className="rounded-2xl bg-accent/30 px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Дата закрытия</p>
+                      <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
+                    </div>
                   )}
                   {/* Door quantities in edit mode */}
                   <div className="grid grid-cols-3 gap-2">
@@ -862,6 +868,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
                         </p>
                         <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {canEdit && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <Calendar size={16} className="text-red-500 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Дата закрытия</p>
+                        <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
                       </div>
                     </div>
                   )}
