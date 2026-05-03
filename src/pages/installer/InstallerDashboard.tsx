@@ -10,6 +10,7 @@ import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
+import { proxyFileUrl } from "@/lib/fileUrl";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
