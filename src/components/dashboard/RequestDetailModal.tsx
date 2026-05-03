@@ -6,6 +6,7 @@ import { useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadFile } from "@/lib/api";
+import { proxyFileUrl } from "@/lib/fileUrl";
 import { formatPhone } from "@/lib/formatPhone";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
 import { useIsMobile } from "@/hooks/use-mobile";
