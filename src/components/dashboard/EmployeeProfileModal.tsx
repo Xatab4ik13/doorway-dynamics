@@ -3,6 +3,7 @@ import { X, Save, Loader2, Upload, FileText, Trash2, Eye, Phone, Calendar, MapPi
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import api, { uploadFile } from "@/lib/api";
+import { proxyFileUrl } from "@/lib/fileUrl";
 import FileViewer from "./FileViewer";
 
 interface FileEntry {
