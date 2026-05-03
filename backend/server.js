@@ -185,6 +185,13 @@ app.get('/health', async (req, res) => {
 });
 
 // === Upload / Delete files ===
+
+// Build proxy URL for a given S3 key (served by this backend, no S3 hostname leaks to clients)
+function buildFileUrl(req, key) {
+  const base = process.env.PUBLIC_API_URL || (req.protocol + '://' + req.get('host'));
+  return base.replace(/\/$/, '') + '/api/files/' + key.split('/').map(encodeURIComponent).join('/');
+}
+
 app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Файл не передан' });
@@ -198,8 +205,7 @@ app.post('/api/upload', auth, upload.single('file'), async (req, res) => {
       ContentType: req.file.mimetype,
       ACL: 'public-read',
     }));
-    const url = process.env.S3_ENDPOINT + '/' + process.env.S3_BUCKET + '/' + key;
-    res.json({ url, key });
+    res.json({ url: buildFileUrl(req, key), key });
   } catch (err) {
     console.error('Upload error:', err);
     res.status(500).json({ error: 'Ошибка загрузки' });
@@ -215,6 +221,47 @@ app.delete('/api/files', auth, async (req, res) => {
   } catch (err) {
     console.error('Delete error:', err);
     res.status(500).json({ error: 'Ошибка удаления' });
+  }
+});
+
+// === File proxy ===
+// Streams files from S3 through our own domain so browsers (especially Safari/iOS)
+// never see the s3.twcstorage.ru hostname which triggers false "malware site" warnings.
+app.get('/api/files/*', async (req, res) => {
+  try {
+    const key = decodeURIComponent(req.params[0] || '');
+    if (!key || key.includes('..')) return res.status(400).end();
+
+    const range = req.headers.range;
+    const obj = await s3.send(new GetObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      Range: range,
+    }));
+
+    if (obj.ContentType) res.setHeader('Content-Type', obj.ContentType);
+    if (obj.ContentLength != null) res.setHeader('Content-Length', obj.ContentLength);
+    if (obj.ETag) res.setHeader('ETag', obj.ETag);
+    if (obj.LastModified) res.setHeader('Last-Modified', obj.LastModified.toUTCString());
+    if (obj.ContentRange) res.setHeader('Content-Range', obj.ContentRange);
+    if (obj.AcceptRanges) res.setHeader('Accept-Ranges', obj.AcceptRanges);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.status(range && obj.ContentRange ? 206 : 200);
+
+    if (obj.Body && typeof obj.Body.pipe === 'function') {
+      obj.Body.pipe(res);
+    } else if (obj.Body) {
+      const buf = Buffer.from(await obj.Body.transformToByteArray());
+      res.end(buf);
+    } else {
+      res.end();
+    }
+  } catch (err) {
+    if (err.$metadata?.httpStatusCode === 404 || err.Code === 'NoSuchKey') {
+      return res.status(404).json({ error: 'Файл не найден' });
+    }
+    console.error('File proxy error:', err);
+    res.status(500).json({ error: 'Ошибка получения файла' });
   }
 });
 
