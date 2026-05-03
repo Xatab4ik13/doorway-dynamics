@@ -15,7 +15,8 @@ interface FileViewerProps {
  * On Android PWA, target="_blank" opens a browser tab that's hard to close.
  * This component shows files in an overlay instead.
  */
-const FileViewer = ({ url, type, onClose }: FileViewerProps) => {
+const FileViewer = ({ url: rawUrl, type, onClose }: FileViewerProps) => {
+  const url = proxyFileUrl(rawUrl);
   const isImage = type === "image" || /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url);
 
   return createPortal(
