@@ -925,7 +925,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm font-medium">{formatDate(request.created_at)}</p>
                     </div>
                   </div>
-                  {(request.status === "closed" || status === "closed") && (
+                  {(request.status === "closed" || status === "closed" || (canEdit && isEditing)) && (
                     <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
                       <Calendar size={16} className="text-red-500 mt-0.5 shrink-0" />
                       <div className="flex-1">
