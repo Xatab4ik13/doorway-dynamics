@@ -3,6 +3,7 @@ import { X, Save, Loader2, Upload, FileText, Trash2, Eye, Phone, Calendar, MapPi
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import api, { uploadFile } from "@/lib/api";
+import { proxyFileUrl } from "@/lib/fileUrl";
 import FileViewer from "./FileViewer";
 
 interface FileEntry {
@@ -127,7 +128,7 @@ const EmployeeProfileModal = ({ userId, userName, onClose }: Props) => {
           <span className="flex-1 text-xs truncate">{f.name}</span>
           <button
             type="button"
-            onClick={() => setViewingFile({ url: f.url })}
+            onClick={() => setViewingFile({ url: proxyFileUrl(f.url) })}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
             title="Просмотр"
           >
@@ -278,7 +279,7 @@ const EmployeeProfileModal = ({ userId, userName, onClose }: Props) => {
         </motion.div>
 
         {viewingFile && (
-          <FileViewer url={viewingFile.url} type={viewingFile.type} onClose={() => setViewingFile(null)} />
+          <FileViewer url={proxyFileUrl(viewingFile.url)} type={viewingFile.type} onClose={() => setViewingFile(null)} />
         )}
       </div>
     </AnimatePresence>
