@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Image, FolderOpen, Search, Download, Eye, ChevronDown, ChevronRight, Loader2, Camera } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { proxyFileUrl } from "@/lib/fileUrl";
 
 
 const ManagerFiles = () => {
