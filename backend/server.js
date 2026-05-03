@@ -227,9 +227,9 @@ app.delete('/api/files', auth, async (req, res) => {
 // === File proxy ===
 // Streams files from S3 through our own domain so browsers (especially Safari/iOS)
 // never see the s3.twcstorage.ru hostname which triggers false "malware site" warnings.
-app.get('/api/files/*', async (req, res) => {
+app.get('/api/files/*splat', async (req, res) => {
   try {
-    const key = decodeURIComponent(req.params[0] || '');
+    const key = decodeURIComponent((req.params.splat || []).join('/'));
     if (!key || key.includes('..')) return res.status(400).end();
 
     const range = req.headers.range;
