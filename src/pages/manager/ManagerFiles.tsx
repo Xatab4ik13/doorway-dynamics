@@ -113,14 +113,14 @@ const ManagerFiles = () => {
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                           {photos.map((photo, i) => (
                             <div key={i} className="group relative aspect-square rounded-lg overflow-hidden border border-border bg-accent/30">
-                              <img src={photo.url} alt={`Файл ${i + 1}`}
+                              <img src={proxyFileUrl(photo.url)} alt={`Файл ${i + 1}`}
                                 className="w-full h-full object-cover" />
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                                <button onClick={(e) => { e.stopPropagation(); setPreviewUrl(photo.url); }}
+                                <button onClick={(e) => { e.stopPropagation(); setPreviewUrl(proxyFileUrl(photo.url)); }}
                                   className="p-1.5 bg-white/90 rounded-lg hover:bg-white transition-colors">
                                   <Eye size={14} />
                                 </button>
-                                <a href={photo.url} download target="_blank" rel="noopener noreferrer"
+                                <a href={proxyFileUrl(photo.url)} download target="_blank" rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
                                   className="p-1.5 bg-white/90 rounded-lg hover:bg-white transition-colors">
                                   <Download size={14} />
