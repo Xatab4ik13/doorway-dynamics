@@ -461,6 +461,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                       )}
                     </div>
+                   )}
+                  {canEdit && (
+                    <div className="rounded-2xl bg-accent/30 px-4 py-3">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Дата закрытия</p>
+                      <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
+                    </div>
                   )}
                   {/* Door quantities in edit mode */}
                   <div className="grid grid-cols-3 gap-2">
