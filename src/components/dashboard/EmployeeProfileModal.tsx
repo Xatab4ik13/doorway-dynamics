@@ -128,7 +128,7 @@ const EmployeeProfileModal = ({ userId, userName, onClose }: Props) => {
           <span className="flex-1 text-xs truncate">{f.name}</span>
           <button
             type="button"
-            onClick={() => setViewingFile({ url: f.url })}
+            onClick={() => setViewingFile({ url: proxyFileUrl(f.url) })}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
             title="Просмотр"
           >
