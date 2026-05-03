@@ -871,6 +871,16 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       </div>
                     </div>
                   )}
+
+                  {canEdit && (
+                    <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
+                      <Calendar size={16} className="text-red-500 mt-0.5 shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Дата закрытия</p>
+                        <input type="date" value={closedAt} onChange={(e) => setClosedAt(e.target.value)} className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30" />
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Read-only Info grid */
