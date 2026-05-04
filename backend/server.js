@@ -736,6 +736,30 @@ app.post('/api/requests', auth, async (req, res) => {
   }
 });
 
+// Получить одну заявку по id (для случаев, когда её нет в текущей выборке списка)
+app.get('/api/requests/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query(
+      `SELECT r.*, u.name AS partner_name, u.phone AS partner_phone
+       FROM requests r
+       LEFT JOIN users u ON u.id = r.partner_id
+       WHERE r.id = $1`,
+      [id]
+    );
+    if (!result.rows.length) return res.status(404).json({ error: 'Заявка не найдена' });
+    const row = result.rows[0];
+    // Партнёр-видимость: партнёр может смотреть только свои
+    if (req.user.role === 'partner' && row.partner_id !== req.user.id) {
+      return res.status(403).json({ error: 'Нет доступа' });
+    }
+    res.json(row);
+  } catch (err) {
+    console.error('Get request by id error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки заявки' });
+  }
+});
+
 // Обновить заявку (с валидацией и уведомлениями)
 app.put('/api/requests/:id', auth, async (req, res) => {
   try {
