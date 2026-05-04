@@ -239,7 +239,14 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
   const dataByDate = useMemo(() => {
     const map: Record<string, DayData> = {};
     const filtered = requests
-      .filter((r) => r.agreed_date && ACTIVE_STATUSES.includes(r.status))
+      .filter((r) => {
+        if (!r.agreed_date) return false;
+        // Скрываем только закрытые/отменённые. Остальные показываем,
+        // если у заявки есть назначенная дата монтажа/замера —
+        // даже если статус ещё не переведён в date_agreed.
+        if (r.status === "closed" || r.status === "cancelled" || r.status === "client_refused") return false;
+        return true;
+      })
       .filter((r) => !cityFilter || r.city === cityFilter);
 
     filtered.forEach((r) => {
