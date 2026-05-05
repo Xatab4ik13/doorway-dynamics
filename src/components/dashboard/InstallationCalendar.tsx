@@ -24,7 +24,6 @@ import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 
 const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled", "measurement_done"];
-const VISIBLE_STATUSES = [...ACTIVE_STATUSES, "closed"];
 
 import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
 
