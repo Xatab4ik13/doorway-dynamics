@@ -242,7 +242,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
       .filter((r) => {
         if (!r.agreed_date) return false;
         // Показываем активные статусы + закрытые (закрытые отрисуем приглушённо)
-        return VISIBLE_STATUSES.includes(r.status);
+        return ACTIVE_STATUSES.includes(r.status);
       })
       .filter((r) => !cityFilter || r.city === cityFilter);
 
