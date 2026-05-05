@@ -23,7 +23,7 @@ import {
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 
-const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled"];
+const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled", "measurement_done"];
 
 import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
 
@@ -241,11 +241,8 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
     const filtered = requests
       .filter((r) => {
         if (!r.agreed_date) return false;
-        // Скрываем только закрытые/отменённые. Остальные показываем,
-        // если у заявки есть назначенная дата монтажа/замера —
-        // даже если статус ещё не переведён в date_agreed.
-        if (r.status === "closed" || r.status === "cancelled" || r.status === "client_refused") return false;
-        return true;
+        // Показываем активные статусы + закрытые (закрытые отрисуем приглушённо)
+        return ACTIVE_STATUSES.includes(r.status);
       })
       .filter((r) => !cityFilter || r.city === cityFilter);
 
