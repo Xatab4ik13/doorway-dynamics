@@ -898,6 +898,46 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       }
     }
 
+    // 3. Дата согласована/перенесена → менеджерам
+    if (updates.agreed_date && updates.agreed_date !== request.agreed_date) {
+      const action = request.agreed_date ? 'перенесена' : 'согласована';
+      const comment = updates.status_comment ? `\nКомментарий: ${updates.status_comment}` : '';
+      await notifyManagersAndAdmins(pool,
+        `📅 <b>Дата ${action}</b>\n\nЗаявка: ${updated.number}\nНовая дата: ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}${comment}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+      );
+      await sendPushToRoles(['admin', 'manager'], {
+        title: `Дата ${action}`,
+        body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
+        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
+      });
+    }
+
+    // 4. Работа завершена (measurement_done или closed) → менеджерам
+    if (updates.status && ['measurement_done', 'closed'].includes(updates.status) && request.status !== updates.status) {
+      await notifyManagersAndAdmins(pool,
+        `✅ <b>Работа завершена</b>\n\nЗаявка: ${updated.number}\nТип: ${typeLabels[updated.type] || updated.type}\nСтатус: ${statusLabels[updates.status]}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+      );
+      await sendPushToRoles(['admin', 'manager'], {
+        title: 'Работа завершена',
+        body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
+        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
+      });
+    }
+
+    // 5. Заявка отменена → уведомить исполнителей
+    if (updates.status === 'cancelled' && request.status !== 'cancelled') {
+      const executorIds = [updated.measurer_id, updated.installer_id].filter(Boolean);
+      for (const execId of executorIds) {
+        await notifyUserById(pool, execId,
+          `❌ <b>Заявка отменена</b>\n\nЗаявка ${updated.number} была отменена.`
+        );
+        await sendPushToUser(execId, {
+          title: 'Заявка отменена',
+          body: `Заявка ${updated.number} была отменена.`,
+        });
+      }
+    }
+
     // 6. Смена статуса → партнёру
     if (updates.status && updates.status !== request.status && updated.partner_id) {
       await notifyPartner(pool, updated.partner_id,
