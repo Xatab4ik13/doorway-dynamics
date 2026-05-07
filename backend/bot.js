@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('./loadEnv');
 const TelegramBot = require('node-telegram-bot-api');
 const { Pool } = require('pg');
 

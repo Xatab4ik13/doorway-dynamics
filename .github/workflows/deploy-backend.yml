@@ -28,7 +28,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ env.DECODED_KEY }}
-          source: "backend/server.js,backend/bot.js,backend/package.json"
+          source: "backend/server.js,backend/bot.js,backend/notify.js,backend/loadEnv.js,backend/package.json"
           target: "/var/www/primedoor-api/backend"
           strip_components: 1
 
