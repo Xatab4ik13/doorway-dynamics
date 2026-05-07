@@ -10,7 +10,7 @@ const SMS_DIAGNOSTIC_DELAY_MS = Number(process.env.SMS_DIAGNOSTIC_DELAY_MS || 15
 
 function smsGatewayHint(errorText = '') {
   if (/android\.permission\.SEND_SMS/i.test(errorText)) {
-    return 'На телефоне установлена сборка/версия SMS Gateway без доступного разрешения SEND_SMS или Android не выдал его приложению. Нужен APK с GitHub Releases: capcom6/android-sms-gateway, не PWA/браузерная версия.';
+    return 'Android не выдал SMS Gateway разрешение SEND_SMS. Если при включении разрешения появляется «Доступ для приложения запрещен», откройте карточку приложения SMS Gateway → меню ⋮ → «Разрешить ограниченные настройки», затем вернитесь в «Разрешения» и включите SMS. Если пункта SMS нет совсем — установлена сборка без SMS, нужен app-release.apk с GitHub Releases, не app-release-nosms.apk/PWA.';
   }
   return null;
 }
@@ -164,6 +164,7 @@ async function notifyUserById(pool, userId, htmlMessage) {
 module.exports = {
   sendTelegram,
   sendSms,
+  smsGatewayHint,
   notifyUser,
   notifyUserById,
   notifyManagersAndAdmins,
