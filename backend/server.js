@@ -851,12 +851,9 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // 1. Назначение замерщика
     if (updates.measurer_id && updates.measurer_id !== request.measurer_id) {
-      const executor = await pool.query('SELECT telegram_id, name FROM users WHERE id = $1', [updates.measurer_id]);
-      if (executor.rows[0]?.telegram_id) {
-        await sendTelegram(executor.rows[0].telegram_id,
-          `🔔 <b>Новая заявка на замер</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\n\nПерейдите в личный кабинет, чтобы согласовать дату замера с клиентом.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
-        );
-      }
+      await notifyUserById(pool, updates.measurer_id,
+        `🔔 <b>Новая заявка на замер</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\n\nПерейдите в личный кабинет, чтобы согласовать дату замера с клиентом.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+      );
       // Push to measurer
       await sendPushToUser(updates.measurer_id, {
         title: 'Новая заявка на замер',
@@ -865,12 +862,9 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       });
       // Если был предыдущий замерщик — уведомить о снятии
       if (request.measurer_id && request.measurer_id !== updates.measurer_id) {
-        const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.measurer_id]);
-        if (prev.rows[0]?.telegram_id) {
-          await sendTelegram(prev.rows[0].telegram_id,
-            `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
-          );
-        }
+        await notifyUserById(pool, request.measurer_id,
+          `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
+        );
         await sendPushToUser(request.measurer_id, {
           title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
@@ -881,13 +875,10 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // 2. Назначение монтажника
     if (updates.installer_id && updates.installer_id !== request.installer_id) {
-      const executor = await pool.query('SELECT telegram_id, name FROM users WHERE id = $1', [updates.installer_id]);
       const dateStr = updated.agreed_date ? new Date(updated.agreed_date).toLocaleDateString('ru-RU') : 'не назначена';
-      if (executor.rows[0]?.telegram_id) {
-        await sendTelegram(executor.rows[0].telegram_id,
-          `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\nПодробнее — в личном кабинете.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
-        );
-      }
+      await notifyUserById(pool, updates.installer_id,
+        `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\nПодробнее — в личном кабинете.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+      );
       // Push to installer
       await sendPushToUser(updates.installer_id, {
         title: 'Новый монтаж',
@@ -896,59 +887,13 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       });
       // Если был предыдущий монтажник — уведомить о снятии
       if (request.installer_id && request.installer_id !== updates.installer_id) {
-        const prev = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [request.installer_id]);
-        if (prev.rows[0]?.telegram_id) {
-          await sendTelegram(prev.rows[0].telegram_id,
-            `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
-          );
-        }
+        await notifyUserById(pool, request.installer_id,
+          `ℹ️ <b>Вы сняты с заявки</b>\n\nЗаявка ${updated.number} передана другому исполнителю.`
+        );
         await sendPushToUser(request.installer_id, {
           title: 'Вы сняты с заявки',
           body: `Заявка ${updated.number} передана другому исполнителю.`,
           url: `/installer`,
-        });
-      }
-    }
-
-    // 3. Дата согласована/перенесена → менеджерам
-    if (updates.agreed_date && updates.agreed_date !== request.agreed_date) {
-      const action = request.agreed_date ? 'перенесена' : 'согласована';
-      const comment = updates.status_comment ? `\nКомментарий: ${updates.status_comment}` : '';
-      await notifyManagersAndAdmins(pool,
-        `📅 <b>Дата ${action}</b>\n\nЗаявка: ${updated.number}\nНовая дата: ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}${comment}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
-      );
-      await sendPushToRoles(['admin', 'manager'], {
-        title: `Дата ${action}`,
-        body: `Заявка ${updated.number} — ${new Date(updates.agreed_date).toLocaleDateString('ru-RU')}`,
-        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
-      });
-    }
-
-    // 4. Работа завершена (measurement_done или closed) → менеджерам
-    if (updates.status && ['measurement_done', 'closed'].includes(updates.status) && request.status !== updates.status) {
-      await notifyManagersAndAdmins(pool,
-        `✅ <b>Работа завершена</b>\n\nЗаявка: ${updated.number}\nТип: ${typeLabels[updated.type] || updated.type}\nСтатус: ${statusLabels[updates.status]}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
-      );
-      await sendPushToRoles(['admin', 'manager'], {
-        title: 'Работа завершена',
-        body: `Заявка ${updated.number} — ${statusLabels[updates.status]}`,
-        url: `/admin/requests?search=${encodeURIComponent(updated.number)}`,
-      });
-    }
-
-    // 5. Заявка отменена → уведомить исполнителей
-    if (updates.status === 'cancelled' && request.status !== 'cancelled') {
-      const executorIds = [updated.measurer_id, updated.installer_id].filter(Boolean);
-      for (const execId of executorIds) {
-        const exec = await pool.query('SELECT telegram_id FROM users WHERE id = $1', [execId]);
-        if (exec.rows[0]?.telegram_id) {
-          await sendTelegram(exec.rows[0].telegram_id,
-            `❌ <b>Заявка отменена</b>\n\nЗаявка ${updated.number} была отменена.`
-          );
-        }
-        await sendPushToUser(execId, {
-          title: 'Заявка отменена',
-          body: `Заявка ${updated.number} была отменена.`,
         });
       }
     }
