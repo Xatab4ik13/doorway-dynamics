@@ -10,7 +10,7 @@ const SMS_DIAGNOSTIC_DELAY_MS = Number(process.env.SMS_DIAGNOSTIC_DELAY_MS || 15
 
 function smsGatewayHint(errorText = '') {
   if (/android\.permission\.SEND_SMS/i.test(errorText)) {
-    return 'Android/Honor заблокировал SMS-разрешение для приложения, установленного не из Google Play. Выйдите с экрана «Разрешения» на карточку приложения SMS Gateway: Настройки → Приложения → SMS Gateway. Нажмите меню ⋮ справа сверху → «Разрешить ограниченные настройки» / «Allow restricted settings», подтвердите PIN/отпечатком, затем снова откройте «Разрешения» и включите SMS. Если меню ⋮ или пункта SMS нет — удалите приложение и ставьте полный app-release.apk, не app-release-nosms.apk/PWA.';
+    return 'Android/Honor заблокировал SMS-разрешение для приложения, установленного не из Google Play: на экране разрешения SMS кнопка «Разрешить» может быть серой и не нажиматься. Это не включается в самом SMS-разрешении. Вернитесь назад на карточку приложения SMSGate/SMS Gateway: Настройки → Приложения → SMSGate/SMS Gateway. Нажмите меню ⋮ справа сверху → «Разрешить ограниченные настройки» / «Allow restricted settings», подтвердите PIN/отпечатком, затем снова откройте «Разрешения» → «SMS» и включите «Разрешить». Если в меню ⋮ нет такого пункта — удалите приложение и установите полный app-release.apk из GitHub Releases, не app-release-nosms.apk/PWA.';
   }
   return null;
 }
