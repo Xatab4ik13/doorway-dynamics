@@ -491,7 +491,21 @@ app.delete('/api/users/:id', auth, async (req, res) => {
   }
 });
 
-// Public upload for reclamation only (no auth)
+// Тест отправки SMS через шлюз (только админ)
+app.post('/api/admin/sms-test', auth, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Доступ запрещён' });
+  const { phone, text } = req.body || {};
+  if (!phone) return res.status(400).json({ error: 'Укажите phone в формате +7XXXXXXXXXX' });
+  try {
+    await sendSms(phone, text || 'Тест SMS от PrimeDoor CRM');
+    res.json({ success: true, driver: NOTIFY_DRIVER });
+  } catch (err) {
+    console.error('SMS test error:', err);
+    res.status(500).json({ error: err.message || 'Ошибка отправки SMS' });
+  }
+});
+
+
 app.post('/api/upload/reclamation', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Файл не передан' });
