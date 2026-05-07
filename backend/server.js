@@ -497,8 +497,8 @@ app.post('/api/admin/sms-test', auth, async (req, res) => {
   const { phone, text } = req.body || {};
   if (!phone) return res.status(400).json({ error: 'Укажите phone в формате +7XXXXXXXXXX' });
   try {
-    await sendSms(phone, text || 'Тест SMS от PrimeDoor CRM');
-    res.json({ success: true, driver: NOTIFY_DRIVER });
+    const result = await sendSms(phone, text || 'Тест SMS от PrimeDoor CRM', { diagnose: true });
+    res.json({ success: Boolean(result?.ok), driver: NOTIFY_DRIVER, sms: result });
   } catch (err) {
     console.error('SMS test error:', err);
     res.status(500).json({ error: err.message || 'Ошибка отправки SMS' });
