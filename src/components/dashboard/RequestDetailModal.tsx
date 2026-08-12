@@ -124,7 +124,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [source, setSource] = useState<string>(request.source || "site");
   const [partnerId, setPartnerId] = useState<string>(request.partner_id || "");
   const [requestType, setRequestType] = useState<string>(request.type || "measurement");
-  const [closedAt, setClosedAt] = useState(request.closed_at?.split("T")[0] || "");
+  const [closedAt, setClosedAt] = useState(mskInputDate(request.closed_at));
   
   // Edit mode toggle for admin/manager
   const [isEditing, setIsEditing] = useState(false);
