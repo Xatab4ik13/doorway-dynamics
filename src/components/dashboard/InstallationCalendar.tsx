@@ -251,7 +251,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
       .filter((r) => !cityFilter || r.city === cityFilter);
 
     filtered.forEach((r) => {
-      const dateKey = r.agreed_date!.slice(0, 10);
+      const dateKey = mskDateKey(r.agreed_date!);
       if (!map[dateKey]) map[dateKey] = { interiorInstalls: [], entranceInstalls: [], mixedInstalls: [], measurements: [], reclamations: [] };
       const d = map[dateKey];
 
