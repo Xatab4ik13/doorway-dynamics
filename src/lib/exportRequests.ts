@@ -3,6 +3,21 @@ import type { ApiRequest } from "@/hooks/useRequests";
 
 type GetUserNameFn = (id?: string) => string | undefined;
 
+// Даты в отчётах считаем по Москве — так же, как фильтрует бэкенд
+const mskDate = (value?: string | null) => {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value.split("T")[0] || "";
+  const parts = new Intl.DateTimeFormat("ru-RU", {
+    timeZone: "Europe/Moscow",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find(p => p.type === t)?.value || "";
+  return `${get("day")}.${get("month")}.${get("year")}`;
+};
+
 const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Номер": r.number,
   "Клиент": r.client_name,
@@ -18,8 +33,8 @@ const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Межкомнатные": r.interior_doors != null ? r.interior_doors : "",
   "Входные": r.entrance_doors != null ? r.entrance_doors : "",
   "Перегородка (кол-во створок)": r.partitions != null ? r.partitions : "",
-  "Дата создания": r.created_at?.split("T")[0] || "",
-  "Дата закрытия": r.closed_at?.split("T")[0] || "",
+  "Дата создания": mskDate(r.created_at),
+  "Дата закрытия": mskDate(r.closed_at),
   "Согласованная дата": r.agreed_date?.split("T")[0] || "",
 });
 
