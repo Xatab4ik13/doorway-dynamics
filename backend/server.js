@@ -612,6 +612,9 @@ app.get('/api/requests', auth, async (req, res) => {
     if (date_from) { conds.push(`${dateColExpr} >= $${idx++}::date`); params.push(date_from); }
     if (date_to) { conds.push(`${dateColExpr} <= $${idx++}::date`); params.push(date_to); }
 
+    // Календарь: только заявки с назначенной датой (иначе старые заявки не влезают в лимит)
+    if (req.query.scheduled === '1') conds.push(`agreed_date IS NOT NULL`);
+
     if (quick === 'new') conds.push(`status = 'new'`);
     else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
     else if (quick === 'pending') conds.push(`status = 'pending'`);
