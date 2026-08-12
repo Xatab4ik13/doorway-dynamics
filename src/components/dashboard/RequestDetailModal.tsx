@@ -1,6 +1,5 @@
 import { useState, useRef } from "react";
 import { buildMapUrl } from "@/lib/mapQuery";
-import { buildMapUrl } from "@/lib/mapQuery";
 import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Link2, RefreshCw } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
