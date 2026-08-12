@@ -2255,41 +2255,61 @@ app.get('/api/dashboard/stats', auth, async (req, res) => {
       pool.query(
         `WITH days AS (
            SELECT generate_series(
-             (CURRENT_DATE - INTERVAL '6 days')::date,
-             CURRENT_DATE,
+             ((now() AT TIME ZONE '${REPORT_TIMEZONE}')::date - INTERVAL '6 days')::date,
+             (now() AT TIME ZONE '${REPORT_TIMEZONE}')::date,
              INTERVAL '1 day'
            )::date AS day
+         ),
+         created AS (
+           SELECT (created_at AT TIME ZONE '${REPORT_TIMEZONE}')::date AS day, COUNT(*)::bigint AS cnt
+           FROM requests
+           GROUP BY 1
+         ),
+         done AS (
+           SELECT (COALESCE(closed_at, updated_at) AT TIME ZONE '${REPORT_TIMEZONE}')::date AS day, COUNT(*)::bigint AS cnt
+           FROM requests
+           WHERE status = 'closed'
+           GROUP BY 1
          )
          SELECT
            d.day,
-           COUNT(c.*)::bigint AS created,
-           COUNT(cl.*)::bigint AS done
+           COALESCE(c.cnt, 0)::bigint AS created,
+           COALESCE(dn.cnt, 0)::bigint AS done
          FROM days d
-         LEFT JOIN requests c ON c.created_at::date = d.day
-         LEFT JOIN requests cl ON cl.status = 'closed' AND COALESCE(cl.closed_at, cl.updated_at)::date = d.day
-         GROUP BY d.day
+         LEFT JOIN created c ON c.day = d.day
+         LEFT JOIN done dn ON dn.day = d.day
          ORDER BY d.day ASC`
       ),
       pool.query(
         `SELECT status, COUNT(*)::bigint AS cnt
          FROM requests
-         WHERE status = ANY($1::text[])
-         GROUP BY status`,
-        [FUNNEL_ORDER]
+         WHERE status NOT IN ('cancelled', 'client_refused')
+         GROUP BY status`
       ),
     ]);
 
-    // Накопительная воронка: на каждом этапе = сумма по всем последующим (включая текущий)
-    const funnelMap = Object.fromEntries(funnelRes.rows.map(r => [r.status, Number(r.cnt)]));
-    const totalAll = Number(totalsRes.rows[0].total);
+    // Воронка: каждая заявка учитывается на своём этапе и на всех предыдущих
+    const STAGE_OF = {
+      new: 0,
+      pending: 1,
+      measurer_assigned: 2,
+      date_agreed: 3,
+      installation_rescheduled: 3,
+      measurement_done: 4,
+      closed: 5,
+    };
+    const stageCounts = [0, 0, 0, 0, 0, 0];
+    for (const r of funnelRes.rows) {
+      const idx = STAGE_OF[r.status];
+      if (idx === undefined) continue;
+      stageCounts[idx] += Number(r.cnt);
+    }
     const funnel = FUNNEL_ORDER.map((status, idx) => {
-      if (idx === 0) {
-        return { status, value: totalAll };
-      }
       let v = 0;
-      for (let i = idx; i < FUNNEL_ORDER.length; i++) v += funnelMap[FUNNEL_ORDER[i]] || 0;
+      for (let i = idx; i < stageCounts.length; i++) v += stageCounts[i];
       return { status, value: v };
     });
+
 
     res.json({
       totals: {
