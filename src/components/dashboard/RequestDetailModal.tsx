@@ -42,6 +42,23 @@ interface RequestDetailModalProps {
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
+// YYYY-MM-DD по Москве — чтобы дата закрытия совпадала с фильтрами отчётов
+const mskInputDate = (value?: string | null) => {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value.split("T")[0] || "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Moscow",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find(p => p.type === t)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+};
+
+
+
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToReclamation, onSendToDoorium, onSyncDoorium, onRepeat, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const { user: authUser } = useAuth();
