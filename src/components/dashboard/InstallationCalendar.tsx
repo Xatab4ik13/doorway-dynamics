@@ -27,6 +27,23 @@ import { toast } from "sonner";
 // и заявки «в ожидании» не показываем — они живут в списке заявок.
 const HIDDEN_STATUSES = ["cancelled", "client_refused", "closed", "pending"];
 
+// Дата согласования приходит с бэка как ISO-строка в UTC (напр. "2026-08-12T21:00:00.000Z"
+// для 13.08 00:00 по Москве). Ключ дня считаем строго по московскому времени.
+const mskDateKey = (value: string) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(value)) {
+    return value.slice(0, 10);
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value.slice(0, 10);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Moscow",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+};
+
 import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
 
 // Determine installation door category
