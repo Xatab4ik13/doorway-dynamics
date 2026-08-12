@@ -255,7 +255,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
       // Allow editing closed_at (admin/manager via pencil)
       // 12:00 UTC = 15:00 МСК — дата закрытия не «уезжает» на соседние сутки в отчётах
-      const originalClosedAt = request.closed_at?.split("T")[0] || "";
+      const originalClosedAt = mskInputDate(request.closed_at);
       if (closedAt !== originalClosedAt) {
         updates.closed_at = closedAt ? closedAt + "T12:00:00.000Z" : null;
       }
