@@ -57,7 +57,7 @@ export interface ApiUser {
 const POLL_INTERVAL = 10000; // 10 seconds
 const FULL_FETCH_LIMIT = 1000;
 
-export function useRequests() {
+export function useRequests(extraQuery?: string) {
   const [requests, setRequests] = useState<ApiRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const prevCountRef = useRef<number | null>(null);
@@ -66,7 +66,7 @@ export function useRequests() {
   const fetchRequests = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}`, { auth: true });
+      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}${extraQuery ? `&${extraQuery}` : ""}`, { auth: true });
       const data = Array.isArray(response) ? response : response.data;
       
       // Notify about new requests
@@ -85,7 +85,7 @@ export function useRequests() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [extraQuery]);
 
   useEffect(() => {
     fetchRequests();
