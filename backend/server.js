@@ -818,7 +818,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
     }
 
     // Замерщик может переносить дату замера
-    if (updates.agreed_date && role === 'measurer' && request.agreed_date && request.type === 'measurement' && request.status === 'date_agreed') {
+    if (updates.agreed_date && !userExplicitlyChangedStatus && role === 'measurer' && request.agreed_date && request.type === 'measurement' && request.status === 'date_agreed') {
       // Allow measurer to reschedule measurement date - keep status as date_agreed
       updates.status = 'date_agreed';
     }
