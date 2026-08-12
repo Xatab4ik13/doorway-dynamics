@@ -243,8 +243,10 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
     const filtered = requests
       .filter((r) => {
         if (!r.agreed_date) return false;
-        // Показываем всё, где есть дата, кроме отменённых/отказов
-        return !HIDDEN_STATUSES.includes(r.status);
+        if (HIDDEN_STATUSES.includes(r.status)) return false;
+        // Выполненные замеры в календаре не показываем
+        if (r.type === "measurement" && r.status === "measurement_done") return false;
+        return true;
       })
       .filter((r) => !cityFilter || r.city === cityFilter);
 
