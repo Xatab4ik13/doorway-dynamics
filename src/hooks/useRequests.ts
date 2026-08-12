@@ -20,6 +20,11 @@ export interface ApiRequest {
   interior_doors?: number;
   entrance_doors?: number;
   partitions?: number;
+  entrance_panels?: number;
+  baseboard_meters?: number;
+  portals?: number;
+  parent_request_id?: string;
+
   source: "site" | "partner";
   partner_id?: string;
   partner_name?: string;

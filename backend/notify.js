@@ -109,12 +109,16 @@ async function sendSms(phone, text, options = {}) {
   }
 }
 
+// SMS отправляем только исполнителям (замерщики и монтажники).
+// Менеджеры, админы и партнёры получают только Telegram.
+const SMS_ROLES = ['measurer', 'installer'];
+
 // Универсальная отправка одному пользователю.
-// user: { telegram_id, phone }
+// user: { telegram_id, phone, role }
 async function notifyUser(user, htmlMessage) {
   if (!user) return;
   const useTg = NOTIFY_DRIVER === 'telegram' || NOTIFY_DRIVER === 'both';
-  const useSms = NOTIFY_DRIVER === 'sms' || NOTIFY_DRIVER === 'both';
+  const useSms = (NOTIFY_DRIVER === 'sms' || NOTIFY_DRIVER === 'both') && SMS_ROLES.includes(user.role);
   const tasks = [];
   if (useTg && user.telegram_id) tasks.push(sendTelegram(user.telegram_id, htmlMessage));
   if (useSms && user.phone) tasks.push(sendSms(user.phone, htmlToSms(htmlMessage)));
@@ -125,7 +129,7 @@ async function notifyUser(user, htmlMessage) {
 async function notifyManagersAndAdmins(pool, htmlMessage) {
   try {
     const { rows } = await pool.query(
-      "SELECT telegram_id, phone FROM users WHERE role IN ('manager', 'admin') AND active = true"
+      "SELECT telegram_id, phone, role FROM users WHERE role IN ('manager', 'admin') AND active = true"
     );
     await Promise.all(rows.map((u) => notifyUser(u, htmlMessage)));
   } catch (err) {
@@ -138,7 +142,7 @@ async function notifyPartner(pool, partnerId, htmlMessage) {
   if (!partnerId) return;
   try {
     const { rows } = await pool.query(
-      'SELECT telegram_id, phone FROM users WHERE id = $1 AND active = true',
+      'SELECT telegram_id, phone, role FROM users WHERE id = $1 AND active = true',
       [partnerId]
     );
     if (rows[0]) await notifyUser(rows[0], htmlMessage);
@@ -152,7 +156,7 @@ async function notifyUserById(pool, userId, htmlMessage) {
   if (!userId) return;
   try {
     const { rows } = await pool.query(
-      'SELECT telegram_id, phone FROM users WHERE id = $1',
+      'SELECT telegram_id, phone, role FROM users WHERE id = $1',
       [userId]
     );
     if (rows[0]) await notifyUser(rows[0], htmlMessage);
@@ -160,6 +164,7 @@ async function notifyUserById(pool, userId, htmlMessage) {
     console.error('Notify user error:', err.message);
   }
 }
+
 
 module.exports = {
   sendTelegram,
