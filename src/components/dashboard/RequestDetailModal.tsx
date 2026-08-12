@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { buildMapUrl } from "@/lib/mapQuery";
 import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Link2, RefreshCw } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
@@ -489,10 +490,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   {/* Read-only iOS grouped info cards */}
                   <div className="rounded-2xl bg-accent/30 overflow-hidden divide-y divide-border/30">
                     <InfoRow icon={<Phone size={16} className="text-primary" />} label="Телефон">
-                      <a href={`tel:${request.client_phone?.replace(/\s/g, "")}`} className="text-sm font-medium text-primary">{request.client_phone}</a>
+                      <a href={`tel:${request.client_phone?.replace(/\s/g, "")} className="text-sm font-medium text-primary">{request.client_phone}</a>
                     </InfoRow>
                     <InfoRow icon={<MapPin size={16} className="text-primary" />} label="Адрес">
-                      <a href={`https://yandex.ru/maps/?text=${encodeURIComponent((request.client_address || "") + (request.city ? ", " + request.city : ""))}`}
+                      <a href={buildMapUrl(request.client_address, request.city)}
                         target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary">
                         {request.client_address}{request.city ? `, ${request.city}` : ""}
                       </a>
@@ -500,7 +501,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     {request.extra_name && (
                       <InfoRow icon={<User size={16} className="text-primary" />} label="Доп. контакт">
                         <p className="text-sm font-medium text-foreground">{request.extra_name}</p>
-                        {request.extra_phone && <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary">{request.extra_phone}</a>}
+                        {request.extra_phone && <a href={`tel:${request.extra_phone?.replace(/\s/g, "")} className="text-xs text-primary">{request.extra_phone}</a>}
                       </InfoRow>
                     )}
                     <InfoRow icon={<Calendar size={16} className="text-primary" />} label="Создана">
@@ -690,7 +691,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <Briefcase size={10} />
                     {partnerName || "Партнёр"}
                     {partnerPhone && viewerRole !== "measurer" && (
-                      <a href={`tel:${partnerPhone.replace(/\s/g, "")}`} className="ml-1 underline hover:no-underline" onClick={(e) => e.stopPropagation()}>
+                      <a href={`tel:${partnerPhone.replace(/\s/g, "")} className="ml-1 underline hover:no-underline" onClick={(e) => e.stopPropagation()}>
                         {partnerPhone}
                       </a>
                     )}
@@ -889,7 +890,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <Phone size={16} className="text-primary mt-0.5 shrink-0" />
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Телефон</p>
-                      <a href={`tel:${request.client_phone?.replace(/\s/g, "")}`} className="text-sm font-medium text-primary hover:underline">{request.client_phone}</a>
+                      <a href={`tel:${request.client_phone?.replace(/\s/g, "")} className="text-sm font-medium text-primary hover:underline">{request.client_phone}</a>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-accent/50">
@@ -897,7 +898,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <div>
                       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Адрес</p>
                       <a 
-                        href={`https://yandex.ru/maps/?text=${encodeURIComponent((request.client_address || "") + (request.city ? ", " + request.city : ""))}`}
+                        href={buildMapUrl(request.client_address, request.city)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-primary hover:underline"
@@ -915,7 +916,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Доп. контакт</p>
                         <p className="text-sm font-medium">{request.extra_name}</p>
                         {request.extra_phone && (
-                          <a href={`tel:${request.extra_phone?.replace(/\s/g, "")}`} className="text-xs text-primary hover:underline">{request.extra_phone}</a>
+                          <a href={`tel:${request.extra_phone?.replace(/\s/g, "")} className="text-xs text-primary hover:underline">{request.extra_phone}</a>
                         )}
                       </div>
                     </div>
@@ -928,7 +929,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <p className="text-[10px] text-emerald-600 uppercase tracking-wider">Партнёр</p>
                         <p className="text-sm font-medium text-emerald-700">{partnerName}</p>
                         {partnerPhone && viewerRole !== "measurer" && (
-                          <a href={`tel:${partnerPhone.replace(/\s/g, "")}`} className="text-xs text-emerald-600 hover:underline">{partnerPhone}</a>
+                          <a href={`tel:${partnerPhone.replace(/\s/g, "")} className="text-xs text-emerald-600 hover:underline">{partnerPhone}</a>
                         )}
                       </div>
                     </div>

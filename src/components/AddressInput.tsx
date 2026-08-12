@@ -3,6 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MapPin } from "lucide-react";
 
 const DADATA_TOKEN = "31256c5e3b7279666a4831f6d7e07c297e2e5ae5";
+// Убираем страну и почтовый индекс, оставляя регион/город — иначе
+// навигатор уводит в другой населённый пункт при адресах МО/ЛО.
+const cleanAddress = (v: string) =>
+  (v || "")
+    .replace(/^\s*Россия\s*,\s*/i, "")
+    .replace(/^\s*\d{6}\s*,\s*/, "")
+    .trim();
+
 const DADATA_URL = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
 
 interface Suggestion {
@@ -44,10 +52,8 @@ const AddressInput = ({
       }
 
       try {
-        const body: any = { query, count: 5 };
+        const body: any = { query, count: 7 };
         if (city) {
-          body.from_bound = { value: "street" };
-          body.to_bound = { value: "house" };
           const regionMap: Record<string, string> = {
             "Москва": "Московская",
             "Санкт-Петербург": "Ленинградская",
@@ -86,7 +92,7 @@ const AddressInput = ({
   };
 
   const handleSelect = (s: Suggestion) => {
-    onChange(s.value);
+    onChange(cleanAddress(s.unrestricted_value || s.value));
     setSuggestions([]);
     setShow(false);
   };

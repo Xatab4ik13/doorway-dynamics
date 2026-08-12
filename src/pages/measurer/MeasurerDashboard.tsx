@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { buildMapUrl } from "@/lib/mapQuery";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
@@ -141,10 +142,10 @@ const MeasurerDashboard = () => {
           </div>
           <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(selected.client_address + (selected.city ? ", " + selected.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
+            <a href={buildMapUrl(selected.client_address, selected.city)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a>
+            <a href={`tel:${selected.client_phone?.replace(/\s/g, "")} className="text-primary hover:underline">{selected.client_phone}</a>
           </p>
           {selected.extra_name && (
             <div className="mt-2 p-2 rounded-lg bg-accent/50">
@@ -446,10 +447,10 @@ const MeasurerDashboard = () => {
                       <p className="font-semibold">{r.client_name}</p>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <MapPin size={12} /> 
-                        <a href={`https://yandex.ru/maps/?text=${encodeURIComponent(r.client_address + (r.city ? ", " + r.city : ""))}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a>
+                        <a href={buildMapUrl(r.client_address, r.city)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone size={12} /> <a href={`tel:${r.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{r.client_phone}</a>
+                        <Phone size={12} /> <a href={`tel:${r.client_phone?.replace(/\s/g, "")} className="text-primary hover:underline">{r.client_phone}</a>
                       </div>
                       {r.agreed_date && (
                         <div className="flex items-center gap-1 text-xs text-primary font-medium">
