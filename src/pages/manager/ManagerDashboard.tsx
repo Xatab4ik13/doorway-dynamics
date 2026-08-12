@@ -246,6 +246,24 @@ const ManagerDashboard = () => {
             setSelectedRequest(prev => prev ? { ...prev, ...result } : null);
             refetch();
           }}
+          onRepeat={async (req) => {
+            await createRequest({
+              type: req.type,
+              client_name: req.client_name,
+              client_phone: req.client_phone,
+              client_address: req.client_address,
+              city: req.city,
+              extra_name: req.extra_name,
+              extra_phone: req.extra_phone,
+              work_description: req.work_description,
+              source: req.source,
+              partner_id: req.partner_id,
+              parent_request_id: req.id,
+            });
+            setSelectedRequest(null);
+            refetch();
+          }}
+
         />
       )}
 

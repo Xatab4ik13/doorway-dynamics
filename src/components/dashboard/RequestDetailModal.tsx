@@ -1,9 +1,12 @@
 import { useState, useRef } from "react";
 import { buildMapUrl } from "@/lib/mapQuery";
-import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Link2, RefreshCw } from "lucide-react";
+import { X, Phone, MapPin, Calendar, User, MessageSquare, Briefcase, Loader2, Image, FileText, ExternalLink, Trash2, ArrowRight, Upload, AlertTriangle, Pencil, Link2, RefreshCw, Copy } from "lucide-react";
 import SearchableUserSelect from "./SearchableUserSelect";
+import RequestComments from "./RequestComments";
+import { useAuth } from "@/contexts/AuthContext";
 import { statusLabels, statusColors, requestTypeLabels, statusFlows, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
 import { useUsers, type ApiRequest } from "@/hooks/useRequests";
+
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { uploadFile } from "@/lib/api";
@@ -34,14 +37,18 @@ interface RequestDetailModalProps {
   onSendToReclamation?: (request: ApiRequest) => Promise<void>;
   onSendToDoorium?: (request: ApiRequest) => Promise<void>;
   onSyncDoorium?: (request: ApiRequest) => Promise<void>;
+  onRepeat?: (request: ApiRequest) => Promise<void>;
+
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
-const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToReclamation, onSendToDoorium, onSyncDoorium, viewerRole = "admin" }: RequestDetailModalProps) => {
+const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToReclamation, onSendToDoorium, onSyncDoorium, onRepeat, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
+  const { user: authUser } = useAuth();
   const canEdit = viewerRole === "admin" || viewerRole === "manager";
   const canPartnerEdit = viewerRole === "partner";
   const { getByRole, getUserName, getUser } = useUsers(!canEdit);
+
   const [status, setStatus] = useState<string>(request.status);
   const [measurerId, setMeasurerId] = useState(request.measurer_id || "");
   const [installerId, setInstallerId] = useState(request.installer_id || "");
@@ -54,6 +61,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [interiorDoors, setInteriorDoors] = useState<string>(request.interior_doors != null ? String(request.interior_doors) : "");
   const [entranceDoors, setEntranceDoors] = useState<string>(request.entrance_doors != null ? String(request.entrance_doors) : "");
   const [partitions, setPartitions] = useState<string>(request.partitions != null ? String(request.partitions) : "");
+  const [entrancePanels, setEntrancePanels] = useState<string>(request.entrance_panels != null ? String(request.entrance_panels) : "");
+  const [baseboardMeters, setBaseboardMeters] = useState<string>(request.baseboard_meters != null ? String(request.baseboard_meters) : "");
+  const [portals, setPortals] = useState<string>(request.portals != null ? String(request.portals) : "");
+  const [repeating, setRepeating] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -80,7 +92,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           uploaded.push({
             url: result.url,
             type: f.type.startsWith("image/") ? "image" : "document",
-            stage: "general",
+            stage: uploadStage,
             uploaded_at: new Date().toISOString(),
           });
           successCount++;
@@ -140,11 +152,58 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const photos = request.photos || [];
   const hasFiles = photos.length > 0;
+  const uploadStage = request.type === "measurement" ? "measurement" : "installation";
+  const fileGroupOf = (f: { stage?: string }) =>
+    f.stage === "installation" ? "installation" : f.stage === "measurement" ? "measurement" : uploadStage;
+  const measurementPhotos = photos.filter((f) => fileGroupOf(f) === "measurement");
+  const installationPhotos = photos.filter((f) => fileGroupOf(f) === "installation");
+
+  const renderFileCard = (file: { url: string; type: string; uploaded_at: string }) => {
+    const i = photos.indexOf(file as any);
+    return (
+      <div key={`${file.url}-${i}`} className="group relative aspect-square rounded-xl overflow-hidden border border-border">
+        <button onClick={() => setViewingFile({ url: proxyFileUrl(file.url), type: file.type })} className="block w-full h-full text-left">
+          {file.type === "image" ? (
+            <img src={proxyFileUrl(file.url)} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
+              <FileText size={24} className="text-muted-foreground" />
+              <p className="text-[10px] text-muted-foreground mt-1 px-1 truncate max-w-full">{file.url.split("/").pop()}</p>
+            </div>
+          )}
+          <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
+            {formatDate(file.uploaded_at)}
+          </p>
+        </button>
+        {viewerRole === "admin" && onSave && (
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              const updatedPhotos = photos.filter((_, idx) => idx !== i);
+              try {
+                await onSave(request.id, { photos: updatedPhotos as any });
+                request.photos = updatedPhotos;
+                toast.success("Файл удалён");
+              } catch {
+                toast.error("Ошибка удаления файла");
+              }
+            }}
+            className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white hover:bg-destructive transition-all z-10"
+            title="Удалить файл"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
+      </div>
+    );
+  };
 
   // Determine which assignment fields to show based on request type
   const showMeasurerField = request.type === "measurement";
   const showInstallerField = request.type === "installation" || request.type === "reclamation";
   const showDateField = true;
+
 
   const buildUpdates = () => {
     const updates: any = { status, notes };
@@ -173,6 +232,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
+      updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
+      updates.portals = portals ? parseInt(portals) : null;
+
       // Allow editing closed_at (admin/manager via pencil)
       // 12:00 UTC = 15:00 МСК — дата закрытия не «уезжает» на соседние сутки в отчётах
       const originalClosedAt = request.closed_at?.split("T")[0] || "";
@@ -192,6 +255,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.interior_doors = interiorDoors ? parseInt(interiorDoors) : null;
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
+      updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
+      updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
+      updates.portals = portals ? parseInt(portals) : null;
+
       // Remove status/notes for partners
       delete updates.status;
       delete updates.notes;
@@ -347,6 +414,19 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
           </button>
         )}
+        {onRepeat && (
+          <button
+            onClick={async () => {
+              setRepeating(true);
+              try { await onRepeat(request); toast.success("Повторная заявка создана"); } catch (e: any) { toast.error(e.message || "Ошибка создания"); } finally { setRepeating(false); }
+            }}
+            disabled={repeating}
+            className="px-4 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground disabled:opacity-50 flex items-center gap-2 active:opacity-80"
+          >
+            {repeating ? <Loader2 size={16} className="animate-spin" /> : <><Copy size={16} /> Повторная</>}
+          </button>
+        )}
+
         {request.type === "installation" && canEdit && onSendToReclamation && (
           <button
             onClick={async () => {
@@ -489,7 +569,20 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground mb-1">Перегор.</p>
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Панели</p>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Плинтус, м</p>
+                      <input type="number" min="0" step="0.1" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Порталы</p>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
                   </div>
+
                 </div>
               ) : (
                 <>
@@ -546,13 +639,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm text-amber-900">{request.status_comment}</p>
                     </div>
                   )}
-                  {(request.interior_doors || request.entrance_doors || request.partitions) && (
+                  {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold text-foreground">{request.interior_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold text-foreground">{request.entrance_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Перегор.</p><p className="text-lg font-bold text-foreground">{request.partitions || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Панели</p><p className="text-lg font-bold text-foreground">{request.entrance_panels || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Плинтус, м</p><p className="text-lg font-bold text-foreground">{request.baseboard_meters || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Порталы</p><p className="text-lg font-bold text-foreground">{request.portals || 0}</p></div>
                     </div>
                   )}
+
                 </>
               )}
 
@@ -586,10 +683,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Заметки</p>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="Добавьте заметку..."
-                  className="w-full px-4 py-2.5 rounded-2xl border border-border bg-background text-sm focus:outline-none resize-none" readOnly={!canEdit && !canPartnerEdit} />
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Комментарии</p>
+                <RequestComments
+                  requestId={request.id}
+                  currentUserId={authUser?.id}
+                  currentUserRole={viewerRole}
+                  defaultStage={request.type === "measurement" ? "measurement" : "installation"}
+                />
               </div>
+
             </div>
           )}
 
@@ -605,7 +707,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       try {
                         const uploaded: typeof photos = [];
                         for (const f of selectedFiles) {
-                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: "general", uploaded_at: new Date().toISOString() }); }
+                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: uploadStage, uploaded_at: new Date().toISOString() }); }
                           catch { toast.error(`Не удалось: ${f.name}`); }
                         }
                         if (uploaded.length > 0) {
@@ -626,39 +728,25 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               {photos.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground"><Image size={40} className="mx-auto mb-3 opacity-30" /><p className="text-sm">Нет файлов</p></div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {photos.map((file, i) => (
-                    <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border border-border group">
-                      <button onClick={() => setViewingFile({ url: proxyFileUrl(file.url), type: file.type })} className="block w-full h-full text-left">
-                        {file.type === "image" ? <img src={proxyFileUrl(file.url)} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-accent/50"><FileText size={24} className="text-muted-foreground" /></div>}
-                      </button>
-                      <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
-                        {formatDate(file.uploaded_at)}
-                      </p>
-                      {viewerRole === "admin" && onSave && (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            const updatedPhotos = photos.filter((_, idx) => idx !== i);
-                            try {
-                              await onSave(request.id, { photos: updatedPhotos as any });
-                              request.photos = updatedPhotos;
-                              toast.success("Файл удалён");
-                            } catch {
-                              toast.error("Ошибка удаления файла");
-                            }
-                          }}
-                          className="absolute top-1.5 right-1.5 p-2 rounded-xl bg-black/60 text-white active:bg-destructive transition-all z-10"
-                          title="Удалить файл"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                <div className="space-y-4">
+                  {([
+                    { key: "measurement" as const, label: "Файлы замера", list: measurementPhotos },
+                    { key: "installation" as const, label: "Файлы монтажа", list: installationPhotos },
+                  ]).map((group) => (
+                    <div key={group.key}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">{group.label} ({group.list.length})</p>
+                      {group.list.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Нет файлов</p>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {group.list.map((file) => renderFileCard(file))}
+                        </div>
                       )}
                     </div>
                   ))}
                 </div>
               )}
+
             </div>
           )}
 
@@ -1115,8 +1203,24 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                       </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные панели</label>
+                        <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус, м</label>
+                        <input type="number" min="0" step="0.1" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                        <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
                     </div>
                   </div>
+
                 </div>
               )}
 
@@ -1140,12 +1244,28 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                     </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные панели</label>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус, м</label>
+                      <input type="number" min="0" step="0.1" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               )}
 
+
               {/* Door counts read-only for executors */}
-              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions) && (
+              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
                   <div className="grid grid-cols-3 gap-2 text-sm text-center">
@@ -1161,24 +1281,36 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground">Перегородка (кол-во створок)</p>
                       <p className="font-semibold">{request.partitions || 0}</p>
                     </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Входные панели</p>
+                      <p className="font-semibold">{request.entrance_panels || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Плинтус, м</p>
+                      <p className="font-semibold">{request.baseboard_meters || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Порталы</p>
+                      <p className="font-semibold">{request.portals || 0}</p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Notes */}
-              <div>
-                <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider flex items-center gap-1">
-                  <MessageSquare size={12} /> Заметки
+
+              {/* Comments */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                  <MessageSquare size={12} /> Комментарии
                 </label>
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={3}
-                  placeholder="Добавьте заметку к заявке..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  readOnly={!canEdit && !canPartnerEdit}
+                <RequestComments
+                  requestId={request.id}
+                  currentUserId={authUser?.id}
+                  currentUserRole={viewerRole}
+                  defaultStage={request.type === "measurement" ? "measurement" : "installation"}
                 />
               </div>
+
             </div>
           )}
 
@@ -1239,54 +1371,29 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <p className="text-sm">Нет файлов по этой заявке</p>
                 </div>
               ) : photos.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {photos.map((file, i) => (
-                    <div key={i} className="group relative aspect-square rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-all">
-                      <a
-                        href={proxyFileUrl(file.url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full h-full"
-                      >
-                        {file.type === "image" ? (
-                          <img src={proxyFileUrl(file.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <div className="grid gap-4 md:grid-cols-2">
+                  {([
+                    { key: "measurement" as const, label: "Файлы замера", list: measurementPhotos },
+                    { key: "installation" as const, label: "Файлы монтажа", list: installationPhotos },
+                  ]).map((group) => (
+                    <div key={group.key} className="rounded-xl border border-border overflow-hidden">
+                      <div className="px-3 py-2 bg-accent/50 border-b border-border">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{group.label} ({group.list.length})</p>
+                      </div>
+                      <div className="p-3">
+                        {group.list.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">Нет файлов</p>
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
-                            <FileText size={24} className="text-muted-foreground" />
-                            <p className="text-[10px] text-muted-foreground mt-1">{file.url.split("/").pop()}</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {group.list.map((file) => renderFileCard(file))}
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                          <ExternalLink size={18} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                        <p className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[9px] px-2 py-1 truncate">
-                          {formatDate(file.uploaded_at)}
-                        </p>
-                      </a>
-                      {viewerRole === "admin" && onSave && (
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            const updatedPhotos = photos.filter((_, idx) => idx !== i);
-                            try {
-                              await onSave(request.id, { photos: updatedPhotos as any });
-                              request.photos = updatedPhotos;
-                              toast.success("Файл удалён");
-                            } catch {
-                              toast.error("Ошибка удаления файла");
-                            }
-                          }}
-                          className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white hover:bg-destructive transition-all z-10"
-                          title="Удалить файл"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : null}
+
             </div>
           )}
 
@@ -1367,6 +1474,19 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   {sendingToInstall ? <Loader2 size={16} className="animate-spin" /> : <><ArrowRight size={16} /> На монтаж</>}
                 </button>
               )}
+              {onRepeat && (
+                <button
+                  onClick={async () => {
+                    setRepeating(true);
+                    try { await onRepeat(request); toast.success("Повторная заявка создана"); } catch (e: any) { toast.error(e.message || "Ошибка создания"); } finally { setRepeating(false); }
+                  }}
+                  disabled={repeating}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium bg-accent text-foreground hover:bg-accent/80 transition-all disabled:opacity-50 flex items-center gap-2"
+                >
+                  {repeating ? <Loader2 size={16} className="animate-spin" /> : <><Copy size={16} /> Повторная заявка</>}
+                </button>
+              )}
+
               {request.type === "installation" && canEdit && onSendToReclamation && (
                 <button
                   onClick={async () => {
@@ -1423,7 +1543,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               </div>
             </div>
           )}
+          {viewingFile && (
+            <FileViewer url={viewingFile.url} type={viewingFile.type} onClose={() => setViewingFile(null)} />
+          )}
         </motion.div>
+
       </div>
     </AnimatePresence>
   );

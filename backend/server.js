@@ -681,7 +681,7 @@ app.post('/api/requests/public', async (req, res) => {
 // Создать заявку (из кабинета)
 app.post('/api/requests', auth, async (req, res) => {
   try {
-    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions } = req.body;
+    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id } = req.body;
     const client_phone = normalizePhone(rawPhone) || rawPhone;
     const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
@@ -691,10 +691,11 @@ app.post('/api/requests', auth, async (req, res) => {
     const partnerId = req.user.role === 'partner' ? req.user.id : (req.body.partner_id || null);
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, 'new') RETURNING *`,
-      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null]
+      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, $17, $18, $19, $20, 'new') RETURNING *`,
+      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, parent_request_id || null]
     );
+
 
     const req_data = rows[0];
     const sourceName = req.user.role === 'partner' ? `Партнёр (${req.user.name})` : req.user.name;
@@ -757,7 +758,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       if (request.partner_id !== req.user.id) {
         return res.status(403).json({ error: 'Нет доступа к этой заявке' });
       }
-      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'photos'];
+      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'entrance_panels', 'baseboard_meters', 'portals', 'photos'];
       const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
       if (forbidden.length > 0) {
         return res.status(403).json({ error: `Партнёрам недоступно изменение: ${forbidden.join(', ')}` });
@@ -1018,7 +1019,123 @@ app.put('/api/requests/:id', auth, async (req, res) => {
   }
 });
 
+// === Комментарии к заявкам ===
+const COMMENT_STAGES = ['measurement', 'installation', 'general'];
+
+async function loadRequestForComment(id) {
+  const { rows } = await pool.query('SELECT id, partner_id, measurer_id, installer_id, installer_2_id, installer_3_id, installer_4_id, number FROM requests WHERE id = $1', [id]);
+  return rows[0] || null;
+}
+
+function canViewRequest(user, request) {
+  if (['admin', 'manager'].includes(user.role)) return true;
+  if (user.role === 'partner') return request.partner_id === user.id;
+  if (user.role === 'measurer') return request.measurer_id === user.id;
+  if (user.role === 'installer') {
+    return [request.installer_id, request.installer_2_id, request.installer_3_id, request.installer_4_id].includes(user.id);
+  }
+  return false;
+}
+
+// Список комментариев заявки
+app.get('/api/requests/:id/comments', auth, async (req, res) => {
+  try {
+    const request = await loadRequestForComment(req.params.id);
+    if (!request) return res.status(404).json({ error: 'Заявка не найдена' });
+    if (!canViewRequest(req.user, request)) return res.status(403).json({ error: 'Нет доступа' });
+    const { rows } = await pool.query(
+      `SELECT c.*, u.name AS user_name, u.role AS user_role
+       FROM request_comments c
+       LEFT JOIN users u ON u.id = c.author_id
+       WHERE c.request_id = $1
+       ORDER BY c.created_at ASC`,
+      [req.params.id]
+    );
+    res.json(rows.map(r => ({
+      id: r.id,
+      request_id: r.request_id,
+      author_id: r.author_id,
+      author_name: r.user_name || r.author_name || 'Без имени',
+      author_role: r.user_role || r.author_role || null,
+      stage: r.stage,
+      text: r.text,
+      created_at: r.created_at,
+      updated_at: r.updated_at,
+    })));
+  } catch (err) {
+    console.error('Get comments error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки комментариев' });
+  }
+});
+
+// Добавить комментарий
+app.post('/api/requests/:id/comments', auth, async (req, res) => {
+  try {
+    const request = await loadRequestForComment(req.params.id);
+    if (!request) return res.status(404).json({ error: 'Заявка не найдена' });
+    if (!canViewRequest(req.user, request)) return res.status(403).json({ error: 'Нет доступа' });
+
+    const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
+    if (!text) return res.status(400).json({ error: 'Комментарий пустой' });
+    if (text.length > 5000) return res.status(400).json({ error: 'Комментарий слишком длинный' });
+    const stage = COMMENT_STAGES.includes(req.body.stage) ? req.body.stage : 'general';
+
+    const { rows } = await pool.query(
+      `INSERT INTO request_comments (request_id, author_id, author_name, author_role, stage, text)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [req.params.id, req.user.id, req.user.name || null, req.user.role, stage, text]
+    );
+    res.json({ ...rows[0], author_name: req.user.name, author_role: req.user.role });
+  } catch (err) {
+    console.error('Create comment error:', err);
+    res.status(500).json({ error: 'Ошибка добавления комментария' });
+  }
+});
+
+// Редактировать комментарий (свой — любой автор, чужой — админ/менеджер)
+app.put('/api/comments/:commentId', auth, async (req, res) => {
+  try {
+    const { rows: found } = await pool.query('SELECT * FROM request_comments WHERE id = $1', [req.params.commentId]);
+    if (!found.length) return res.status(404).json({ error: 'Комментарий не найден' });
+    const comment = found[0];
+    const isOwner = comment.author_id && comment.author_id === req.user.id;
+    if (!isOwner && !['admin', 'manager'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Можно редактировать только свои комментарии' });
+    }
+    const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
+    if (!text) return res.status(400).json({ error: 'Комментарий пустой' });
+    const stage = COMMENT_STAGES.includes(req.body.stage) ? req.body.stage : comment.stage;
+    const { rows } = await pool.query(
+      'UPDATE request_comments SET text = $1, stage = $2, updated_at = NOW() WHERE id = $3 RETURNING *',
+      [text, stage, req.params.commentId]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update comment error:', err);
+    res.status(500).json({ error: 'Ошибка обновления комментария' });
+  }
+});
+
+// Удалить комментарий (свой — любой автор, чужой — админ/менеджер)
+app.delete('/api/comments/:commentId', auth, async (req, res) => {
+  try {
+    const { rows: found } = await pool.query('SELECT * FROM request_comments WHERE id = $1', [req.params.commentId]);
+    if (!found.length) return res.status(404).json({ error: 'Комментарий не найден' });
+    const comment = found[0];
+    const isOwner = comment.author_id && comment.author_id === req.user.id;
+    if (!isOwner && !['admin', 'manager'].includes(req.user.role)) {
+      return res.status(403).json({ error: 'Можно удалять только свои комментарии' });
+    }
+    await pool.query('DELETE FROM request_comments WHERE id = $1', [req.params.commentId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete comment error:', err);
+    res.status(500).json({ error: 'Ошибка удаления комментария' });
+  }
+});
+
 // === Articles ===
+
 app.get('/api/articles', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM articles ORDER BY created_at DESC');
