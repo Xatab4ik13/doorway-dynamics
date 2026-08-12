@@ -229,7 +229,7 @@ const InstallerDashboard = () => {
                       <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
                       <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> <a href={buildMapUrl(selected.client_address, selected.city)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a></div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")} className="text-primary hover:underline">{selected.client_phone}</a></div>
+                      <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
                     </div>
 
                     {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
@@ -244,7 +244,7 @@ const InstallerDashboard = () => {
                       <div className="p-3 rounded-xl bg-accent/50">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Доп. контакт</p>
                         <p className="text-sm font-medium">{selected.extra_name}</p>
-                        {selected.extra_phone && <a href={`tel:${selected.extra_phone.replace(/\s/g, "")} className="text-xs text-primary hover:underline">{selected.extra_phone}</a>}
+                        {selected.extra_phone && <a href={`tel:${selected.extra_phone.replace(/\s/g, "")}`} className="text-xs text-primary hover:underline">{selected.extra_phone}</a>}
                       </div>
                     )}
 
@@ -437,7 +437,7 @@ const InstallerDashboard = () => {
                     <p className="font-mono text-xs text-muted-foreground">{selected.number}</p>
                     <h2 className="text-lg font-heading font-bold mt-1">{selected.client_name}</h2>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1"><MapPin size={14} /> <a href={buildMapUrl(selected.client_address, selected.city)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a></div>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")} className="text-primary hover:underline">{selected.client_phone}</a></div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground"><Phone size={14} /> <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a></div>
                     {(selected.interior_doors != null || selected.entrance_doors != null || selected.partitions != null) && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {selected.interior_doors != null && <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-accent text-xs font-medium">Межкомнатные: {selected.interior_doors}</span>}

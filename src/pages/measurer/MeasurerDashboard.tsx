@@ -145,7 +145,7 @@ const MeasurerDashboard = () => {
             <a href={buildMapUrl(selected.client_address, selected.city)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{selected.client_address}</a>
           </p>
           <p className="text-sm text-muted-foreground mt-1">
-            <a href={`tel:${selected.client_phone?.replace(/\s/g, "")} className="text-primary hover:underline">{selected.client_phone}</a>
+            <a href={`tel:${selected.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{selected.client_phone}</a>
           </p>
           {selected.extra_name && (
             <div className="mt-2 p-2 rounded-lg bg-accent/50">
@@ -450,7 +450,7 @@ const MeasurerDashboard = () => {
                         <a href={buildMapUrl(r.client_address, r.city)} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{r.client_address}</a>
                       </div>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Phone size={12} /> <a href={`tel:${r.client_phone?.replace(/\s/g, "")} className="text-primary hover:underline">{r.client_phone}</a>
+                        <Phone size={12} /> <a href={`tel:${r.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{r.client_phone}</a>
                       </div>
                       {r.agreed_date && (
                         <div className="flex items-center gap-1 text-xs text-primary font-medium">
