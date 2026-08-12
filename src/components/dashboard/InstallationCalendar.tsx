@@ -23,7 +23,9 @@ import {
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 
-const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled"];
+// Заявку прячем из календаря только если она отменена/отказ клиента.
+// Всё остальное с проставленной датой должно быть видно, даже если статус не обновился.
+const HIDDEN_STATUSES = ["cancelled", "client_refused"];
 
 import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
 

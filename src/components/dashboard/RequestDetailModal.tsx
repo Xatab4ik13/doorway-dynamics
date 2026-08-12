@@ -174,9 +174,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
       // Allow editing closed_at (admin/manager via pencil)
+      // 12:00 UTC = 15:00 МСК — дата закрытия не «уезжает» на соседние сутки в отчётах
       const originalClosedAt = request.closed_at?.split("T")[0] || "";
       if (closedAt !== originalClosedAt) {
-        updates.closed_at = closedAt ? closedAt + "T23:59:59.000Z" : null;
+        updates.closed_at = closedAt ? closedAt + "T12:00:00.000Z" : null;
       }
     }
     
