@@ -791,7 +791,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // Статусы, из которых заявка НЕ оживляется автоматически (только вручную)
     const TERMINAL_STATUSES = ['closed', 'cancelled'];
-    const canAutoAdvance = !TERMINAL_STATUSES.includes(request.status) && !(updates.status && TERMINAL_STATUSES.includes(updates.status));
+    // Если пользователь явно выбрал другой статус — никакая автоматика его не перебивает
+    const userExplicitlyChangedStatus = !!updates.status && updates.status !== request.status;
+    const canAutoAdvance = !userExplicitlyChangedStatus
+      && !TERMINAL_STATUSES.includes(request.status)
+      && !(updates.status && TERMINAL_STATUSES.includes(updates.status));
 
     // Автоматизация: назначение исполнителя → смена статуса
     // (работает из любого нетерминального статуса, включая "зависшие" заявки)
@@ -809,7 +813,6 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // Автоматизация: перенос даты монтажа → installation_rescheduled
     // Только если пользователь НЕ менял статус вручную (т.е. статус в payload совпадает с текущим)
-    const userExplicitlyChangedStatus = updates.status && updates.status !== request.status;
     if (updates.agreed_date && !userExplicitlyChangedStatus && ["date_agreed", "installation_rescheduled"].includes(request.status) && request.type === "installation" && ["installer", "admin", "manager"].includes(role)) {
       updates.status = "installation_rescheduled";
     }
