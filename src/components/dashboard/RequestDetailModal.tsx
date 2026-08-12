@@ -201,8 +201,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       const originalDate = request.agreed_date?.split("T")[0] || "";
       if (agreedDate !== originalDate) {
         updates.agreed_date = agreedDate || null;
+        // Auto-advance status when a date is set and user didn't pick a new status manually
+        if (agreedDate && status === request.status && !["date_agreed", "installation_rescheduled", "completed", "cancelled", "client_refused"].includes(status)) {
+          updates.status = originalDate ? "installation_rescheduled" : "date_agreed";
+        }
       }
     }
+
     
     return updates;
   };
