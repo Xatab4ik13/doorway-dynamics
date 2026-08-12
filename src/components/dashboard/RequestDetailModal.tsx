@@ -1197,12 +1197,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Status comment */}
-              {request.status_comment && (
+              {(statusComment || statusCommentEditing) && (
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-                  <label className="text-[10px] font-medium text-amber-700 mb-2 block uppercase tracking-wider flex items-center gap-1">
-                    <MessageSquare size={12} /> Комментарий к статусу
-                  </label>
-                  <p className="text-sm leading-relaxed text-amber-900">{request.status_comment}</p>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <label className="text-[10px] font-medium text-amber-700 block uppercase tracking-wider flex items-center gap-1">
+                      <MessageSquare size={12} /> Комментарий к статусу
+                    </label>
+                    {canEdit && onSave && !statusCommentEditing && renderStatusCommentActions()}
+                  </div>
+                  {statusCommentEditing ? renderStatusCommentEditor() : (
+                    <p className="text-sm leading-relaxed text-amber-900">{statusComment}</p>
+                  )}
                 </div>
               )}
 
