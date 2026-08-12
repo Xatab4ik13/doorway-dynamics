@@ -214,7 +214,8 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [detailRequest, setDetailRequest] = useState<ApiRequest | null>(null);
-  const { requests, loading, updateRequest } = useRequests();
+  // scheduled=1 — забираем только заявки с датой, иначе старые не попадают в лимит 1000
+  const { requests, loading, updateRequest } = useRequests("scheduled=1");
   const { getUserName, getByRole } = useUsers();
   const installers = useMemo(() => getByRole("installer"), [getByRole]);
 
