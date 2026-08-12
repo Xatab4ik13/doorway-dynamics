@@ -775,16 +775,21 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // Admin and manager can edit ALL fields without restriction
 
+    // Статусы, из которых заявка НЕ оживляется автоматически (только вручную)
+    const TERMINAL_STATUSES = ['closed', 'cancelled'];
+    const canAutoAdvance = !TERMINAL_STATUSES.includes(request.status) && !(updates.status && TERMINAL_STATUSES.includes(updates.status));
+
     // Автоматизация: назначение исполнителя → смена статуса
-    if (updates.measurer_id && !request.measurer_id && ['new', 'pending'].includes(request.status)) {
+    // (работает из любого нетерминального статуса, включая "зависшие" заявки)
+    if (canAutoAdvance && updates.measurer_id && !request.measurer_id && !['date_agreed', 'measurement_done'].includes(request.status)) {
       updates.status = 'measurer_assigned';
     }
-    if (updates.installer_id && !request.installer_id && ['new', 'pending'].includes(request.status)) {
+    if (canAutoAdvance && updates.installer_id && !request.installer_id && !['date_agreed', 'installation_rescheduled'].includes(request.status)) {
       updates.status = 'installer_assigned';
     }
 
-    // Автоматизация: установка даты → date_agreed
-    if (updates.agreed_date && ['measurer_assigned', 'new', 'pending'].includes(request.status)) {
+    // Автоматизация: установка даты → date_agreed (из любого нетерминального статуса)
+    if (canAutoAdvance && updates.agreed_date && !['date_agreed', 'installation_rescheduled'].includes(request.status)) {
       updates.status = 'date_agreed';
     }
 
@@ -1154,8 +1159,21 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
 (async () => {
   try {
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ`);
+
+    // Если колонка исторически создана как TIMESTAMP (без TZ) — конвертируем,
+    // иначе отчёты по МСК сдвигают закрытия на границе суток на предыдущий день.
+    const colType = await pool.query(`
+      SELECT data_type FROM information_schema.columns
+      WHERE table_name = 'requests' AND column_name = 'closed_at'
+    `);
+    if (colType.rows[0]?.data_type === 'timestamp without time zone') {
+      await pool.query(`ALTER TABLE requests ALTER COLUMN closed_at TYPE TIMESTAMPTZ USING closed_at AT TIME ZONE 'UTC'`);
+      console.log('Migrated closed_at: timestamp -> timestamptz');
+    }
+
     hasClosedAtColumn = true;
     console.log('Startup check: closed_at column ready');
+
 
     // One-time backfill: set closed_at = agreed_date for closed requests that have no closed_at
     const backfill = await pool.query(`
