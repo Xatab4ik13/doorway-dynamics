@@ -25,7 +25,7 @@ import { toast } from "sonner";
 
 // Заявку прячем из календаря только если она отменена/отказ клиента.
 // Всё остальное с проставленной датой должно быть видно, даже если статус не обновился.
-const HIDDEN_STATUSES = ["cancelled", "client_refused"];
+const HIDDEN_STATUSES = ["cancelled", "client_refused", "closed"];
 
 import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
 
