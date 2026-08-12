@@ -42,6 +42,23 @@ interface RequestDetailModalProps {
   viewerRole?: "admin" | "manager" | "measurer" | "installer" | "partner";
 }
 
+// YYYY-MM-DD по Москве — чтобы дата закрытия совпадала с фильтрами отчётов
+const mskInputDate = (value?: string | null) => {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value.split("T")[0] || "";
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Moscow",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(d);
+  const get = (t: string) => parts.find(p => p.type === t)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+};
+
+
+
 const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstallation, onSendToReclamation, onSendToDoorium, onSyncDoorium, onRepeat, viewerRole = "admin" }: RequestDetailModalProps) => {
   const isMobile = useIsMobile();
   const { user: authUser } = useAuth();
@@ -124,7 +141,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [source, setSource] = useState<string>(request.source || "site");
   const [partnerId, setPartnerId] = useState<string>(request.partner_id || "");
   const [requestType, setRequestType] = useState<string>(request.type || "measurement");
-  const [closedAt, setClosedAt] = useState(request.closed_at?.split("T")[0] || "");
+  const [closedAt, setClosedAt] = useState(mskInputDate(request.closed_at));
   
   // Edit mode toggle for admin/manager
   const [isEditing, setIsEditing] = useState(false);
@@ -238,7 +255,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
       // Allow editing closed_at (admin/manager via pencil)
       // 12:00 UTC = 15:00 МСК — дата закрытия не «уезжает» на соседние сутки в отчётах
-      const originalClosedAt = request.closed_at?.split("T")[0] || "";
+      const originalClosedAt = mskInputDate(request.closed_at);
       if (closedAt !== originalClosedAt) {
         updates.closed_at = closedAt ? closedAt + "T12:00:00.000Z" : null;
       }
