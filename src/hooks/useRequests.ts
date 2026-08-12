@@ -66,7 +66,7 @@ export function useRequests(extraQuery?: string) {
   const fetchRequests = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}`, { auth: true });
+      const response = await api<ApiRequest[] | { data: ApiRequest[] }>(`/api/requests?page=1&limit=${FULL_FETCH_LIMIT}${extraQuery ? `&${extraQuery}` : ""}`, { auth: true });
       const data = Array.isArray(response) ? response : response.data;
       
       // Notify about new requests
