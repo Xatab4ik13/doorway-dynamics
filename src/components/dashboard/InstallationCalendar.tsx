@@ -23,7 +23,9 @@ import {
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 
-const ACTIVE_STATUSES = ["date_agreed", "installation_rescheduled"];
+// Заявку прячем из календаря только если она отменена/отказ клиента.
+// Всё остальное с проставленной датой должно быть видно, даже если статус не обновился.
+const HIDDEN_STATUSES = ["cancelled", "client_refused"];
 
 import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
 
@@ -241,8 +243,8 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
     const filtered = requests
       .filter((r) => {
         if (!r.agreed_date) return false;
-        // Показываем активные статусы + закрытые (закрытые отрисуем приглушённо)
-        return ACTIVE_STATUSES.includes(r.status);
+        // Показываем всё, где есть дата, кроме отменённых/отказов
+        return !HIDDEN_STATUSES.includes(r.status);
       })
       .filter((r) => !cityFilter || r.city === cityFilter);
 

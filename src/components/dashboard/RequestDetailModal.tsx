@@ -174,9 +174,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.entrance_doors = entranceDoors ? parseInt(entranceDoors) : null;
       updates.partitions = partitions ? parseInt(partitions) : null;
       // Allow editing closed_at (admin/manager via pencil)
+      // 12:00 UTC = 15:00 МСК — дата закрытия не «уезжает» на соседние сутки в отчётах
       const originalClosedAt = request.closed_at?.split("T")[0] || "";
       if (closedAt !== originalClosedAt) {
-        updates.closed_at = closedAt ? closedAt + "T23:59:59.000Z" : null;
+        updates.closed_at = closedAt ? closedAt + "T12:00:00.000Z" : null;
       }
     }
     
@@ -202,7 +203,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       if (agreedDate !== originalDate) {
         updates.agreed_date = agreedDate || null;
         // Auto-advance status when a date is set and user didn't pick a new status manually
-        if (agreedDate && status === request.status && !["date_agreed", "installation_rescheduled", "completed", "cancelled", "client_refused"].includes(status)) {
+        if (agreedDate && status === request.status && !["date_agreed", "installation_rescheduled", "closed", "cancelled", "client_refused"].includes(status)) {
           updates.status = originalDate ? "installation_rescheduled" : "date_agreed";
         }
       }
