@@ -1080,7 +1080,7 @@ app.get('/api/requests/:id/comments', auth, async (req, res) => {
     })));
   } catch (err) {
     console.error('Get comments error:', err);
-    res.status(500).json({ error: 'Ошибка загрузки комментариев' });
+    res.status(500).json({ error: 'Ошибка загрузки комментариев: ' + err.message });
   }
 });
 
@@ -1104,7 +1104,7 @@ app.post('/api/requests/:id/comments', auth, async (req, res) => {
     res.json({ ...rows[0], author_name: req.user.name, author_role: req.user.role });
   } catch (err) {
     console.error('Create comment error:', err);
-    res.status(500).json({ error: 'Ошибка добавления комментария' });
+    res.status(500).json({ error: 'Ошибка добавления комментария: ' + err.message });
   }
 });
 
@@ -1128,7 +1128,7 @@ app.put('/api/comments/:commentId', auth, async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error('Update comment error:', err);
-    res.status(500).json({ error: 'Ошибка обновления комментария' });
+    res.status(500).json({ error: 'Ошибка обновления комментария: ' + err.message });
   }
 });
 
@@ -1146,7 +1146,7 @@ app.delete('/api/comments/:commentId', auth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('Delete comment error:', err);
-    res.status(500).json({ error: 'Ошибка удаления комментария' });
+    res.status(500).json({ error: 'Ошибка удаления комментария: ' + err.message });
   }
 });
 
