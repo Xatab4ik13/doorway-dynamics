@@ -23,9 +23,9 @@ import {
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
 
-// Заявку прячем из календаря только если она отменена/отказ клиента.
-// Всё остальное с проставленной датой должно быть видно, даже если статус не обновился.
-const HIDDEN_STATUSES = ["cancelled", "client_refused", "closed"];
+// В календаре только активные работы: отменённые, отказы, закрытые
+// и заявки «в ожидании» не показываем — они живут в списке заявок.
+const HIDDEN_STATUSES = ["cancelled", "client_refused", "closed", "pending"];
 
 import type { ApiRequest, ApiUser } from "@/hooks/useRequests";
 

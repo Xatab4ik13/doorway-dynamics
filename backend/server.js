@@ -791,7 +791,11 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // Статусы, из которых заявка НЕ оживляется автоматически (только вручную)
     const TERMINAL_STATUSES = ['closed', 'cancelled'];
-    const canAutoAdvance = !TERMINAL_STATUSES.includes(request.status) && !(updates.status && TERMINAL_STATUSES.includes(updates.status));
+    // Если пользователь явно выбрал другой статус — никакая автоматика его не перебивает
+    const userExplicitlyChangedStatus = !!updates.status && updates.status !== request.status;
+    const canAutoAdvance = !userExplicitlyChangedStatus
+      && !TERMINAL_STATUSES.includes(request.status)
+      && !(updates.status && TERMINAL_STATUSES.includes(updates.status));
 
     // Автоматизация: назначение исполнителя → смена статуса
     // (работает из любого нетерминального статуса, включая "зависшие" заявки)
@@ -809,13 +813,12 @@ app.put('/api/requests/:id', auth, async (req, res) => {
 
     // Автоматизация: перенос даты монтажа → installation_rescheduled
     // Только если пользователь НЕ менял статус вручную (т.е. статус в payload совпадает с текущим)
-    const userExplicitlyChangedStatus = updates.status && updates.status !== request.status;
     if (updates.agreed_date && !userExplicitlyChangedStatus && ["date_agreed", "installation_rescheduled"].includes(request.status) && request.type === "installation" && ["installer", "admin", "manager"].includes(role)) {
       updates.status = "installation_rescheduled";
     }
 
     // Замерщик может переносить дату замера
-    if (updates.agreed_date && role === 'measurer' && request.agreed_date && request.type === 'measurement' && request.status === 'date_agreed') {
+    if (updates.agreed_date && !userExplicitlyChangedStatus && role === 'measurer' && request.agreed_date && request.type === 'measurement' && request.status === 'date_agreed') {
       // Allow measurer to reschedule measurement date - keep status as date_agreed
       updates.status = 'date_agreed';
     }
@@ -1077,7 +1080,7 @@ app.get('/api/requests/:id/comments', auth, async (req, res) => {
     })));
   } catch (err) {
     console.error('Get comments error:', err);
-    res.status(500).json({ error: 'Ошибка загрузки комментариев' });
+    res.status(500).json({ error: 'Ошибка загрузки комментариев: ' + err.message });
   }
 });
 
@@ -1101,7 +1104,7 @@ app.post('/api/requests/:id/comments', auth, async (req, res) => {
     res.json({ ...rows[0], author_name: req.user.name, author_role: req.user.role });
   } catch (err) {
     console.error('Create comment error:', err);
-    res.status(500).json({ error: 'Ошибка добавления комментария' });
+    res.status(500).json({ error: 'Ошибка добавления комментария: ' + err.message });
   }
 });
 
@@ -1125,7 +1128,7 @@ app.put('/api/comments/:commentId', auth, async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error('Update comment error:', err);
-    res.status(500).json({ error: 'Ошибка обновления комментария' });
+    res.status(500).json({ error: 'Ошибка обновления комментария: ' + err.message });
   }
 });
 
@@ -1143,7 +1146,7 @@ app.delete('/api/comments/:commentId', auth, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('Delete comment error:', err);
-    res.status(500).json({ error: 'Ошибка удаления комментария' });
+    res.status(500).json({ error: 'Ошибка удаления комментария: ' + err.message });
   }
 });
 
