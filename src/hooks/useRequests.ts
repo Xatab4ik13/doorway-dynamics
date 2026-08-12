@@ -85,7 +85,7 @@ export function useRequests(extraQuery?: string) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [extraQuery]);
 
   useEffect(() => {
     fetchRequests();
