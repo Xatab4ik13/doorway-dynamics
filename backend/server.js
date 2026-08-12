@@ -623,8 +623,14 @@ app.get('/api/requests', auth, async (req, res) => {
     const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
     const baseWhere = baseConds.length ? 'WHERE ' + baseConds.join(' AND ') : '';
 
+    const scheduledQuery = req.query.scheduled === '1';
+    const dataQuery = scheduledQuery
+      ? `SELECT * FROM requests ${where} ORDER BY agreed_date ASC`
+      : `SELECT * FROM requests ${where} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx+1}`;
+    const dataParams = scheduledQuery ? params : [...params, parseInt(limit), offset];
+
     const [dataRes, countRes, countsRes] = await Promise.all([
-      pool.query(`SELECT * FROM requests ${where} ORDER BY created_at DESC LIMIT $${idx} OFFSET $${idx+1}`, [...params, parseInt(limit), offset]),
+      pool.query(dataQuery, dataParams),
       pool.query(`SELECT COUNT(*)::int as total FROM requests ${where}`, params),
       pool.query(`SELECT COUNT(*)::int as "all", COUNT(*) FILTER (WHERE status='new')::int as "new", COUNT(*) FILTER (WHERE status='pending')::int as "pending", COUNT(*) FILTER (WHERE status NOT IN ('new','closed','cancelled'))::int as "in_progress", COUNT(*) FILTER (WHERE type='reclamation')::int as "reclamation" FROM requests ${baseWhere}`, baseParams)
     ]);
