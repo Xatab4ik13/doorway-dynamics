@@ -711,10 +711,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm text-foreground">{request.work_description}</p>
                     </div>
                   )}
-                  {request.status_comment && (
+                  {(statusComment || statusCommentEditing) && (
                     <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
-                      <p className="text-[10px] text-amber-700 uppercase tracking-wider mb-1">Комментарий</p>
-                      <p className="text-sm text-amber-900">{request.status_comment}</p>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="text-[10px] text-amber-700 uppercase tracking-wider">Комментарий</p>
+                        {canEdit && onSave && !statusCommentEditing && renderStatusCommentActions()}
+                      </div>
+                      {statusCommentEditing ? renderStatusCommentEditor() : (
+                        <p className="text-sm text-amber-900">{statusComment}</p>
+                      )}
                     </div>
                   )}
                   {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
