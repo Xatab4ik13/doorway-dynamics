@@ -1288,8 +1288,21 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
       console.log('Migrated closed_at: timestamp -> timestamptz');
     }
 
+    // Те же соображения для created_at / updated_at — отчёты фильтруют по МСК
+    for (const col of ['created_at', 'updated_at']) {
+      const t = await pool.query(`
+        SELECT data_type FROM information_schema.columns
+        WHERE table_name = 'requests' AND column_name = $1
+      `, [col]);
+      if (t.rows[0]?.data_type === 'timestamp without time zone') {
+        await pool.query(`ALTER TABLE requests ALTER COLUMN ${col} TYPE TIMESTAMPTZ USING ${col} AT TIME ZONE 'UTC'`);
+        console.log(`Migrated ${col}: timestamp -> timestamptz`);
+      }
+    }
+
     hasClosedAtColumn = true;
     console.log('Startup check: closed_at column ready');
+
 
 
     // One-time backfill: set closed_at = agreed_date for closed requests that have no closed_at
