@@ -82,6 +82,67 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [baseboardMeters, setBaseboardMeters] = useState<string>(request.baseboard_meters != null ? String(request.baseboard_meters) : "");
   const [portals, setPortals] = useState<string>(request.portals != null ? String(request.portals) : "");
   const [repeating, setRepeating] = useState(false);
+  const [statusComment, setStatusComment] = useState(request.status_comment || "");
+  const [statusCommentEditing, setStatusCommentEditing] = useState(false);
+  const [statusCommentDraft, setStatusCommentDraft] = useState(request.status_comment || "");
+  const [savingStatusComment, setSavingStatusComment] = useState(false);
+
+  const saveStatusComment = async (value: string) => {
+    if (!onSave) return;
+    setSavingStatusComment(true);
+    try {
+      await onSave(request.id, { status_comment: value || null } as Partial<ApiRequest>);
+      setStatusComment(value);
+      setStatusCommentEditing(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Не удалось сохранить комментарий");
+    } finally {
+      setSavingStatusComment(false);
+    }
+  };
+
+  const renderStatusCommentActions = () => (
+    <div className="flex items-center gap-1 shrink-0">
+      <button
+        onClick={() => { setStatusCommentDraft(statusComment); setStatusCommentEditing(true); }}
+        className="p-1 rounded hover:bg-amber-100 text-amber-700"
+        title="Изменить"
+      >
+        <Pencil size={12} />
+      </button>
+      <button
+        onClick={() => saveStatusComment("")}
+        disabled={savingStatusComment}
+        className="p-1 rounded hover:bg-amber-100 text-destructive disabled:opacity-50"
+        title="Удалить"
+      >
+        <Trash2 size={12} />
+      </button>
+    </div>
+  );
+
+  const renderStatusCommentEditor = () => (
+    <div className="space-y-1.5">
+      <textarea
+        value={statusCommentDraft}
+        onChange={(e) => setStatusCommentDraft(e.target.value)}
+        rows={3}
+        className="w-full px-2 py-1.5 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+      />
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => saveStatusComment(statusCommentDraft.trim())}
+          disabled={savingStatusComment}
+          className="px-2 py-1 rounded-lg bg-primary text-primary-foreground text-xs disabled:opacity-50"
+        >
+          Сохранить
+        </button>
+        <button onClick={() => setStatusCommentEditing(false)} className="px-2 py-1 rounded-lg bg-accent text-xs">
+          Отмена
+        </button>
+      </div>
+    </div>
+  );
 
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
@@ -650,10 +711,15 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-sm text-foreground">{request.work_description}</p>
                     </div>
                   )}
-                  {request.status_comment && (
+                  {(statusComment || statusCommentEditing) && (
                     <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
-                      <p className="text-[10px] text-amber-700 uppercase tracking-wider mb-1">Комментарий</p>
-                      <p className="text-sm text-amber-900">{request.status_comment}</p>
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="text-[10px] text-amber-700 uppercase tracking-wider">Комментарий</p>
+                        {canEdit && onSave && !statusCommentEditing && renderStatusCommentActions()}
+                      </div>
+                      {statusCommentEditing ? renderStatusCommentEditor() : (
+                        <p className="text-sm text-amber-900">{statusComment}</p>
+                      )}
                     </div>
                   )}
                   {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
@@ -1131,12 +1197,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
               {/* Status comment */}
-              {request.status_comment && (
+              {(statusComment || statusCommentEditing) && (
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-                  <label className="text-[10px] font-medium text-amber-700 mb-2 block uppercase tracking-wider flex items-center gap-1">
-                    <MessageSquare size={12} /> Комментарий к статусу
-                  </label>
-                  <p className="text-sm leading-relaxed text-amber-900">{request.status_comment}</p>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <label className="text-[10px] font-medium text-amber-700 block uppercase tracking-wider flex items-center gap-1">
+                      <MessageSquare size={12} /> Комментарий к статусу
+                    </label>
+                    {canEdit && onSave && !statusCommentEditing && renderStatusCommentActions()}
+                  </div>
+                  {statusCommentEditing ? renderStatusCommentEditor() : (
+                    <p className="text-sm leading-relaxed text-amber-900">{statusComment}</p>
+                  )}
                 </div>
               )}
 
