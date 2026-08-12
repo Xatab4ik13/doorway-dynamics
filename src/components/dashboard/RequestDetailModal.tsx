@@ -82,6 +82,67 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [baseboardMeters, setBaseboardMeters] = useState<string>(request.baseboard_meters != null ? String(request.baseboard_meters) : "");
   const [portals, setPortals] = useState<string>(request.portals != null ? String(request.portals) : "");
   const [repeating, setRepeating] = useState(false);
+  const [statusComment, setStatusComment] = useState(request.status_comment || "");
+  const [statusCommentEditing, setStatusCommentEditing] = useState(false);
+  const [statusCommentDraft, setStatusCommentDraft] = useState(request.status_comment || "");
+  const [savingStatusComment, setSavingStatusComment] = useState(false);
+
+  const saveStatusComment = async (value: string) => {
+    if (!onSave) return;
+    setSavingStatusComment(true);
+    try {
+      await onSave(request.id, { status_comment: value || null } as Partial<ApiRequest>);
+      setStatusComment(value);
+      setStatusCommentEditing(false);
+    } catch (err: any) {
+      toast.error(err?.message || "Не удалось сохранить комментарий");
+    } finally {
+      setSavingStatusComment(false);
+    }
+  };
+
+  const renderStatusCommentActions = () => (
+    <div className="flex items-center gap-1 shrink-0">
+      <button
+        onClick={() => { setStatusCommentDraft(statusComment); setStatusCommentEditing(true); }}
+        className="p-1 rounded hover:bg-amber-100 text-amber-700"
+        title="Изменить"
+      >
+        <Pencil size={12} />
+      </button>
+      <button
+        onClick={() => saveStatusComment("")}
+        disabled={savingStatusComment}
+        className="p-1 rounded hover:bg-amber-100 text-destructive disabled:opacity-50"
+        title="Удалить"
+      >
+        <Trash2 size={12} />
+      </button>
+    </div>
+  );
+
+  const renderStatusCommentEditor = () => (
+    <div className="space-y-1.5">
+      <textarea
+        value={statusCommentDraft}
+        onChange={(e) => setStatusCommentDraft(e.target.value)}
+        rows={3}
+        className="w-full px-2 py-1.5 rounded-lg border border-amber-300 bg-background text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+      />
+      <div className="flex gap-1.5">
+        <button
+          onClick={() => saveStatusComment(statusCommentDraft.trim())}
+          disabled={savingStatusComment}
+          className="px-2 py-1 rounded-lg bg-primary text-primary-foreground text-xs disabled:opacity-50"
+        >
+          Сохранить
+        </button>
+        <button onClick={() => setStatusCommentEditing(false)} className="px-2 py-1 rounded-lg bg-accent text-xs">
+          Отмена
+        </button>
+      </div>
+    </div>
+  );
 
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"details" | "files">("details");
