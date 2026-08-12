@@ -223,7 +223,12 @@ app.get('/api/files/*splat', async (req, res) => {
     res.status(range && obj.ContentRange ? 206 : 200);
 
     if (obj.Body && typeof obj.Body.pipe === 'function') {
-      obj.Body.pipe(res);
+      const stream = obj.Body;
+      const cleanup = () => { try { stream.destroy(); } catch {} };
+      res.on('close', cleanup);
+      res.on('error', cleanup);
+      stream.on('error', (e) => { console.error('File stream error:', e.message); cleanup(); res.destroy(); });
+      stream.pipe(res);
     } else if (obj.Body) {
       const buf = Buffer.from(await obj.Body.transformToByteArray());
       res.end(buf);
