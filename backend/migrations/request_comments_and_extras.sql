@@ -33,3 +33,12 @@ ALTER TABLE requests ADD COLUMN IF NOT EXISTS portals INTEGER;
 
 -- Связь повторных заявок с исходной
 ALTER TABLE requests ADD COLUMN IF NOT EXISTS parent_request_id UUID REFERENCES requests(id) ON DELETE SET NULL;
+
+-- Права для пользователя приложения (таблица создаётся под postgres)
+DO $$
+DECLARE app_user TEXT;
+BEGIN
+  FOR app_user IN SELECT rolname FROM pg_roles WHERE rolcanlogin AND rolname NOT IN ('postgres') LOOP
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON public.request_comments TO %I', app_user);
+  END LOOP;
+END $$;
