@@ -35,7 +35,7 @@ const formatRow = (r: ApiRequest, getUserName: GetUserNameFn) => ({
   "Перегородка (кол-во створок)": r.partitions != null ? r.partitions : "",
   "Дата создания": mskDate(r.created_at),
   "Дата закрытия": mskDate(r.closed_at),
-  "Согласованная дата": r.agreed_date?.split("T")[0] || "",
+  "Согласованная дата": r.agreed_date ? r.agreed_date.split("T")[0].split("-").reverse().join(".") : "",
 });
 
 export async function exportToCSV(requests: ApiRequest[], getUserName: GetUserNameFn) {
