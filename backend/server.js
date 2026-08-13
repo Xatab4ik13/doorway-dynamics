@@ -718,8 +718,22 @@ app.post('/api/requests', auth, async (req, res) => {
       [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, parent_request_id || null]
     );
 
-
     const req_data = rows[0];
+
+    // Перенос комментариев из родительской заявки (замер -> монтаж, повтор, рекламация)
+    if (parent_request_id) {
+      try {
+        await pool.query(
+          `INSERT INTO request_comments (request_id, author_id, author_name, author_role, stage, text, created_at)
+           SELECT $1, author_id, author_name, author_role, stage, text, created_at
+           FROM request_comments WHERE request_id = $2 ORDER BY created_at ASC`,
+          [req_data.id, parent_request_id]
+        );
+      } catch (e) {
+        console.error('Copy comments error:', e.message);
+      }
+    }
+
     const sourceName = req.user.role === 'partner' ? `Партнёр (${req.user.name})` : req.user.name;
     // Уведомление менеджерам и админам
     await notifyManagersAndAdmins(pool,
