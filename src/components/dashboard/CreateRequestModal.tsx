@@ -32,6 +32,9 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   const [interiorDoors, setInteriorDoors] = useState("");
   const [entranceDoors, setEntranceDoors] = useState("");
   const [partitions, setPartitions] = useState("");
+  const [entrancePanels, setEntrancePanels] = useState("");
+  const [baseboardMeters, setBaseboardMeters] = useState("");
+  const [portals, setPortals] = useState("");
   const [partnerId, setPartnerId] = useState("");
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
