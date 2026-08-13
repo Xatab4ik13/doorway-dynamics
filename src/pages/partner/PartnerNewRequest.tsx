@@ -29,6 +29,9 @@ const PartnerNewRequest = () => {
   const [interiorDoors, setInteriorDoors] = useState("");
   const [entranceDoors, setEntranceDoors] = useState("");
   const [partitions, setPartitions] = useState("");
+  const [entrancePanels, setEntrancePanels] = useState("");
+  const [baseboardMeters, setBaseboardMeters] = useState("");
+  const [portals, setPortals] = useState("");
   const [agree, setAgree] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
