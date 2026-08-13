@@ -255,9 +255,10 @@ app.get('/api/files/*splat', async (req, res) => {
     if (err.$metadata?.httpStatusCode === 404 || err.Code === 'NoSuchKey') {
       return res.status(404).json({ error: 'Файл не найден' });
     }
-    console.error('File proxy error:', err);
-    res.status(500).json({ error: 'Ошибка получения файла' });
+    console.error('File proxy error:', err.name, err.message, err.$metadata?.httpStatusCode);
+    res.status(502).json({ error: 'Хранилище временно недоступно, попробуйте ещё раз' });
   }
+
 });
 
 app.use((err, req, res, next) => {
