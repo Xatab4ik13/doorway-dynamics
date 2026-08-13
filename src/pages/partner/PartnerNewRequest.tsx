@@ -265,6 +265,20 @@ const PartnerNewRequest = () => {
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
                     </div>
                   </div>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные панели</label>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус (м/п)</label>
+                      <input type="number" min="0" step="0.1" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                  </div>
                 </div>
               )}
 
