@@ -207,11 +207,27 @@ app.get('/api/files/*splat', async (req, res) => {
     if (!key || key.includes('..')) return res.status(400).end();
 
     const range = req.headers.range;
-    const obj = await s3.send(new GetObjectCommand({
-      Bucket: process.env.S3_BUCKET,
-      Key: key,
-      Range: range,
-    }));
+    // Timeweb S3 периодически отдаёт HTML-страницу 502 вместо XML — ретраим сами
+    let obj, lastErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        obj = await s3.send(new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET,
+          Key: key,
+          Range: range,
+        }));
+        lastErr = null;
+        break;
+      } catch (e) {
+        lastErr = e;
+        const code = e.$metadata?.httpStatusCode;
+        const transient = code === 502 || code === 503 || code === 504 || /XML parse error/i.test(e.message || '');
+        if (!transient) break;
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+      }
+    }
+    if (lastErr) throw lastErr;
+
 
     if (obj.ContentType) res.setHeader('Content-Type', obj.ContentType);
     if (obj.ContentLength != null) res.setHeader('Content-Length', obj.ContentLength);
@@ -239,9 +255,10 @@ app.get('/api/files/*splat', async (req, res) => {
     if (err.$metadata?.httpStatusCode === 404 || err.Code === 'NoSuchKey') {
       return res.status(404).json({ error: 'Файл не найден' });
     }
-    console.error('File proxy error:', err);
-    res.status(500).json({ error: 'Ошибка получения файла' });
+    console.error('File proxy error:', err.name, err.message, err.$metadata?.httpStatusCode);
+    res.status(502).json({ error: 'Хранилище временно недоступно, попробуйте ещё раз' });
   }
+
 });
 
 app.use((err, req, res, next) => {
