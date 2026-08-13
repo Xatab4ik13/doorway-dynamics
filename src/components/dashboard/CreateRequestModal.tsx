@@ -99,6 +99,9 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
               interior_doors: interiorDoors ? parseInt(interiorDoors) : undefined,
               entrance_doors: entranceDoors ? parseInt(entranceDoors) : undefined,
               partitions: partitions ? parseInt(partitions) : undefined,
+              entrance_panels: entrancePanels ? parseInt(entrancePanels) : undefined,
+              baseboard_meters: baseboardMeters ? parseFloat(baseboardMeters) : undefined,
+              portals: portals ? parseInt(portals) : undefined,
             }
           : {}),
         ...(photos ? { photos } : {}),
