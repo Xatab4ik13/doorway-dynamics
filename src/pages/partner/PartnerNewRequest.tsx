@@ -29,6 +29,9 @@ const PartnerNewRequest = () => {
   const [interiorDoors, setInteriorDoors] = useState("");
   const [entranceDoors, setEntranceDoors] = useState("");
   const [partitions, setPartitions] = useState("");
+  const [entrancePanels, setEntrancePanels] = useState("");
+  const [baseboardMeters, setBaseboardMeters] = useState("");
+  const [portals, setPortals] = useState("");
   const [agree, setAgree] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -97,6 +100,9 @@ const PartnerNewRequest = () => {
             interior_doors: interiorDoors ? parseInt(interiorDoors) : undefined,
             entrance_doors: entranceDoors ? parseInt(entranceDoors) : undefined,
             partitions: partitions ? parseInt(partitions) : undefined,
+            entrance_panels: entrancePanels ? parseInt(entrancePanels) : undefined,
+            baseboard_meters: baseboardMeters ? parseFloat(baseboardMeters) : undefined,
+            portals: portals ? parseInt(portals) : undefined,
           } : {}),
           ...(photos ? { photos } : {}),
         },
@@ -257,6 +263,20 @@ const PartnerNewRequest = () => {
                     <div>
                       <label className="text-[10px] text-muted-foreground mb-1 block text-center">Перегородка (кол-во створок)</label>
                       <input type="number" min="0" value={partitions} onChange={(e) => setPartitions(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mt-2">
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Входные панели</label>
+                      <input type="number" min="0" value={entrancePanels} onChange={(e) => setEntrancePanels(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Плинтус (м/п)</label>
+                      <input type="number" min="0" step="0.1" value={baseboardMeters} onChange={(e) => setBaseboardMeters(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Порталы</label>
+                      <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className={inputClass("") + " text-center"} placeholder="0" />
                     </div>
                   </div>
                 </div>
