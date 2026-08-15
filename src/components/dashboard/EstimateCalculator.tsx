@@ -234,23 +234,33 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
     });
   }, []);
 
+  const [saving, setSaving] = useState(false);
+
   const handleSave = async () => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
     if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
+    setSaving(true);
     try {
-      const saved = await api<any>("/api/estimates", {
-        method: "POST",
-        body: { client_name: clientName, client_address: clientAddress, city, items, discount, total },
-        auth: true,
+      const body = {
+        client_name: clientName,
+        client_phone: clientPhone.replace(/\s/g, "") === "+7" ? null : clientPhone.replace(/\s/g, ""),
+        client_address: clientAddress,
+        city, items, discount, total,
+      };
+      const saved = editId
+        ? await api<any>(`/api/estimates/${editId}`, { method: "PUT", body, auth: true })
+        : await api<any>("/api/estimates", { method: "POST", body, auth: true });
+      setSavedEstimates(prev => {
+        const entry = { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" };
+        return editId ? prev.map(e => (e.id === saved.id ? entry : e)) : [entry, ...prev];
       });
-      setSavedEstimates(prev => [
-        { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" },
-        ...prev,
-      ]);
+      setEditingNumber(saved.number);
       setIsSaved(true);
-      toast.success("Смета сохранена");
+      toast.success(editId ? "Смета обновлена" : "Смета сохранена");
     } catch (err: any) {
       toast.error(err.message || "Ошибка сохранения");
+    } finally {
+      setSaving(false);
     }
   };
 
