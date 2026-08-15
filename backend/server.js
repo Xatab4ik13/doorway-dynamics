@@ -1290,20 +1290,55 @@ app.get('/api/estimates', auth, async (req, res) => {
   }
 });
 
+app.get('/api/estimates/:id', auth, async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM estimates WHERE id = $1', [req.params.id]);
+    if (!rows[0]) return res.status(404).json({ error: 'Смета не найдена' });
+    const est = rows[0];
+    if ((req.user.role === 'measurer' || req.user.role === 'installer') && est.created_by !== req.user.id) {
+      return res.status(403).json({ error: 'Нет доступа' });
+    }
+    res.json(est);
+  } catch (err) {
+    console.error('Get estimate error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки сметы' });
+  }
+});
+
 app.post('/api/estimates', auth, async (req, res) => {
   try {
-    const { client_name, client_address, city, items, discount, total, request_id } = req.body;
+    const { client_name, client_phone, client_address, city, items, discount, total, request_id } = req.body;
     const countResult = await pool.query('SELECT COUNT(*) FROM estimates');
     const number = 'EST-' + String(parseInt(countResult.rows[0].count) + 1).padStart(3, '0');
     const { rows } = await pool.query(
-      `INSERT INTO estimates (number, client_name, client_address, city, items, discount, total, created_by, request_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [number, client_name, client_address || null, city || null, JSON.stringify(items || []), discount || 0, total || 0, req.user.id, request_id || null]
+      `INSERT INTO estimates (number, client_name, client_phone, client_address, city, items, discount, total, created_by, request_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [number, client_name, client_phone || null, client_address || null, city || null, JSON.stringify(items || []), discount || 0, total || 0, req.user.id, request_id || null]
     );
     res.json(rows[0]);
   } catch (err) {
     console.error('Create estimate error:', err);
     res.status(500).json({ error: 'Ошибка сохранения сметы' });
+  }
+});
+
+app.put('/api/estimates/:id', auth, async (req, res) => {
+  try {
+    const existing = await pool.query('SELECT * FROM estimates WHERE id = $1', [req.params.id]);
+    if (!existing.rows[0]) return res.status(404).json({ error: 'Смета не найдена' });
+    if ((req.user.role === 'measurer' || req.user.role === 'installer') && existing.rows[0].created_by !== req.user.id) {
+      return res.status(403).json({ error: 'Нет доступа' });
+    }
+    const { client_name, client_phone, client_address, city, items, discount, total } = req.body;
+    const { rows } = await pool.query(
+      `UPDATE estimates SET client_name = $1, client_phone = $2, client_address = $3, city = $4,
+       items = $5, discount = $6, total = $7 WHERE id = $8 RETURNING *`,
+      [client_name, client_phone || null, client_address || null, city || null, JSON.stringify(items || []), discount || 0, total || 0, req.params.id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update estimate error:', err);
+    res.status(500).json({ error: 'Ошибка обновления сметы' });
   }
 });
 
