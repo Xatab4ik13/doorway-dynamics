@@ -16,6 +16,7 @@ import {
   Handshake,
   Upload,
   MoreHorizontal,
+  FolderOpen,
 } from "lucide-react";
 import type { UserRole } from "@/data/mockDashboard";
 import { cn } from "@/lib/utils";
