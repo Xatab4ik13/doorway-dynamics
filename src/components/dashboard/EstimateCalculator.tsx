@@ -49,6 +49,10 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [variantModal, setVariantModal] = useState<{ item: PriceItem; variants: string[] } | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const editId = searchParams.get("id");
+  const [editingNumber, setEditingNumber] = useState<string | null>(null);
 
   useEffect(() => { document.title = "Калькулятор смет"; }, []);
 
@@ -68,6 +72,26 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       .catch(() => {})
       .finally(() => setLoadingSaved(false));
   }, []);
+
+  // Load estimate for editing
+  useEffect(() => {
+    if (!editId) {
+      setEditingNumber(null);
+      return;
+    }
+    api<any>(`/api/estimates/${editId}`, { auth: true })
+      .then((e) => {
+        setEditingNumber(e.number);
+        setClientName(e.client_name || "");
+        setClientPhone(e.client_phone ? formatPhone(e.client_phone) : "+7 ");
+        setClientAddress(e.client_address || "");
+        setCity(e.city === "spb" ? "spb" : "moscow");
+        const raw = typeof e.items === "string" ? JSON.parse(e.items || "[]") : (e.items || []);
+        setItems(Array.isArray(raw) ? raw : []);
+        setDiscount(Number(e.discount) || 0);
+      })
+      .catch((err: any) => toast.error(err.message || "Не удалось загрузить смету"));
+  }, [editId]);
 
   const currentPriceList = priceData[activeCategory] || [];
   const filteredPriceList = currentPriceList.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
