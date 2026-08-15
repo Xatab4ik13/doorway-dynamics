@@ -542,29 +542,37 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardContent>
             </Card>
 
-            <button onClick={handleDownloadPdf}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
-              <Download size={18} /> Скачать смету
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button onClick={handleSave} disabled={saving}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-accent text-foreground rounded-xl text-sm font-medium hover:bg-accent/80 transition-all disabled:opacity-60">
+                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                {editId ? "Сохранить изменения" : "Сохранить смету"}
+              </button>
+              <button onClick={handleDownloadPdf}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
+                <Download size={18} /> Скачать смету
+              </button>
+            </div>
 
-            {savedEstimates.length > 0 && (
+            {!loadingSaved && savedEstimates.length > 0 && (
               <Card className="border-0 shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Сохранённые</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {savedEstimates.map((est) => (
-                      <div key={est.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                    {savedEstimates.slice(0, 5).map((est) => (
+                      <button key={est.id} onClick={() => navigate(`/${role}/estimates?id=${est.id}`)}
+                        className="w-full text-left flex items-center justify-between py-2.5 border-b border-border/50 last:border-0 hover:bg-accent/40 rounded-lg px-2 transition-all">
                         <div>
                           <p className="text-xs font-mono text-primary">{est.number}</p>
                           <p className="text-sm font-medium">{est.client}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold">{est.total.toLocaleString("ru")} ₽</p>
+                          <p className="text-sm font-bold">{Number(est.total).toLocaleString("ru")} ₽</p>
                           <p className="text-[10px] text-muted-foreground">{est.date}</p>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </CardContent>
