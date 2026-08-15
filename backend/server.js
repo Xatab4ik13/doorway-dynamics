@@ -751,6 +751,25 @@ app.post('/api/requests', auth, async (req, res) => {
       }
     }
 
+    // Перенос файлов из родительской заявки с сохранением этапа (замер / монтаж)
+    if (parent_request_id) {
+      try {
+        const parent = await pool.query('SELECT type, photos FROM requests WHERE id = $1', [parent_request_id]);
+        const parentRow = parent.rows[0];
+        if (parentRow && Array.isArray(parentRow.photos) && parentRow.photos.length) {
+          const parentStage = parentRow.type === 'measurement' ? 'measurement' : 'installation';
+          const inherited = parentRow.photos.map((p) => ({ ...p, stage: p.stage || parentStage }));
+          const own = Array.isArray(req_data.photos) ? req_data.photos : [];
+          const ownUrls = new Set(own.map((p) => p && p.url));
+          const merged = [...inherited.filter((p) => !ownUrls.has(p.url)), ...own];
+          const upd = await pool.query('UPDATE requests SET photos = $1::jsonb WHERE id = $2 RETURNING photos', [JSON.stringify(merged), req_data.id]);
+          req_data.photos = upd.rows[0].photos;
+        }
+      } catch (e) {
+        console.error('Copy photos error:', e.message);
+      }
+    }
+
     const sourceName = req.user.role === 'partner' ? `Партнёр (${req.user.name})` : req.user.name;
     // Уведомление менеджерам и админам
     await notifyManagersAndAdmins(pool,
