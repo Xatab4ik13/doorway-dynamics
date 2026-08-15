@@ -346,7 +346,17 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   return (
     <DashboardLayout role={role} userName={userName}>
       <div className="space-y-5">
-        <h1 className="text-2xl font-heading font-bold">Калькулятор смет</h1>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className="text-2xl font-heading font-bold">
+            {editId ? `Редактирование сметы${editingNumber ? ` ${editingNumber}` : ""}` : "Калькулятор смет"}
+          </h1>
+          <button
+            onClick={() => navigate(`/${role}/saved-estimates`)}
+            className="px-4 py-2 rounded-xl text-xs font-medium bg-accent hover:bg-accent/80 transition-all"
+          >
+            Сохранённые сметы
+          </button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto w-full">
           {/* Left: Price list */}
