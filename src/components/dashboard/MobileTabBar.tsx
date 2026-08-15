@@ -16,6 +16,7 @@ import {
   Handshake,
   Upload,
   MoreHorizontal,
+  FolderOpen,
 } from "lucide-react";
 import type { UserRole } from "@/data/mockDashboard";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,7 @@ const tabsByRole: Record<UserRole, RoleTabConfig> = {
     ],
     more: [
       { label: "Сметы", href: "/admin/estimates", icon: FileSpreadsheet },
+      { label: "Сохранённые сметы", href: "/admin/saved-estimates", icon: FolderOpen },
       { label: "Партнёры", href: "/admin/partners", icon: Handshake },
       { label: "Новости", href: "/admin/news", icon: Newspaper },
     ],
@@ -54,7 +56,10 @@ const tabsByRole: Record<UserRole, RoleTabConfig> = {
       { label: "Задачи", href: "/manager/assign", icon: Users },
       { label: "Сметы", href: "/manager/estimates", icon: Calculator },
     ],
-    more: [{ label: "Файлы", href: "/manager/files", icon: Upload }],
+    more: [
+      { label: "Файлы", href: "/manager/files", icon: Upload },
+      { label: "Сохранённые сметы", href: "/manager/saved-estimates", icon: FolderOpen },
+    ],
   },
   measurer: {
     tabs: [
@@ -71,7 +76,7 @@ const tabsByRole: Record<UserRole, RoleTabConfig> = {
       { label: "Сметы", href: "/installer/estimates", icon: Calculator },
       { label: "История", href: "/installer/history", icon: History },
     ],
-    more: [],
+    more: [{ label: "Сохранённые сметы", href: "/installer/saved-estimates", icon: FolderOpen }],
   },
   partner: {
     tabs: [

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ClipboardList, Users, Newspaper, FileSpreadsheet,
   Ruler, Wrench, Briefcase, LogOut, Menu, X, ChevronLeft,
-  History, Upload, PlusCircle, Eye, Calculator, Bell, CalendarDays, Handshake, UserCheck,
+  History, Upload, PlusCircle, Eye, Calculator, Bell, CalendarDays, Handshake, UserCheck, FolderOpen,
 } from "lucide-react";
 
 import type { UserRole } from "@/data/mockDashboard";
@@ -31,6 +31,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Календарь", href: "/admin/calendar", icon: <CalendarDays size={20} /> },
     { label: "Занятость", href: "/admin/availability", icon: <UserCheck size={20} /> },
     { label: "Сметы", href: "/admin/estimates", icon: <FileSpreadsheet size={20} /> },
+    { label: "Сохранённые сметы", href: "/admin/saved-estimates", icon: <FolderOpen size={20} /> },
     { label: "Аккаунты", href: "/admin/accounts", icon: <Users size={20} /> },
     { label: "Партнёры", href: "/admin/partners", icon: <Handshake size={20} /> },
     { label: "Новости", href: "/admin/news", icon: <Newspaper size={20} /> },
@@ -42,6 +43,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Распределение", href: "/manager/assign", icon: <Users size={20} /> },
     { label: "Файлы", href: "/manager/files", icon: <Upload size={20} /> },
     { label: "Сметы", href: "/manager/estimates", icon: <Calculator size={20} /> },
+    { label: "Сохранённые сметы", href: "/manager/saved-estimates", icon: <FolderOpen size={20} /> },
   ],
   measurer: [
     { label: "Мои заявки", href: "/measurer", icon: <Ruler size={20} /> },
@@ -52,6 +54,7 @@ const navByRole: Record<UserRole, NavItem[]> = {
     { label: "Мои заявки", href: "/installer", icon: <Wrench size={20} /> },
     { label: "Календарь", href: "/installer/calendar", icon: <CalendarDays size={20} /> },
     { label: "Сметы", href: "/installer/estimates", icon: <Calculator size={20} /> },
+    { label: "Сохранённые сметы", href: "/installer/saved-estimates", icon: <FolderOpen size={20} /> },
     { label: "История", href: "/installer/history", icon: <History size={20} /> },
   ],
   partner: [

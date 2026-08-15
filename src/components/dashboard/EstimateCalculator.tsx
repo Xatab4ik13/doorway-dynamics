@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Download, Plus, Search, Loader2 } from "lucide-react";
+import { Trash2, Download, Plus, Search, Loader2, Save } from "lucide-react";
 import { priceData, serviceTypeLabels, parsePrice, type PriceItem } from "@/data/priceData";
 import logo from "@/assets/logo.png";
 import { toast } from "sonner";
@@ -48,6 +49,10 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [variantModal, setVariantModal] = useState<{ item: PriceItem; variants: string[] } | null>(null);
   const [loadingSaved, setLoadingSaved] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const editId = searchParams.get("id");
+  const [editingNumber, setEditingNumber] = useState<string | null>(null);
 
   useEffect(() => { document.title = "Калькулятор смет"; }, []);
 
@@ -67,6 +72,26 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       .catch(() => {})
       .finally(() => setLoadingSaved(false));
   }, []);
+
+  // Load estimate for editing
+  useEffect(() => {
+    if (!editId) {
+      setEditingNumber(null);
+      return;
+    }
+    api<any>(`/api/estimates/${editId}`, { auth: true })
+      .then((e) => {
+        setEditingNumber(e.number);
+        setClientName(e.client_name || "");
+        setClientPhone(e.client_phone ? formatPhone(e.client_phone) : "+7 ");
+        setClientAddress(e.client_address || "");
+        setCity(e.city === "spb" ? "spb" : "moscow");
+        const raw = typeof e.items === "string" ? JSON.parse(e.items || "[]") : (e.items || []);
+        setItems(Array.isArray(raw) ? raw : []);
+        setDiscount(Number(e.discount) || 0);
+      })
+      .catch((err: any) => toast.error(err.message || "Не удалось загрузить смету"));
+  }, [editId]);
 
   const currentPriceList = priceData[activeCategory] || [];
   const filteredPriceList = currentPriceList.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -209,23 +234,33 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
     });
   }, []);
 
+  const [saving, setSaving] = useState(false);
+
   const handleSave = async () => {
     if (!clientName) { toast.error("Укажите имя клиента"); return; }
     if (items.length === 0) { toast.error("Добавьте хотя бы одну позицию"); return; }
+    setSaving(true);
     try {
-      const saved = await api<any>("/api/estimates", {
-        method: "POST",
-        body: { client_name: clientName, client_address: clientAddress, city, items, discount, total },
-        auth: true,
+      const body = {
+        client_name: clientName,
+        client_phone: clientPhone.replace(/\s/g, "") === "+7" ? null : clientPhone.replace(/\s/g, ""),
+        client_address: clientAddress,
+        city, items, discount, total,
+      };
+      const saved = editId
+        ? await api<any>(`/api/estimates/${editId}`, { method: "PUT", body, auth: true })
+        : await api<any>("/api/estimates", { method: "POST", body, auth: true });
+      setSavedEstimates(prev => {
+        const entry = { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" };
+        return editId ? prev.map(e => (e.id === saved.id ? entry : e)) : [entry, ...prev];
       });
-      setSavedEstimates(prev => [
-        { id: saved.id, number: saved.number, client: saved.client_name, total: saved.total, date: saved.created_at?.split("T")[0] || "" },
-        ...prev,
-      ]);
+      setEditingNumber(saved.number);
       setIsSaved(true);
-      toast.success("Смета сохранена");
+      toast.success(editId ? "Смета обновлена" : "Смета сохранена");
     } catch (err: any) {
       toast.error(err.message || "Ошибка сохранения");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -311,7 +346,19 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   return (
     <DashboardLayout role={role} userName={userName}>
       <div className="space-y-5">
-        <h1 className="text-2xl font-heading font-bold">Калькулятор смет</h1>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h1 className="text-2xl font-heading font-bold">
+            {editId ? `Редактирование сметы${editingNumber ? ` ${editingNumber}` : ""}` : "Калькулятор смет"}
+          </h1>
+          {role !== "measurer" && (
+            <button
+              onClick={() => navigate(`/${role}/saved-estimates`)}
+              className="px-4 py-2 rounded-xl text-xs font-medium bg-accent hover:bg-accent/80 transition-all"
+            >
+              Сохранённые сметы
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto w-full">
           {/* Left: Price list */}
@@ -497,29 +544,37 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
               </CardContent>
             </Card>
 
-            <button onClick={handleDownloadPdf}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
-              <Download size={18} /> Скачать смету
-            </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button onClick={handleSave} disabled={saving}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-accent text-foreground rounded-xl text-sm font-medium hover:bg-accent/80 transition-all disabled:opacity-60">
+                {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                {editId ? "Сохранить изменения" : "Сохранить смету"}
+              </button>
+              <button onClick={handleDownloadPdf}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-primary text-primary-foreground rounded-xl text-sm font-medium hover:bg-primary/90 transition-all shadow-md shadow-primary/25">
+                <Download size={18} /> Скачать смету
+              </button>
+            </div>
 
-            {savedEstimates.length > 0 && (
+            {!loadingSaved && savedEstimates.length > 0 && (
               <Card className="border-0 shadow-lg">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base">Сохранённые</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {savedEstimates.map((est) => (
-                      <div key={est.id} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                    {savedEstimates.slice(0, 5).map((est) => (
+                      <button key={est.id} onClick={() => navigate(`/${role}/estimates?id=${est.id}`)}
+                        className="w-full text-left flex items-center justify-between py-2.5 border-b border-border/50 last:border-0 hover:bg-accent/40 rounded-lg px-2 transition-all">
                         <div>
                           <p className="text-xs font-mono text-primary">{est.number}</p>
                           <p className="text-sm font-medium">{est.client}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold">{est.total.toLocaleString("ru")} ₽</p>
+                          <p className="text-sm font-bold">{Number(est.total).toLocaleString("ru")} ₽</p>
                           <p className="text-[10px] text-muted-foreground">{est.date}</p>
                         </div>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </CardContent>
