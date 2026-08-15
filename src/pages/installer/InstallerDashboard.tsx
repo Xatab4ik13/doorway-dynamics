@@ -120,7 +120,7 @@ const InstallerDashboard = () => {
     if (!isComplete) { setValidationShown(true); return; }
     if (!selected) return;
     try {
-      const allPhotos = uploadedFiles.map(url => ({ url, type: "image", stage: "general", uploaded_at: new Date().toISOString() }));
+      const allPhotos = uploadedFiles.map(url => ({ url, type: "image", stage: "installation", uploaded_at: new Date().toISOString() }));
       const existingPhotos = selected.photos || [];
       await updateRequest(selected.id, {
         status: "closed" as any,
