@@ -235,7 +235,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       : viewerRole === "installer" ? "installation"
       : request.type === "measurement" ? "measurement" : "installation";
   const fileGroupOf = (f: { stage?: string }) =>
-    f.stage === "installation" ? "installation" : f.stage === "measurement" ? "measurement" : uploadStage;
+    f.stage === "installation" ? "installation" : "measurement";
   const measurementPhotos = photos.filter((f) => fileGroupOf(f) === "measurement");
   const installationPhotos = photos.filter((f) => fileGroupOf(f) === "installation");
 

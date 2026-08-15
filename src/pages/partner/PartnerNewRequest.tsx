@@ -75,7 +75,7 @@ const PartnerNewRequest = () => {
             return {
               url: result.url,
               type: f.file.type.startsWith("image/") ? "image" : "document",
-              stage: "general",
+              stage: type === "installation" ? "installation" : "measurement",
               uploaded_at: new Date().toISOString(),
             };
           })
