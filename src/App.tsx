@@ -36,6 +36,7 @@ const AdminRequests = lazy(() => import("./pages/admin/AdminRequests"));
 const AdminAccounts = lazy(() => import("./pages/admin/AdminAccounts"));
 const AdminNews = lazy(() => import("./pages/admin/AdminNews"));
 const AdminEstimates = lazy(() => import("./pages/admin/AdminEstimates"));
+const AdminSavedEstimates = lazy(() => import("./pages/admin/AdminSavedEstimates"));
 const AdminCalendar = lazy(() => import("./pages/admin/AdminCalendar"));
 const AdminPartners = lazy(() => import("./pages/admin/AdminPartners"));
 const AdminAvailability = lazy(() => import("./pages/admin/AdminAvailability"));
@@ -43,6 +44,7 @@ const ManagerDashboard = lazy(() => import("./pages/manager/ManagerDashboard"));
 const ManagerAssign = lazy(() => import("./pages/manager/ManagerAssign"));
 const ManagerFiles = lazy(() => import("./pages/manager/ManagerFiles"));
 const ManagerEstimates = lazy(() => import("./pages/manager/ManagerEstimates"));
+const ManagerSavedEstimates = lazy(() => import("./pages/manager/ManagerSavedEstimates"));
 const ManagerCalendar = lazy(() => import("./pages/manager/ManagerCalendar"));
 const ManagerAvailability = lazy(() => import("./pages/manager/ManagerAvailability"));
 const MeasurerDashboard = lazy(() => import("./pages/measurer/MeasurerDashboard"));
@@ -51,6 +53,7 @@ const MeasurerEstimates = lazy(() => import("./pages/measurer/MeasurerEstimates"
 const InstallerDashboard = lazy(() => import("./pages/installer/InstallerDashboard"));
 const InstallerHistory = lazy(() => import("./pages/installer/InstallerHistory"));
 const InstallerEstimates = lazy(() => import("./pages/installer/InstallerEstimates"));
+const InstallerSavedEstimates = lazy(() => import("./pages/installer/InstallerSavedEstimates"));
 const InstallerCalendar = lazy(() => import("./pages/installer/InstallerCalendar"));
 const MeasurerCalendar = lazy(() => import("./pages/measurer/MeasurerCalendar"));
 const PartnerDashboard = lazy(() => import("./pages/partner/PartnerDashboard"));
@@ -112,6 +115,7 @@ const CrmRoutes = () => (
         <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAccounts /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminNews /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/saved-estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminSavedEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminPartners /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/availability" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAvailability /></DashboardErrorBoundary></ProtectedRoute>}/>
@@ -120,6 +124,7 @@ const CrmRoutes = () => (
         <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAssign /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerFiles /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/saved-estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerSavedEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/availability" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAvailability /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Measurer */}
@@ -131,6 +136,7 @@ const CrmRoutes = () => (
         <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/saved-estimates" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerSavedEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/calendar" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Partner */}
         <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
@@ -165,6 +171,7 @@ const SiteRoutes = () => (
         <Route path="/admin/accounts" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAccounts /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/news" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminNews /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/admin/saved-estimates" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminSavedEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/calendar" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/partners" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminPartners /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/admin/availability" element={<ProtectedRoute allowedRoles={["admin"]}><DashboardErrorBoundary><AdminAvailability /></DashboardErrorBoundary></ProtectedRoute>} />
@@ -173,6 +180,7 @@ const SiteRoutes = () => (
         <Route path="/manager/assign" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAssign /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/files" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerFiles /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/manager/saved-estimates" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerSavedEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/calendar" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/manager/availability" element={<ProtectedRoute allowedRoles={["manager"]}><DashboardErrorBoundary><ManagerAvailability /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Measurer */}
@@ -184,6 +192,7 @@ const SiteRoutes = () => (
         <Route path="/installer" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/history" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerHistory /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/estimates" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
+        <Route path="/installer/saved-estimates" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerSavedEstimates /></DashboardErrorBoundary></ProtectedRoute>} />
         <Route path="/installer/calendar" element={<ProtectedRoute allowedRoles={["installer"]}><DashboardErrorBoundary><InstallerCalendar /></DashboardErrorBoundary></ProtectedRoute>} />
         {/* Partner */}
         <Route path="/partner" element={<ProtectedRoute allowedRoles={["partner"]}><DashboardErrorBoundary><PartnerDashboard /></DashboardErrorBoundary></ProtectedRoute>} />
