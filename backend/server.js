@@ -1725,6 +1725,15 @@ const BRIDGE_API_KEY = process.env.BRIDGE_API_KEY;
   }
 })();
 
+// Auto-create client_phone column for estimates
+(async () => {
+  try {
+    await pool.query(`ALTER TABLE estimates ADD COLUMN IF NOT EXISTS client_phone TEXT`);
+  } catch (err) {
+    console.error('Estimates client_phone column error:', err.message);
+  }
+})();
+
 // Status mapping: PrimeDoor → Doorium
 const statusToDoorium = {
   new: 'new',
