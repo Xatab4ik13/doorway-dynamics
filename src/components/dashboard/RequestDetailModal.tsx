@@ -171,7 +171,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           uploaded.push({
             url: result.url,
             type: f.type.startsWith("image/") ? "image" : "document",
-            stage: uploadStage,
+            stage: getUploadStage(),
             uploaded_at: new Date().toISOString(),
           });
           successCount++;
@@ -189,6 +189,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       toast.error(err.message || "Ошибка загрузки");
     } finally {
       setUploadingFile(false);
+      uploadTargetRef.current = null;
     }
   };
   
@@ -211,7 +212,8 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   // Confirmation dialog
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingUpdates, setPendingUpdates] = useState<any>(null);
-  const [viewingFile, setViewingFile] = useState<{ url: string; type: string } | null>(null);
+  const [viewingFile, setViewingFile] = useState<{ url: string; type: string; items?: { url: string; type: string }[] } | null>(null);
+  const uploadTargetRef = useRef<string | null>(null);
 
   const measurers = getByRole("measurer");
   const installers = getByRole("installer");
@@ -231,20 +233,44 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
 
   const photos = request.photos || [];
   const hasFiles = photos.length > 0;
-  const uploadStage =
+  const defaultUploadStage =
     viewerRole === "measurer" ? "measurement"
       : viewerRole === "installer" ? "installation"
+      : viewerRole === "partner" ? "partner"
       : request.type === "measurement" ? "measurement" : "installation";
+  const getUploadStage = () => uploadTargetRef.current || defaultUploadStage;
   const fileGroupOf = (f: { stage?: string }) =>
-    f.stage === "installation" ? "installation" : "measurement";
+    f.stage === "installation" ? "installation" : f.stage === "partner" ? "partner" : "measurement";
   const measurementPhotos = photos.filter((f) => fileGroupOf(f) === "measurement");
   const installationPhotos = photos.filter((f) => fileGroupOf(f) === "installation");
+  const partnerPhotos = photos.filter((f) => fileGroupOf(f) === "partner");
+  const fileGroups = [
+    { key: "measurement" as const, label: "Файлы замерщика", list: measurementPhotos },
+    { key: "installation" as const, label: "Файлы монтажника", list: installationPhotos },
+    { key: "partner" as const, label: "Файлы партнёра", list: partnerPhotos },
+  ];
+  const isStaffUploader = (viewerRole === "admin" || viewerRole === "manager") && !!onSave;
+  const pickFilesFor = (stage: string) => {
+    uploadTargetRef.current = stage;
+    fileInputRef.current?.click();
+  };
+  const renderGroupAddButton = (stage: string) =>
+    isStaffUploader ? (
+      <button
+        type="button"
+        onClick={() => pickFilesFor(stage)}
+        disabled={uploadingFile}
+        className="flex items-center gap-1 text-[10px] font-medium text-primary hover:underline disabled:opacity-50"
+      >
+        <Upload size={11} /> Добавить
+      </button>
+    ) : null;
 
   const renderFileCard = (file: { url: string; type: string; uploaded_at: string }) => {
     const i = photos.indexOf(file as any);
     return (
       <div key={`${file.url}-${i}`} className="group relative aspect-square rounded-xl overflow-hidden border border-border">
-        <button onClick={() => setViewingFile({ url: proxyFileUrl(file.url), type: file.type })} className="block w-full h-full text-left">
+        <button onClick={() => { const grp = photos.filter((f) => fileGroupOf(f) === fileGroupOf(file as any)); setViewingFile({ url: proxyFileUrl(file.url), type: file.type, items: grp.map((f) => ({ url: f.url, type: f.type })) }); }} className="block w-full h-full text-left">
           {file.type === "image" ? (
             <img src={proxyFileUrl(file.url)} alt="" className="w-full h-full object-cover" />
           ) : (
@@ -812,7 +838,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       try {
                         const uploaded: typeof photos = [];
                         for (const f of selectedFiles) {
-                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: uploadStage, uploaded_at: new Date().toISOString() }); }
+                          try { const result = await uploadFile(f, "requests"); uploaded.push({ url: result.url, type: f.type.startsWith("image/") ? "image" : "document", stage: getUploadStage(), uploaded_at: new Date().toISOString() }); }
                           catch { toast.error(`Не удалось: ${f.name}`); }
                         }
                         if (uploaded.length > 0) {
@@ -821,9 +847,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           request.photos = updatedPhotos;
                           toast.success(`Загружено: ${uploaded.length}`);
                         }
-                      } finally { setUploadingFile(false); e.target.value = ""; }
+                      } finally { setUploadingFile(false); e.target.value = ""; uploadTargetRef.current = null; }
                     }} />
-                  <button onClick={() => fileInputRef.current?.click()} disabled={uploadingFile}
+                  <button onClick={() => { uploadTargetRef.current = null; fileInputRef.current?.click(); }} disabled={uploadingFile}
                     className="w-full py-3.5 border-2 border-dashed border-border rounded-2xl text-xs text-muted-foreground flex items-center justify-center gap-2 active:bg-accent/50 disabled:opacity-50">
                     {uploadingFile ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
                     {uploadingFile ? "Загрузка..." : "Загрузить файлы"}
@@ -834,12 +860,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 <div className="text-center py-12 text-muted-foreground"><Image size={40} className="mx-auto mb-3 opacity-30" /><p className="text-sm">Нет файлов</p></div>
               ) : (
                 <div className="space-y-4">
-                  {([
-                    { key: "measurement" as const, label: "Файлы замера", list: measurementPhotos },
-                    { key: "installation" as const, label: "Файлы монтажа", list: installationPhotos },
-                  ]).map((group) => (
+                  {fileGroups.map((group) => (
                     <div key={group.key}>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">{group.label} ({group.list.length})</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{group.label} ({group.list.length})</p>
+                        {renderGroupAddButton(group.key)}
+                      </div>
                       {group.list.length === 0 ? (
                         <p className="text-xs text-muted-foreground">Нет файлов</p>
                       ) : (
@@ -859,7 +885,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           {renderConfirmation()}
         </MobileFullScreen>
         {viewingFile && (
-          <FileViewer url={viewingFile.url} type={viewingFile.type} onClose={() => setViewingFile(null)} />
+          <FileViewer url={viewingFile.url} type={viewingFile.type} items={viewingFile.items} onClose={() => setViewingFile(null)} />
         )}
       </>
     );
@@ -1481,7 +1507,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     }}
                   />
                   <button
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={() => { uploadTargetRef.current = null; fileInputRef.current?.click(); }}
                     disabled={uploadingFile}
                     className={`w-full py-6 border-2 border-dashed rounded-xl text-xs transition-all flex flex-col items-center justify-center gap-2 disabled:opacity-50 ${
                       isDragging
@@ -1509,14 +1535,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <p className="text-sm">Нет файлов по этой заявке</p>
                 </div>
               ) : photos.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {([
-                    { key: "measurement" as const, label: "Файлы замера", list: measurementPhotos },
-                    { key: "installation" as const, label: "Файлы монтажа", list: installationPhotos },
-                  ]).map((group) => (
+                <div className="grid gap-4 md:grid-cols-3">
+                  {fileGroups.map((group) => (
                     <div key={group.key} className="rounded-xl border border-border overflow-hidden">
-                      <div className="px-3 py-2 bg-accent/50 border-b border-border">
+                      <div className="px-3 py-2 bg-accent/50 border-b border-border flex items-center justify-between gap-2">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{group.label} ({group.list.length})</p>
+                        {renderGroupAddButton(group.key)}
                       </div>
                       <div className="p-3">
                         {group.list.length === 0 ? (
@@ -1682,7 +1706,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
             </div>
           )}
           {viewingFile && (
-            <FileViewer url={viewingFile.url} type={viewingFile.type} onClose={() => setViewingFile(null)} />
+            <FileViewer url={viewingFile.url} type={viewingFile.type} items={viewingFile.items} onClose={() => setViewingFile(null)} />
           )}
         </motion.div>
 
