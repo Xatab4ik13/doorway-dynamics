@@ -699,6 +699,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     {showDateField && (
                       <InfoRow icon={<Calendar size={16} className="text-emerald-600" />} label={request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}>
                         {canChangeDate ? (
+                          <>
                           <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
                         ) : (
                           <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
@@ -1159,6 +1160,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           {agreedDate && (
                             <button type="button" onClick={() => setAgreedDate("")} className="mt-1 text-xs text-destructive hover:underline">Очистить дату</button>
                           )}
+                          </>
                         ) : (
                           <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                         )}
