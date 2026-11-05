@@ -28,7 +28,7 @@ const PrivacyPage = () => {
                 <p>
                   Настоящая Политика конфиденциальности (далее — «Политика») определяет порядок обработки и защиты
                   персональных данных пользователей сайта PrimeDoor Service (далее — «Сайт»), принадлежащего
-                  Индивидуальному предпринимателю Корженевскому Максиму Андреевичу (ИНН 971502093793, ОГРНИП 323774600734716),
+                  Индивидуальному предпринимателю Савкину Р.И. (ИНН 672708949520),
                   далее — «Оператор».
                 </p>
                 <p className="mt-2">
@@ -138,13 +138,8 @@ const PrivacyPage = () => {
               <div className="border-t border-border pt-8 mt-12">
                 <h2 className="text-lg font-heading font-semibold text-foreground mb-4">Реквизиты оператора</h2>
                 <div className="space-y-2 text-sm">
-                  <p><span className="text-muted-foreground">Наименование:</span> ИП Корженевский Максим Андреевич</p>
-                  <p><span className="text-muted-foreground">ИНН:</span> 971502093793</p>
-                  <p><span className="text-muted-foreground">ОГРНИП:</span> 323774600734716</p>
-                  <p><span className="text-muted-foreground">Банк:</span> АО «ТБанк»</p>
-                  <p><span className="text-muted-foreground">Р/с:</span> 40802810000005508076</p>
-                  <p><span className="text-muted-foreground">К/с:</span> 30101810145250000974</p>
-                  <p><span className="text-muted-foreground">БИК:</span> 044525974</p>
+                  <p><span className="text-muted-foreground">Наименование:</span> ИП Савкин Р.И.</p>
+                  <p><span className="text-muted-foreground">ИНН:</span> 672708949520</p>
                 </div>
               </div>
 
