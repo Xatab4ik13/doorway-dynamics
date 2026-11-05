@@ -27,6 +27,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
   const [loading, setLoading] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const prevTotalRef = useRef<number | null>(null);
+  const sigRef = useRef("");
 
   const buildQuery = useCallback(() => {
     const params = new URLSearchParams();
@@ -138,7 +139,15 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
       }
       prevTotalRef.current = response.total;
 
-      setResult(response);
+      // Не трогаем state, если данные не изменились — лишних перерисовок нет
+      const sig = response.total + "|" + response.data.length + "|" + response.data.reduce((m, r) => {
+        const t = (r as any).updated_at || r.created_at || "";
+        return t > m ? t : m;
+      }, "");
+      if (sigRef.current !== sig) {
+        sigRef.current = sig;
+        setResult(response);
+      }
     } catch (err: any) {
       if (!silent) toast.error(err.message || "Ошибка загрузки заявок");
     } finally {
@@ -154,8 +163,14 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
 
   useEffect(() => {
     fetchRequests();
-    pollRef.current = setInterval(() => fetchRequests(true), POLL_INTERVAL);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    // Не опрашиваем сервер, пока вкладка скрыта; при возврате — сразу обновляем
+    pollRef.current = setInterval(() => { if (!document.hidden) fetchRequests(true); }, POLL_INTERVAL);
+    const onVisible = () => { if (!document.hidden) fetchRequests(true); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [fetchRequests]);
 
   const totalPages = Math.max(1, Math.ceil(result.total / limit));
