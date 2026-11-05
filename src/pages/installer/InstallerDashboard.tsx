@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { buildMapUrl } from "@/lib/mapQuery";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
@@ -430,7 +431,10 @@ const InstallerDashboard = () => {
               </Card>
             </MobileFullScreen>
           ) : (
-            <Card className="border-t-4 border-t-primary bg-card">
+            <Dialog open={true} onOpenChange={(o) => { if (!o) setSelected(null); }}>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+            <DialogTitle className="sr-only">{selected.number}</DialogTitle>
+            <Card className="border-0 shadow-none bg-card">
               <CardContent className="p-6 space-y-5">
                 <div className="flex items-start justify-between">
                   <div>
@@ -634,6 +638,8 @@ const InstallerDashboard = () => {
                 )}
               </CardContent>
             </Card>
+            </DialogContent>
+            </Dialog>
           )
         )}
       </div>
