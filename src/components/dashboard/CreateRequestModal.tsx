@@ -21,7 +21,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
   const { getByRole } = useUsers();
   const partners = getByRole("partner");
 
-  const [type, setType] = useState<"measurement" | "installation" | "reclamation">("measurement");
+  const [type, setType] = useState<"measurement" | "installation" | "reclamation" | "">("");
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
@@ -51,6 +51,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
 
   const validate = () => {
     const e: Record<string, string> = {};
+    if (!type) e.type = "Выберите тип заявки";
     if (!clientName.trim()) e.clientName = "Обязательно";
     if (clientPhone.replace(/\D/g, "").length < 11) e.clientPhone = "Некорректный номер";
     if (!clientAddress.trim()) e.clientAddress = "Обязательно";
@@ -85,7 +86,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
       }
 
       await onCreate({
-        type,
+        type: type as "measurement" | "installation" | "reclamation",
         client_name: clientName,
         client_phone: clientPhone,
         client_address: clientAddress,
@@ -153,7 +154,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
           <div className="p-5 space-y-4 flex-1 overflow-y-auto overscroll-contain" style={{ WebkitOverflowScrolling: "touch" as any }}>
             {/* Type */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-2 block">Тип заявки</label>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Тип заявки <span className="text-destructive">*</span></label>
               <div className="grid grid-cols-3 gap-2">
                 {(Object.entries(requestTypeLabels) as [string, string][]).map(([key, label]) => (
                   <button
@@ -169,6 +170,7 @@ const CreateRequestModal = ({ onClose, onCreate }: CreateRequestModalProps) => {
                   </button>
                 ))}
               </div>
+              {errors.type && <p className="text-xs text-destructive mt-1">{errors.type}</p>}
             </div>
 
             {/* Client name */}
