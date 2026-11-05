@@ -347,7 +347,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
     <DashboardLayout role={role} userName={userName}>
       <div className="space-y-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h1 className="text-2xl font-heading font-bold">
+          <h1 className="text-2xl font-heading font-bold animate-fade-up">
             {editId ? `Редактирование сметы${editingNumber ? ` ${editingNumber}` : ""}` : "Калькулятор смет"}
           </h1>
           {role !== "measurer" && (
