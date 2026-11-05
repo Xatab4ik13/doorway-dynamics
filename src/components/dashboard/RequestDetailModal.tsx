@@ -18,9 +18,21 @@ import MobileFullScreen from "./MobileFullScreen";
 import FileViewer from "./FileViewer";
 
 /** iOS-style grouped row for mobile detail view */
+const STATUS_DOT: Record<string, string> = {
+  new: "bg-blue-500",
+  pending: "bg-amber-500",
+  measurer_assigned: "bg-orange-500",
+  date_agreed: "bg-cyan-500",
+  measurement_done: "bg-purple-500",
+  installer_assigned: "bg-indigo-500",
+  closed: "bg-green-500",
+  cancelled: "bg-gray-400",
+  client_refused: "bg-red-400",
+};
+
 const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-3 px-4 py-3">
-    <div className="mt-0.5 shrink-0">{icon}</div>
+    <div className="mt-0.5 shrink-0 w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4">{icon}</div>
     <div className="flex-1 min-w-0">
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
       {children}
