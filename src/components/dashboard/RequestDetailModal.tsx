@@ -537,7 +537,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
           </button>
         )}
 
-        {request.type === "installation" && canEdit && onSendToReclamation && (
+        {request.type === "installation" && (canEdit || viewerRole === "partner") && onSendToReclamation && (
           <button
             onClick={async () => {
               setSendingToReclamation(true);
@@ -1649,7 +1649,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </button>
               )}
 
-              {request.type === "installation" && canEdit && onSendToReclamation && (
+              {request.type === "installation" && (canEdit || viewerRole === "partner") && onSendToReclamation && (
                 <button
                   onClick={async () => {
                     setSendingToReclamation(true);
