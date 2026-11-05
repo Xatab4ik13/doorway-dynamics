@@ -283,7 +283,6 @@ const ReclamationPage = () => {
                 required
                 disabled={!selectedCity}
                 value={form.phone}
-                onFocus={(e) => { if (!e.target.value) setForm({ ...form, phone: "+7" }); }}
                 onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })}
                 className={selectedCity ? inputClass : disabledInputClass}
               />

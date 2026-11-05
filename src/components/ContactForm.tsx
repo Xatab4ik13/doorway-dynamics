@@ -174,7 +174,6 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
               className={filtersSelected ? inputClass : disabledInputClass} />
             <input type="tel" placeholder="+7 ___ ___ __ __" required disabled={!filtersSelected}
               value={form.phone}
-              onFocus={(e) => { if (!e.target.value) setForm({ ...form, phone: "+7" }); }}
               onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })}
               className={filtersSelected ? inputClass : disabledInputClass} />
 
@@ -190,7 +189,6 @@ const ContactForm = forwardRef<ContactFormRef>((_, ref) => {
                   className={filtersSelected ? inputClass : disabledInputClass} />
                 <input type="tel" placeholder="+7 ___ ___ __ __" disabled={!filtersSelected}
                   value={form.extraPhone}
-                  onFocus={(e) => { if (!e.target.value) setForm({ ...form, extraPhone: "+7" }); }}
                   onChange={(e) => setForm({ ...form, extraPhone: formatPhone(e.target.value) })}
                   className={filtersSelected ? inputClass : disabledInputClass} />
               </>

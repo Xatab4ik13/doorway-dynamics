@@ -197,7 +197,6 @@ const LoginPage = () => {
                   placeholder="+7 ___ ___ __ __"
                   required
                   value={phone}
-                  onFocus={(e) => { if (!e.target.value) setPhone("+7"); }}
                   onChange={(e) => setPhone(formatPhone(e.target.value))}
                   className={inputClass}
                   autoFocus

@@ -4,6 +4,7 @@
  */
 export const formatPhone = (value: string): string => {
   const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
   const d = digits.startsWith("7")
     ? digits
     : digits.startsWith("8")

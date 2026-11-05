@@ -109,7 +109,6 @@ const PartnerForm = () => {
               placeholder="+7 ___ ___ __ __"
               required
               value={form.phone}
-              onFocus={(e) => { if (!e.target.value) setForm({ ...form, phone: "+7" }); }}
               onChange={(e) => setForm({ ...form, phone: formatPhone(e.target.value) })}
               className={inputClass}
             />
