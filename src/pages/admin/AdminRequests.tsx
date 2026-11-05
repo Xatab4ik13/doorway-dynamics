@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels, getStatusLabel, type RequestStatus, type RequestType } from "@/data/mockDashboard";
-import { Download, Briefcase, Loader2, Plus, MapPin, Link2 } from "lucide-react";
+import { Download, Briefcase, Plus, MapPin, Link2 } from "lucide-react";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import RequestFilters, { type FilterState, defaultFilters } from "@/components/dashboard/RequestFilters";
 import CreateRequestModal from "@/components/dashboard/CreateRequestModal";
@@ -21,6 +21,39 @@ import { useRequests } from "@/hooks/useRequests";
 import api from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
 import type { PaginatedResponse } from "@/hooks/usePaginatedRequests";
+
+const STATUS_DOT: Record<string, string> = {
+  new: "bg-blue-500",
+  pending: "bg-amber-500",
+  measurer_assigned: "bg-orange-500",
+  date_agreed: "bg-cyan-500",
+  measurement_done: "bg-purple-500",
+  installer_assigned: "bg-indigo-500",
+  closed: "bg-green-500",
+  cancelled: "bg-gray-400",
+  client_refused: "bg-red-400",
+};
+
+const TableSkeleton = () => (
+  <div className="mt-4 space-y-2">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div key={i} className="skeleton-shimmer h-12 rounded-lg" style={{ opacity: 1 - i * 0.1 }} />
+    ))}
+  </div>
+);
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center py-14 text-center">
+    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" aria-hidden>
+      <rect x="14" y="10" width="44" height="52" rx="6" className="stroke-muted-foreground/30" strokeWidth="2.5" />
+      <path d="M24 24h24M24 33h24M24 42h14" className="stroke-muted-foreground/30" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="52" cy="52" r="11" className="fill-background stroke-muted-foreground/40" strokeWidth="2.5" />
+      <path d="m59 59 5 5" className="stroke-muted-foreground/40" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+    <p className="mt-4 text-sm font-medium">Заявки не найдены</p>
+    <p className="mt-1 text-xs text-muted-foreground">Попробуйте изменить фильтры или поисковый запрос</p>
+  </div>
+);
 
 const AdminRequests = () => {
   const isMobile = useIsMobile();
@@ -101,7 +134,7 @@ const AdminRequests = () => {
     <DashboardLayout role="admin" userName={user?.name || "Админ"}>
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 animate-fade-up">
             <h1 className="text-2xl font-heading font-bold">Заявки</h1>
             <CityToggle value={city} onChange={(c) => { setCity(c); setFilters(f => ({ ...f, city: c })); }} />
           </div>
@@ -113,7 +146,7 @@ const AdminRequests = () => {
           </button>
         </div>
 
-        <Card className="overflow-hidden border-0 shadow-lg">
+        <Card className="overflow-hidden border-0 shadow-lg animate-fade-up" style={{ animationDelay: "80ms" }}>
           <CardContent className="p-5">
             <RequestFilters
               filters={filters}
@@ -124,9 +157,7 @@ const AdminRequests = () => {
             />
 
             {loading ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="animate-spin text-primary" size={36} />
-              </div>
+              <TableSkeleton />
             ) : (
               <div className="mt-4">
                 {isMobile ? (
@@ -141,9 +172,7 @@ const AdminRequests = () => {
                         getUserName={getUserName}
                       />
                     ))}
-                    {requests.length === 0 && (
-                      <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
-                    )}
+                    {requests.length === 0 && <EmptyState />}
                   </div>
                 ) : (
                   /* Desktop: table view */
@@ -188,7 +217,8 @@ const AdminRequests = () => {
                               {requestTypeLabels[r.type] || r.type}
                             </td>
                             <td className="py-3.5 pr-4">
-                              <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[r.status] || "bg-gray-400"}`} />
                                 {getStatusLabel(r.status as RequestStatus, r.type as RequestType)}
                               </span>
                             </td>
@@ -220,9 +250,7 @@ const AdminRequests = () => {
                         ))}
                       </tbody>
                     </table>
-                    {requests.length === 0 && (
-                      <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
-                    )}
+                    {requests.length === 0 && <EmptyState />}
                   </div>
                 )}
 
