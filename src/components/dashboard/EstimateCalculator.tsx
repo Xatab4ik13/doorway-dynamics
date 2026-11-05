@@ -38,7 +38,7 @@ const hasPercentVariants = (priceStr: string): boolean => priceStr.includes("/")
 
 const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
   const [clientName, setClientName] = useState("");
-  const [clientPhone, setClientPhone] = useState("+7 ");
+  const [clientPhone, setClientPhone] = useState("");
   const [clientAddress, setClientAddress] = useState("");
   const [city, setCity] = useState<"moscow" | "spb">("moscow");
   const [items, setItems] = useState<EstimateItem[]>([]);
@@ -83,7 +83,7 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
       .then((e) => {
         setEditingNumber(e.number);
         setClientName(e.client_name || "");
-        setClientPhone(e.client_phone ? formatPhone(e.client_phone) : "+7 ");
+        setClientPhone(e.client_phone ? formatPhone(e.client_phone) : "");
         setClientAddress(e.client_address || "");
         setCity(e.city === "spb" ? "spb" : "moscow");
         const raw = typeof e.items === "string" ? JSON.parse(e.items || "[]") : (e.items || []);
