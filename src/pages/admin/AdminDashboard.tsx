@@ -41,7 +41,37 @@ interface TopEmployee {
   name: string;
   role: string;
   completed: number;
+  total?: number;
 }
+
+const TopList = ({ title, items, valueLabel }: { title: string; items: TopEmployee[]; valueLabel?: (e: TopEmployee) => string | number }) => (
+  <Card>
+    <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
+      <CardTitle className="text-base">{title}</CardTitle>
+      <span className="text-xs text-muted-foreground">{items.length}</span>
+    </CardHeader>
+    <CardContent>
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Нет данных</p>
+      ) : (
+        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          {items.map((emp, i) => (
+            <div key={emp.id} className="flex items-center gap-3">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                {i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{emp.name}</p>
+                <p className="text-xs text-muted-foreground">{emp.role}</p>
+              </div>
+              <span className="text-sm font-bold tabular-nums">{valueLabel ? valueLabel(emp) : emp.completed}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </CardContent>
+  </Card>
+);
 
 const AdminDashboard = () => {
   const isMobile = useIsMobile();
@@ -51,6 +81,7 @@ const AdminDashboard = () => {
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [topEmployees, setTopEmployees] = useState<TopEmployee[]>([]);
+  const [topPartners, setTopPartners] = useState<TopEmployee[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => { document.title = "Админ-панель — PrimeDoor Service"; }, []);
@@ -63,6 +94,7 @@ const AdminDashboard = () => {
           api<DashboardStats>("/api/dashboard/stats", { auth: true }),
           api<TopEmployee[]>("/api/dashboard/top-employees", { auth: true }),
         ]);
+        api<TopEmployee[]>("/api/dashboard/top-partners", { auth: true }).then((p) => { if (!cancelled) setTopPartners(p); }).catch(() => {});
         if (cancelled) return;
         setStats(s);
         setTopEmployees(t);
@@ -188,36 +220,14 @@ const AdminDashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Top employees */}
-          <Card>
-            <CardHeader className="pb-2 flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-base">Топ сотрудников</CardTitle>
-              <span className="text-xs text-muted-foreground">{topEmployees.length}</span>
-            </CardHeader>
-            <CardContent>
-              {topEmployees.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Нет данных</p>
-              ) : (
-                <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                  {topEmployees.map((emp, i) => (
-                    <div key={emp.id} className="flex items-center gap-3">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${i < 3 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                        {i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{emp.name}</p>
-                        <p className="text-xs text-muted-foreground">{emp.role}</p>
-                      </div>
-                      <span className="text-sm font-bold tabular-nums">{emp.completed}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <TopList title="Топ монтажников" items={topEmployees.filter((e) => e.role === "Монтажник")} />
+          <TopList title="Топ замерщиков" items={topEmployees.filter((e) => e.role === "Замерщик")} />
+          <TopList title="Топ партнёров" items={topPartners} valueLabel={(e) => e.total ?? e.completed} />
+        </div>
 
+        <div className="grid grid-cols-1 gap-6">
           {/* Recent requests */}
-          <Card className="lg:col-span-2">
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Последние заявки</CardTitle>
             </CardHeader>

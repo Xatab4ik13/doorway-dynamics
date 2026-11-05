@@ -2491,7 +2491,7 @@ app.get('/api/dashboard/top-employees', auth, async (req, res) => {
     // Считаем по measurer_id и installer_id (1..4) — сколько закрытых заявок
     const { rows } = await pool.query(
       `WITH involved AS (
-         SELECT measurer_id AS user_id FROM requests WHERE status = 'closed' AND measurer_id IS NOT NULL
+         SELECT measurer_id AS user_id FROM requests WHERE status IN ('closed', 'measurement_done') AND measurer_id IS NOT NULL
          UNION ALL
          SELECT installer_id   FROM requests WHERE status = 'closed' AND installer_id   IS NOT NULL
          UNION ALL
@@ -2516,6 +2516,28 @@ app.get('/api/dashboard/top-employees', auth, async (req, res) => {
     })));
   } catch (err) {
     console.error('Top employees error:', err);
+    res.status(500).json({ error: 'Ошибка загрузки' });
+  }
+});
+
+// GET /api/dashboard/top-partners — партнёры по количеству заявок (всего / закрыто)
+app.get('/api/dashboard/top-partners', auth, async (req, res) => {
+  if (!['admin', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({ error: 'Доступ запрещён' });
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT u.id, u.name, COUNT(r.id)::bigint AS total,
+              COUNT(r.id) FILTER (WHERE r.status = 'closed')::bigint AS completed
+       FROM users u
+       JOIN requests r ON r.partner_id = u.id
+       WHERE u.role = 'partner' AND r.status <> 'cancelled'
+       GROUP BY u.id, u.name
+       ORDER BY total DESC, u.name ASC`
+    );
+    res.json(rows.map(r => ({ id: r.id, name: r.name, role: 'Партнёр', total: Number(r.total), completed: Number(r.completed) })));
+  } catch (err) {
+    console.error('Top partners error:', err);
     res.status(500).json({ error: 'Ошибка загрузки' });
   }
 });
