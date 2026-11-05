@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { statusLabels, statusColors, type RequestStatus } from "@/data/mockDashboard";
-import { Search, Calendar, MapPin, Loader2 } from "lucide-react";
+import { Search, Calendar, MapPin } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";

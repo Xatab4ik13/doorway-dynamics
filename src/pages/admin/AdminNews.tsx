@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { articles as localArticles, type Article } from "@/data/articles";
-import { PlusCircle, Trash2, Edit, Eye, Loader2 } from "lucide-react";
+import { PlusCircle, Trash2, Edit, Eye } from "lucide-react";
 import ArticleEditorModal from "@/components/dashboard/ArticleEditorModal";
 import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
 import { toast } from "sonner";
