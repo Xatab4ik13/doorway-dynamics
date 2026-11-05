@@ -377,6 +377,21 @@ html { scroll-behavior: smooth; }
 }
 .animate-fade-up { animation: fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+@keyframes dialog-in {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes dialog-out {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -48%) scale(0.97); }
+}
+.dialog-content-apple {
+  animation: dialog-in 0.28s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+.dialog-content-apple[data-state="closed"] {
+  animation: dialog-out 0.16s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
 @keyframes shimmer {
   0% { background-position: -400px 0; }
   100% { background-position: 400px 0; }
