@@ -856,7 +856,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   </button>
                 </div>
               )}
-              {photos.length === 0 ? (
+              {photos.length === 0 && !isStaffUploader ? (
                 <div className="text-center py-12 text-muted-foreground"><Image size={40} className="mx-auto mb-3 opacity-30" /><p className="text-sm">Нет файлов</p></div>
               ) : (
                 <div className="space-y-4">
@@ -1529,13 +1529,13 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 </div>
               )}
 
-              {photos.length === 0 && !uploadingFile ? (
+              {photos.length === 0 && !uploadingFile && !isStaffUploader ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Image size={40} className="mx-auto mb-3 opacity-30" />
                   <p className="text-sm">Нет файлов по этой заявке</p>
                 </div>
-              ) : photos.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-3">
+              ) : (photos.length > 0 || isStaffUploader) ? (
+                <div className="grid gap-4 grid-cols-1">
                   {fileGroups.map((group) => (
                     <div key={group.key} className="rounded-xl border border-border overflow-hidden">
                       <div className="px-3 py-2 bg-accent/50 border-b border-border flex items-center justify-between gap-2">
