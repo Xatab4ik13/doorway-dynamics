@@ -1156,6 +1156,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                             onChange={(e) => setAgreedDate(e.target.value)}
                             className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                           />
+                          {agreedDate && (
+                            <button type="button" onClick={() => setAgreedDate("")} className="mt-1 text-xs text-destructive hover:underline">Очистить дату</button>
+                          )}
                         ) : (
                           <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                         )}
@@ -1195,6 +1198,9 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       onChange={(e) => setAgreedDate(e.target.value)}
                       className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                     />
+                    {agreedDate && (
+                      <button type="button" onClick={() => setAgreedDate("")} className="mt-1 text-xs text-destructive hover:underline">Очистить дату</button>
+                    )}
                   </div>
                 </div>
               )}
