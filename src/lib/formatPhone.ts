@@ -5,6 +5,8 @@
 export const formatPhone = (value: string): string => {
   const digits = value.replace(/\D/g, "");
   if (!digits) return "";
+  // Paste over an existing "+7": "+7" + "+79161234567" -> drop duplicated prefix
+  if (digits.length > 11 && /^7[78]/.test(digits)) return formatPhone(digits.slice(1));
   const d = digits.startsWith("7")
     ? digits
     : digits.startsWith("8")
