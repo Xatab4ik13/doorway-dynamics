@@ -701,6 +701,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         {canChangeDate ? (
                           <>
                           <input type="date" value={agreedDate} onChange={(e) => setAgreedDate(e.target.value)} className="text-sm font-medium bg-transparent focus:outline-none text-foreground" />
+                          {agreedDate && (
+                            <button type="button" onClick={() => setAgreedDate("")} className="block mt-1 text-xs text-destructive hover:underline">Очистить дату</button>
+                          )}
+                          </>
                         ) : (
                           <p className="text-sm font-medium text-emerald-600">{agreedDate || "Не назначена"}</p>
                         )}
@@ -1151,6 +1155,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                           {request.type === "measurement" ? "Дата замера" : request.type === "installation" ? "Дата монтажа" : "Дата визита"}
                         </p>
                         {canChangeDate ? (
+                          <>
                           <input
                             type="date"
                             value={agreedDate}
