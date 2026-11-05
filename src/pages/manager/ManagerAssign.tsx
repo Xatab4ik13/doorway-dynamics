@@ -47,12 +47,10 @@ const ManagerAssign = () => {
   return (
     <DashboardLayout role="manager" userName={user?.name || "Менеджер"}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-heading font-bold">Распределение заявок</h1>
+        <h1 className="text-2xl font-heading font-bold animate-fade-up">Распределение заявок</h1>
 
         {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-muted-foreground" size={32} />
-          </div>
+          <div className="space-y-2.5">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton-shimmer h-20 rounded-xl" style={{ opacity: 1 - i * 0.15 }} />)}</div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Unassigned requests */}

@@ -27,7 +27,7 @@ const MeasurerHistory = () => {
     <DashboardLayout role="measurer" userName={user?.name || "Замерщик"}>
       <div className="space-y-6">
         <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h1 className="text-2xl font-heading font-bold">История заказов</h1>
+          <h1 className="text-2xl font-heading font-bold animate-fade-up">История заказов</h1>
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input type="text" autoComplete="off" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Поиск..."
@@ -38,7 +38,7 @@ const MeasurerHistory = () => {
         <p className="text-sm text-muted-foreground">Всего выполнено: {filtered.length}</p>
 
         {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-muted-foreground" size={32} /></div>
+          <div className="space-y-2.5">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton-shimmer h-20 rounded-xl" style={{ opacity: 1 - i * 0.15 }} />)}</div>
         ) : filtered.length === 0 ? (
           <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">Нет завершённых заказов</CardContent></Card>
         ) : (
