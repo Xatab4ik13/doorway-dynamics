@@ -63,6 +63,7 @@ export function useRequests(extraQuery?: string) {
   const [loading, setLoading] = useState(true);
   const prevCountRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
+  const sigRef = useRef("");
 
   const fetchRequests = useCallback(async (silent = false) => {
     try {
@@ -79,8 +80,16 @@ export function useRequests(extraQuery?: string) {
         });
       }
       prevCountRef.current = data.length;
-      
-      setRequests(data);
+
+      // Не трогаем state, если данные не изменились — лишних перерисовок нет
+      const sig = data.length + "|" + data.reduce((m, r) => {
+        const t = (r as any).updated_at || r.created_at || "";
+        return t > m ? t : m;
+      }, "");
+      if (sigRef.current !== sig) {
+        sigRef.current = sig;
+        setRequests(data);
+      }
     } catch (err: any) {
       if (!silent) toast.error(err.message || "Ошибка загрузки заявок");
     } finally {
@@ -90,8 +99,14 @@ export function useRequests(extraQuery?: string) {
 
   useEffect(() => {
     fetchRequests();
-    pollRef.current = setInterval(() => fetchRequests(true), POLL_INTERVAL);
-    return () => { if (pollRef.current) clearInterval(pollRef.current); };
+    // Не опрашиваем сервер, пока вкладка скрыта; при возврате — сразу обновляем
+    pollRef.current = setInterval(() => { if (!document.hidden) fetchRequests(true); }, POLL_INTERVAL);
+    const onVisible = () => { if (!document.hidden) fetchRequests(true); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [fetchRequests]);
 
   const updateRequest = useCallback(async (id: string, updates: Partial<ApiRequest>) => {
