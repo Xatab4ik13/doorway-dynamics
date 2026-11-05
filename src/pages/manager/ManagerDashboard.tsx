@@ -17,6 +17,7 @@ import api from "@/lib/api";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { exportToCSV, exportToExcel } from "@/lib/exportRequests";
 import { motion } from "framer-motion";
+import OverdueRequestsCard from "@/components/dashboard/OverdueRequestsCard";
 
 const quickFilters = [
   { label: "Все", value: "all", icon: <ClipboardList size={14} /> },
@@ -33,7 +34,7 @@ const ManagerDashboard = () => {
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
   const [quickFilter, setQuickFilter] = useState("all");
   const { requests, total, page, totalPages, limit, counts, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter });
-  const { createRequest, updateRequest } = useRequests();
+  const { requests: allRequests, createRequest, updateRequest } = useRequests();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -73,6 +74,8 @@ const ManagerDashboard = () => {
             <Plus size={16} /> Создать заявку
           </button>
         </div>
+
+        <OverdueRequestsCard requests={allRequests} onOpen={(r) => setSelectedRequest(r)} />
 
         {/* Quick filters */}
         <div className="flex flex-wrap gap-2">
