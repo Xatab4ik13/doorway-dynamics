@@ -167,10 +167,10 @@ const InstallerDashboard = () => {
   return (
     <DashboardLayout role="installer" userName={user?.name || "Монтажник"}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-heading font-bold">Мои заявки</h1>
+        <h1 className="text-2xl font-heading font-bold animate-fade-up">Мои заявки</h1>
 
         {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-muted-foreground" size={32} /></div>
+          <div className="space-y-2.5">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton-shimmer h-20 rounded-xl" style={{ opacity: 1 - i * 0.15 }} />)}</div>
         ) : activeRequests.length === 0 && doneRequests.length === 0 ? (
           <Card><CardContent className="p-8 text-center text-muted-foreground text-sm">Нет активных заявок</CardContent></Card>
         ) : (
