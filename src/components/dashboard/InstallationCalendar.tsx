@@ -109,7 +109,7 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath
 }) => {
   return (
   <div
-    className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/50 transition-colors cursor-pointer"
+    className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/50 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer animate-fade-up"
     onClick={() => onOpenDetail?.(r)}
   >
     <div className="flex items-center justify-between">
@@ -310,7 +310,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
   return (
     <>
       <div className="space-y-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center justify-between flex-wrap gap-2 animate-fade-up">
           <h1 className="text-xl md:text-2xl font-bold flex items-center gap-2">
             <CalendarIcon className="text-primary" size={24} />
             Календарь
@@ -325,19 +325,27 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-4 bg-card rounded-xl border border-border/50 p-3">
-          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent transition-colors">
+        <div className="flex items-center justify-center gap-2 md:gap-4 bg-card rounded-xl border border-border/50 p-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
+          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent hover:scale-110 active:scale-95 transition-all">
             <ChevronLeft size={20} />
           </button>
-          <h2 className="text-lg font-semibold min-w-[200px] text-center capitalize">
+          <h2 key={format(currentMonth, "yyyy-MM")} className="text-lg font-semibold min-w-[200px] text-center capitalize animate-fade-up">
             {format(currentMonth, "LLLL yyyy", { locale: ru })}
           </h2>
-          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent transition-colors">
+          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent hover:scale-110 active:scale-95 transition-all">
             <ChevronRight size={20} />
           </button>
+          {!isToday(currentMonth) && (
+            <button
+              onClick={() => setCurrentMonth(new Date())}
+              className="ml-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+            >
+              Сегодня
+            </button>
+          )}
         </div>
 
-        <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+        <div className="bg-card rounded-xl border border-border/50 overflow-hidden animate-fade-up" style={{ animationDelay: "120ms" }}>
           <div className="grid grid-cols-7 border-b border-border/50">
             {weekDays.map((wd) => (
               <div key={wd} className="py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">{wd}</div>
@@ -352,17 +360,18 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
                 const inMonth = isSameMonth(d, currentMonth);
                 const today = isToday(d);
                 const hasAny = dayData && (dayData.interiorInstalls.length + dayData.entranceInstalls.length + dayData.mixedInstalls.length + dayData.measurements.length + dayData.reclamations.length > 0);
+                const weekend = d.getDay() === 0 || d.getDay() === 6;
 
                 return (
                   <button
                     key={dateKey}
                     onClick={() => hasAny && setSelectedDate(d)}
-                    className={`relative min-h-[60px] md:min-h-[80px] p-1.5 md:p-2 border-r border-border/20 last:border-r-0 text-left transition-colors focus:outline-none focus:ring-1 focus:ring-primary/30 ${
-                      !inMonth ? "bg-muted/30" : ""
-                    } ${hasAny ? "hover:bg-accent/50 cursor-pointer" : "cursor-default"}`}
+                    className={`relative min-h-[60px] md:min-h-[80px] p-1.5 md:p-2 border-r border-border/20 last:border-r-0 text-left transition-all focus:outline-none focus:ring-1 focus:ring-primary/30 ${
+                      !inMonth ? "bg-muted/30" : weekend ? "bg-accent/20" : ""
+                    } ${hasAny ? "hover:bg-accent/50 hover:shadow-inner cursor-pointer" : "cursor-default"}`}
                   >
                     <span className={`inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full text-xs md:text-sm font-medium ${
-                      today ? "bg-destructive text-destructive-foreground" : !inMonth ? "text-muted-foreground/50" : "text-foreground"
+                      today ? "bg-destructive text-destructive-foreground font-bold shadow-md shadow-destructive/40 ring-2 ring-destructive/20" : !inMonth ? "text-muted-foreground/50" : "text-foreground"
                     }`}>
                       {format(d, "d")}
                     </span>
@@ -420,7 +429,13 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
           ))}
         </div>
 
-        {loading && <p className="text-center text-sm text-muted-foreground">Загрузка заявок...</p>}
+        {loading && (
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 35 }).map((_, i) => (
+              <div key={i} className="skeleton-shimmer h-12 md:h-16 rounded-lg" style={{ opacity: 1 - (i % 7) * 0.08 }} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Day detail — mobile: fullscreen sheet, desktop: dialog */}
