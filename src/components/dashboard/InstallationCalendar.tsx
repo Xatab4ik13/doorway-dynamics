@@ -148,6 +148,16 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath
     </div>
 
     <div className="space-y-1.5">
+      {(r.partner_name || r.partner_id) && (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+            Партнёр: {r.partner_name || getUserName(r.partner_id) || "—"}
+            {r.partner_phone && (
+              <a href={`tel:${r.partner_phone}`} className="ml-1 underline" onClick={(e) => e.stopPropagation()}>{r.partner_phone}</a>
+            )}
+          </span>
+        </div>
+      )}
       <div className="flex items-center gap-2 text-sm">
         <User size={14} className="text-muted-foreground shrink-0" />
         <span className="font-medium text-foreground">{r.client_name}</span>
@@ -266,6 +276,12 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
         else if (cat === "entrance") d.entranceInstalls.push(r);
         else d.mixedInstalls.push(r);
       }
+    });
+    // Стабильный порядок: карточки не прыгают после назначения монтажника
+    const byNumber = (x: ApiRequest, y: ApiRequest) => String(x.number).localeCompare(String(y.number), "ru", { numeric: true });
+    Object.values(map).forEach((d) => {
+      d.interiorInstalls.sort(byNumber); d.entranceInstalls.sort(byNumber); d.mixedInstalls.sort(byNumber);
+      d.measurements.sort(byNumber); d.reclamations.sort(byNumber);
     });
     return map;
   }, [requests, cityFilter]);
