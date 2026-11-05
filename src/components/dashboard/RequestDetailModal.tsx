@@ -773,6 +773,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} placeholder="0" />
                 </div>
               )}
+              {request.notes && (
+                <div className="p-3 rounded-xl bg-accent/30 border border-border mb-2">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Отчёт исполнителя</p>
+                  <p className="text-sm whitespace-pre-wrap">{request.notes}</p>
+                </div>
+              )}
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Комментарии</p>
                 <RequestComments
@@ -1402,6 +1408,12 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
 
+              {request.notes && (
+                <div className="p-3 rounded-xl bg-accent/30 border border-border mb-2">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Отчёт исполнителя</p>
+                  <p className="text-sm whitespace-pre-wrap">{request.notes}</p>
+                </div>
+              )}
               {/* Comments */}
               <div className="space-y-2">
                 <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
