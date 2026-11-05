@@ -723,7 +723,7 @@ app.post('/api/requests/public', async (req, res) => {
 // Создать заявку (из кабинета)
 app.post('/api/requests', auth, async (req, res) => {
   try {
-    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id } = req.body;
+    const { client_name, client_phone: rawPhone, client_address, city, type, work_description, source, comment, extra_name, extra_phone: rawExtraPhone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, penals, parent_request_id } = req.body;
     const client_phone = normalizePhone(rawPhone) || rawPhone;
     const extra_phone = rawExtraPhone ? (normalizePhone(rawExtraPhone) || rawExtraPhone) : null;
     const countResult = await pool.query("SELECT COALESCE(MAX(CAST(SUBSTRING(number FROM 5) AS INTEGER)), 0) AS count FROM requests");
@@ -733,9 +733,9 @@ app.post('/api/requests', auth, async (req, res) => {
     const partnerId = req.user.role === 'partner' ? req.user.id : (req.body.partner_id || null);
 
     const { rows } = await pool.query(
-      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, parent_request_id, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, $17, $18, $19, $20, 'new') RETURNING *`,
-      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, parent_request_id || null]
+      `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, penals, parent_request_id, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, $17, $18, $19, $20, $21, 'new') RETURNING *`,
+      [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, penals || null, parent_request_id || null]
     );
 
     const req_data = rows[0];
@@ -833,7 +833,7 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       if (request.partner_id !== req.user.id) {
         return res.status(403).json({ error: 'Нет доступа к этой заявке' });
       }
-      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'entrance_panels', 'baseboard_meters', 'portals', 'photos'];
+      const partnerAllowed = ['client_name', 'client_phone', 'client_address', 'city', 'extra_name', 'extra_phone', 'work_description', 'interior_doors', 'entrance_doors', 'partitions', 'entrance_panels', 'baseboard_meters', 'portals', 'penals', 'photos'];
       const forbidden = Object.keys(updates).filter(k => !partnerAllowed.includes(k));
       if (forbidden.length > 0) {
         return res.status(403).json({ error: `Партнёрам недоступно изменение: ${forbidden.join(', ')}` });
@@ -1428,6 +1428,7 @@ app.delete("/api/requests/:id", auth, async (req, res) => {
 (async () => {
   try {
     await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ`);
+    await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS penals INTEGER`);
 
     // Если колонка исторически создана как TIMESTAMP (без TZ) — конвертируем,
     // иначе отчёты по МСК сдвигают закрытия на границе суток на предыдущий день.
