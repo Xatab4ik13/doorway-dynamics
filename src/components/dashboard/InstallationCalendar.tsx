@@ -498,8 +498,8 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
             <DialogContent
               onInteractOutside={(e) => { if (detailRequest) e.preventDefault(); }}
               onEscapeKeyDown={(e) => { if (detailRequest) e.preventDefault(); }}
-              style={{ animationDuration: "0.15s" }}
-              className={`dashboard-theme w-[95vw] max-w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden bg-card border-border text-card-foreground ${detailRequest ? "pointer-events-none" : ""}`}
+              overlayClassName="backdrop-blur-none"
+              className={`dialog-lite shadow-xl dashboard-theme w-[95vw] max-w-[95vw] h-[90vh] max-h-[90vh] overflow-hidden bg-card border-border text-card-foreground ${detailRequest ? "pointer-events-none" : ""}`}
             >
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
