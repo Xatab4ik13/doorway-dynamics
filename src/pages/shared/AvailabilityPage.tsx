@@ -169,18 +169,20 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
     }
   };
 
-  const goPrev = () => setMonthDate(new Date(year, monthIdx - 1, 1));
-  const goNext = () => setMonthDate(new Date(year, monthIdx + 1, 1));
+  const [slideDir, setSlideDir] = useState<"left" | "right">("left");
+  const goPrev = () => { setSlideDir("right"); setMonthDate(new Date(year, monthIdx - 1, 1)); };
+  const goNext = () => { setSlideDir("left"); setMonthDate(new Date(year, monthIdx + 1, 1)); };
   const goToday = () => {
     const d = new Date();
+    setSlideDir(d < monthDate ? "right" : "left");
     setMonthDate(new Date(d.getFullYear(), d.getMonth(), 1));
   };
 
   const today = todayKey();
 
   const renderRow = (u: AvailUser) => (
-    <tr key={u.id} className="border-b border-border/40">
-      <td className="sticky left-0 z-10 bg-card px-3 py-2 text-sm font-medium whitespace-nowrap border-r border-border/40">
+    <tr key={u.id} className="border-b border-border/40 group/row hover:bg-accent/30 transition-colors">
+      <td className="sticky left-0 z-10 bg-card group-hover/row:bg-accent/30 px-3 py-2 text-sm font-medium whitespace-nowrap border-r border-border/40 transition-colors">
         {u.name}
       </td>
       {days.map((d) => {
@@ -192,12 +194,12 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
         return (
           <td
             key={d}
-            className={`p-0 text-center align-middle border-r border-border/30 ${isToday ? "ring-1 ring-primary/40 ring-inset" : ""}`}
+            className={`p-0.5 text-center align-middle border-r border-border/20 ${isToday ? "bg-primary/5" : ""}`}
           >
             <button
               type="button"
               onClick={() => setActiveCell({ userId: u.id, date: dateKey })}
-              className={`relative w-9 h-9 flex items-center justify-center text-[11px] font-medium transition-opacity hover:opacity-80 ${style.bg} ${style.textColor || ""}`}
+              className={`relative w-8 h-8 mx-auto flex items-center justify-center text-[11px] font-medium rounded-lg transition-all hover:scale-110 hover:shadow-md active:scale-95 ${style.bg} ${style.textColor || ""} ${isToday ? "ring-2 ring-primary/50" : ""}`}
               title={style.label}
             >
               {reqs.length > 0 ? reqs.length : ""}
@@ -277,7 +279,14 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
         </div>
 
         {/* Таблица */}
-        <div className="rounded-xl border border-border/50 bg-card overflow-auto max-h-[calc(100vh-260px)]">
+        {loading && !data && (
+          <div className="rounded-xl border border-border/50 bg-card p-3 space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="skeleton-shimmer h-9 rounded-lg" style={{ opacity: 1 - i * 0.09 }} />
+            ))}
+          </div>
+        )}
+        <div key={month} className={`rounded-xl border border-border/50 bg-card overflow-auto max-h-[calc(100vh-260px)] ${slideDir === "left" ? "calendar-slide-left" : "calendar-slide-right"}`}>
           <table className="border-collapse">
             <thead className="sticky top-0 z-20 bg-card">
               <tr className="border-b border-border/50">
@@ -336,11 +345,11 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
       {/* Попап ячейки */}
       {activeCell && activeUser && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 flex items-center justify-center p-4"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setActiveCell(null)}
         >
           <div
-            className="bg-card rounded-2xl shadow-xl w-full max-w-md max-h-[85vh] overflow-auto"
+            className="bg-card rounded-2xl shadow-[0_24px_70px_-12px_rgba(0,0,0,0.25)] w-full max-w-md max-h-[85vh] overflow-auto animate-pop-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
@@ -352,7 +361,7 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
                   })}
                 </p>
               </div>
-              <button onClick={() => setActiveCell(null)} className="p-1 rounded hover:bg-accent">
+              <button onClick={() => setActiveCell(null)} className="p-1.5 rounded-full text-muted-foreground transition-all hover:bg-muted hover:text-foreground">
                 <X size={18} />
               </button>
             </div>
@@ -424,16 +433,16 @@ const AvailabilityPage = ({ role }: { role: "admin" | "manager" }) => {
       {/* Picker сотрудников */}
       {pickerOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 flex items-center justify-center p-4"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={() => setPickerOpen(false)}
         >
           <div
-            className="bg-card rounded-2xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col"
+            className="bg-card rounded-2xl shadow-[0_24px_70px_-12px_rgba(0,0,0,0.25)] w-full max-w-md max-h-[80vh] flex flex-col animate-pop-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
               <p className="text-sm font-semibold">Показать только выбранных</p>
-              <button onClick={() => setPickerOpen(false)} className="p-1 rounded hover:bg-accent">
+              <button onClick={() => setPickerOpen(false)} className="p-1.5 rounded-full text-muted-foreground transition-all hover:bg-muted hover:text-foreground">
                 <X size={18} />
               </button>
             </div>

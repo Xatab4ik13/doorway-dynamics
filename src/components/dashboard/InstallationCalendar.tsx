@@ -222,6 +222,11 @@ interface DayData {
 const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: InstallationCalendarProps) => {
   const isMobile = useIsMobile();
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [slideDir, setSlideDir] = useState<"left" | "right">("left");
+  const goMonth = useCallback((next: Date) => {
+    setSlideDir(next > currentMonth ? "left" : "right");
+    setCurrentMonth(next);
+  }, [currentMonth]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [detailRequest, setDetailRequest] = useState<ApiRequest | null>(null);
   // scheduled=1 — забираем только заявки с датой, иначе старые не попадают в лимит 1000
@@ -326,18 +331,18 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
         </div>
 
         <div className="flex items-center justify-center gap-2 md:gap-4 bg-card rounded-xl border border-border/50 p-3 animate-fade-up" style={{ animationDelay: "60ms" }}>
-          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent hover:scale-110 active:scale-95 transition-all">
+          <button onClick={() => goMonth(subMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent hover:scale-110 active:scale-95 transition-all">
             <ChevronLeft size={20} />
           </button>
-          <h2 key={format(currentMonth, "yyyy-MM")} className="text-lg font-semibold min-w-[200px] text-center capitalize animate-fade-up">
+          <h2 key={format(currentMonth, "yyyy-MM")} className={`text-lg font-semibold min-w-[200px] text-center capitalize ${slideDir === "left" ? "calendar-slide-left" : "calendar-slide-right"}`}>
             {format(currentMonth, "LLLL yyyy", { locale: ru })}
           </h2>
-          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent hover:scale-110 active:scale-95 transition-all">
+          <button onClick={() => goMonth(addMonths(currentMonth, 1))} className="p-2 rounded-lg hover:bg-accent hover:scale-110 active:scale-95 transition-all">
             <ChevronRight size={20} />
           </button>
           {!isToday(currentMonth) && (
             <button
-              onClick={() => setCurrentMonth(new Date())}
+              onClick={() => goMonth(new Date())}
               className="ml-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
             >
               Сегодня
@@ -345,7 +350,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
           )}
         </div>
 
-        <div className="bg-card rounded-xl border border-border/50 overflow-hidden animate-fade-up" style={{ animationDelay: "120ms" }}>
+        <div key={format(currentMonth, "yyyy-MM")} className={`bg-card rounded-xl border border-border/50 overflow-hidden ${slideDir === "left" ? "calendar-slide-left" : "calendar-slide-right"}`}>
           <div className="grid grid-cols-7 border-b border-border/50">
             {weekDays.map((wd) => (
               <div key={wd} className="py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">{wd}</div>
