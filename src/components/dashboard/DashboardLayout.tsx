@@ -1,10 +1,13 @@
 import { useState, useCallback } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, ClipboardList, Users, Newspaper, FileSpreadsheet,
-  Ruler, Wrench, Briefcase, LogOut, Menu, X, ChevronLeft,
-  History, Upload, PlusCircle, Eye, Calculator, Bell, CalendarDays, Handshake, UserCheck, FolderOpen,
+  LogOut, Menu, X, ChevronLeft, Bell,
 } from "lucide-react";
+import {
+  IconDashboard, IconRequests, IconCalendar, IconAvailability, IconEstimate,
+  IconFolder, IconUsers, IconPartners, IconNews, IconMeasure, IconInstall,
+  IconHistory, IconEye, IconPlus, IconUpload, IconAssign,
+} from "@/components/icons/CrmIcons";
 
 import type { UserRole } from "@/data/mockDashboard";
 import { roleLabels } from "@/data/mockDashboard";
@@ -26,41 +29,41 @@ interface NavItem {
 
 const navByRole: Record<UserRole, NavItem[]> = {
   admin: [
-    { label: "Дашборд", href: "/admin", icon: <LayoutDashboard size={20} /> },
-    { label: "Заявки", href: "/admin/requests", icon: <ClipboardList size={20} /> },
-    { label: "Календарь", href: "/admin/calendar", icon: <CalendarDays size={20} /> },
-    { label: "Занятость", href: "/admin/availability", icon: <UserCheck size={20} /> },
-    { label: "Сметы", href: "/admin/estimates", icon: <FileSpreadsheet size={20} /> },
-    { label: "Сохранённые сметы", href: "/admin/saved-estimates", icon: <FolderOpen size={20} /> },
-    { label: "Аккаунты", href: "/admin/accounts", icon: <Users size={20} /> },
-    { label: "Партнёры", href: "/admin/partners", icon: <Handshake size={20} /> },
-    { label: "Новости", href: "/admin/news", icon: <Newspaper size={20} /> },
+    { label: "Дашборд", href: "/admin", icon: <IconDashboard size={20} /> },
+    { label: "Заявки", href: "/admin/requests", icon: <IconRequests size={20} /> },
+    { label: "Календарь", href: "/admin/calendar", icon: <IconCalendar size={20} /> },
+    { label: "Занятость", href: "/admin/availability", icon: <IconAvailability size={20} /> },
+    { label: "Сметы", href: "/admin/estimates", icon: <IconEstimate size={20} /> },
+    { label: "Сохранённые сметы", href: "/admin/saved-estimates", icon: <IconFolder size={20} /> },
+    { label: "Аккаунты", href: "/admin/accounts", icon: <IconUsers size={20} /> },
+    { label: "Партнёры", href: "/admin/partners", icon: <IconPartners size={20} /> },
+    { label: "Новости", href: "/admin/news", icon: <IconNews size={20} /> },
   ],
   manager: [
-    { label: "Заявки", href: "/manager", icon: <ClipboardList size={20} /> },
-    { label: "Календарь", href: "/manager/calendar", icon: <CalendarDays size={20} /> },
-    { label: "Занятость", href: "/manager/availability", icon: <UserCheck size={20} /> },
-    { label: "Распределение", href: "/manager/assign", icon: <Users size={20} /> },
-    { label: "Файлы", href: "/manager/files", icon: <Upload size={20} /> },
-    { label: "Сметы", href: "/manager/estimates", icon: <Calculator size={20} /> },
-    { label: "Сохранённые сметы", href: "/manager/saved-estimates", icon: <FolderOpen size={20} /> },
+    { label: "Заявки", href: "/manager", icon: <IconRequests size={20} /> },
+    { label: "Календарь", href: "/manager/calendar", icon: <IconCalendar size={20} /> },
+    { label: "Занятость", href: "/manager/availability", icon: <IconAvailability size={20} /> },
+    { label: "Распределение", href: "/manager/assign", icon: <IconAssign size={20} /> },
+    { label: "Файлы", href: "/manager/files", icon: <IconUpload size={20} /> },
+    { label: "Сметы", href: "/manager/estimates", icon: <IconEstimate size={20} /> },
+    { label: "Сохранённые сметы", href: "/manager/saved-estimates", icon: <IconFolder size={20} /> },
   ],
   measurer: [
-    { label: "Мои заявки", href: "/measurer", icon: <Ruler size={20} /> },
-    { label: "Календарь", href: "/measurer/calendar", icon: <CalendarDays size={20} /> },
-    { label: "История", href: "/measurer/history", icon: <History size={20} /> },
+    { label: "Мои заявки", href: "/measurer", icon: <IconMeasure size={20} /> },
+    { label: "Календарь", href: "/measurer/calendar", icon: <IconCalendar size={20} /> },
+    { label: "История", href: "/measurer/history", icon: <IconHistory size={20} /> },
   ],
   installer: [
-    { label: "Мои заявки", href: "/installer", icon: <Wrench size={20} /> },
-    { label: "Календарь", href: "/installer/calendar", icon: <CalendarDays size={20} /> },
-    { label: "Сметы", href: "/installer/estimates", icon: <Calculator size={20} /> },
-    { label: "Сохранённые сметы", href: "/installer/saved-estimates", icon: <FolderOpen size={20} /> },
-    { label: "История", href: "/installer/history", icon: <History size={20} /> },
+    { label: "Мои заявки", href: "/installer", icon: <IconInstall size={20} /> },
+    { label: "Календарь", href: "/installer/calendar", icon: <IconCalendar size={20} /> },
+    { label: "Сметы", href: "/installer/estimates", icon: <IconEstimate size={20} /> },
+    { label: "Сохранённые сметы", href: "/installer/saved-estimates", icon: <IconFolder size={20} /> },
+    { label: "История", href: "/installer/history", icon: <IconHistory size={20} /> },
   ],
   partner: [
-    { label: "Мои заявки", href: "/partner", icon: <Eye size={20} /> },
-    { label: "Новая заявка", href: "/partner/new", icon: <PlusCircle size={20} /> },
-    { label: "История", href: "/partner/history", icon: <History size={20} /> },
+    { label: "Мои заявки", href: "/partner", icon: <IconEye size={20} /> },
+    { label: "Новая заявка", href: "/partner/new", icon: <IconPlus size={20} /> },
+    { label: "История", href: "/partner/history", icon: <IconHistory size={20} /> },
   ],
 };
 
