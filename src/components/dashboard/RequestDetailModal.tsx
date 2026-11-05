@@ -18,9 +18,21 @@ import MobileFullScreen from "./MobileFullScreen";
 import FileViewer from "./FileViewer";
 
 /** iOS-style grouped row for mobile detail view */
+const STATUS_DOT: Record<string, string> = {
+  new: "bg-blue-500",
+  pending: "bg-amber-500",
+  measurer_assigned: "bg-orange-500",
+  date_agreed: "bg-cyan-500",
+  measurement_done: "bg-purple-500",
+  installer_assigned: "bg-indigo-500",
+  closed: "bg-green-500",
+  cancelled: "bg-gray-400",
+  client_refused: "bg-red-400",
+};
+
 const InfoRow = ({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) => (
   <div className="flex items-start gap-3 px-4 py-3">
-    <div className="mt-0.5 shrink-0">{icon}</div>
+    <div className="mt-0.5 shrink-0 w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center [&>svg]:w-4 [&>svg]:h-4">{icon}</div>
     <div className="flex-1 min-w-0">
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
       {children}
@@ -272,7 +284,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       <div key={`${file.url}-${i}`} className="group relative aspect-square rounded-xl overflow-hidden border border-border">
         <button onClick={() => { const grp = photos.filter((f) => fileGroupOf(f) === fileGroupOf(file as any)); setViewingFile({ url: proxyFileUrl(file.url), type: file.type, items: grp.map((f) => ({ url: f.url, type: f.type })) }); }} className="block w-full h-full text-left">
           {file.type === "image" ? (
-            <img src={proxyFileUrl(file.url)} alt="" className="w-full h-full object-cover" />
+            <img src={proxyFileUrl(file.url)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-accent/50">
               <FileText size={24} className="text-muted-foreground" />
@@ -297,7 +309,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 toast.error("Ошибка удаления файла");
               }
             }}
-            className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white hover:bg-destructive transition-all z-10"
+            className="absolute top-1 right-1 p-1.5 rounded-lg bg-black/60 text-white hover:bg-destructive transition-all z-10 md:opacity-0 md:group-hover:opacity-100"
             title="Удалить файл"
           >
             <Trash2 size={14} />
@@ -910,6 +922,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                 <p className="font-mono text-xs text-muted-foreground">{request.number}</p>
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent text-muted-foreground">
                   {requestTypeLabels[request.type] || request.type}
+                </span>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusColors[request.status as RequestStatus] || "bg-muted text-muted-foreground"}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[request.status] || "bg-gray-400"}`} />
+                  {statusLabels[request.status as RequestStatus] || request.status}
                 </span>
                 {(partnerName || request.partner_id) && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-700">
