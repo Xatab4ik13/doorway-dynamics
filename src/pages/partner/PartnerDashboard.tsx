@@ -46,7 +46,7 @@ const PartnerDashboard = () => {
   return (
     <DashboardLayout role="partner" userName={user?.name || "Партнёр"}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-heading font-bold">Мои заявки</h1>
+        <h1 className="text-2xl font-heading font-bold animate-fade-up">Мои заявки</h1>
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
@@ -83,9 +83,7 @@ const PartnerDashboard = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin text-muted-foreground" size={32} />
-          </div>
+          <div className="space-y-2.5">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton-shimmer h-20 rounded-xl" style={{ opacity: 1 - i * 0.15 }} />)}</div>
         ) : (
           <div className="space-y-3">
             {activeRequests.length === 0 && closedRequests.length === 0 && (

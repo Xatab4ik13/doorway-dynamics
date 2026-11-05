@@ -132,14 +132,12 @@ const AdminPartners = () => {
       <div className="space-y-6">
         <div className="flex items-center gap-3">
           <Handshake size={24} className="text-primary" />
-          <h1 className="text-2xl font-bold">Заявки на партнёрство</h1>
+          <h1 className="text-2xl font-bold animate-fade-up">Заявки на партнёрство</h1>
           <Badge variant="secondary" className="ml-2">{forms.length}</Badge>
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="animate-spin text-muted-foreground" size={32} />
-          </div>
+          <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton-shimmer h-28 rounded-xl" style={{ opacity: 1 - i * 0.2 }} />)}</div>
         ) : forms.length === 0 ? (
           <div className="text-center py-20 text-muted-foreground">
             Заявок пока нет
