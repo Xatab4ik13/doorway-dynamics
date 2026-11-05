@@ -363,3 +363,9 @@ html { scroll-behavior: smooth; }
 .-webkit-overflow-scrolling-touch {
   -webkit-overflow-scrolling: touch;
 }
+
+@keyframes pulse-border {
+  0%, 100% { border-color: hsl(var(--destructive)); box-shadow: 0 0 0 0 hsl(var(--destructive) / 0.4); }
+  50% { border-color: hsl(var(--destructive) / 0.3); box-shadow: 0 0 0 6px hsl(var(--destructive) / 0); }
+}
+.animate-pulse-border { animation: pulse-border 1.6s ease-in-out infinite; }
