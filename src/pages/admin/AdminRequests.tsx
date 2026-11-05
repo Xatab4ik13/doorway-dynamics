@@ -22,6 +22,39 @@ import api from "@/lib/api";
 import { formatDate } from "@/lib/formatDate";
 import type { PaginatedResponse } from "@/hooks/usePaginatedRequests";
 
+const STATUS_DOT: Record<string, string> = {
+  new: "bg-blue-500",
+  pending: "bg-amber-500",
+  measurer_assigned: "bg-orange-500",
+  date_agreed: "bg-cyan-500",
+  measurement_done: "bg-purple-500",
+  installer_assigned: "bg-indigo-500",
+  closed: "bg-green-500",
+  cancelled: "bg-gray-400",
+  client_refused: "bg-red-400",
+};
+
+const TableSkeleton = () => (
+  <div className="mt-4 space-y-2">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div key={i} className="skeleton-shimmer h-12 rounded-lg" style={{ opacity: 1 - i * 0.1 }} />
+    ))}
+  </div>
+);
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center py-14 text-center">
+    <svg width="72" height="72" viewBox="0 0 72 72" fill="none" aria-hidden>
+      <rect x="14" y="10" width="44" height="52" rx="6" className="stroke-muted-foreground/30" strokeWidth="2.5" />
+      <path d="M24 24h24M24 33h24M24 42h14" className="stroke-muted-foreground/30" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx="52" cy="52" r="11" className="fill-background stroke-muted-foreground/40" strokeWidth="2.5" />
+      <path d="m59 59 5 5" className="stroke-muted-foreground/40" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+    <p className="mt-4 text-sm font-medium">Заявки не найдены</p>
+    <p className="mt-1 text-xs text-muted-foreground">Попробуйте изменить фильтры или поисковый запрос</p>
+  </div>
+);
+
 const AdminRequests = () => {
   const isMobile = useIsMobile();
   const { user } = useAuth();
