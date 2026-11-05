@@ -11,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { uploadFile } from "@/lib/api";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const MeasurerDashboard = () => {
   const { user } = useAuth();
@@ -125,7 +126,9 @@ const MeasurerDashboard = () => {
     } catch {}
   };
 
-  const activeRequests = requests.filter((r) => !["measurement_done", "closed", "cancelled", "client_refused"].includes(r.status));
+  const activeRequests = requests
+    .filter((r) => !["measurement_done", "closed", "cancelled", "client_refused"].includes(r.status))
+    .sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending"));
   const doneRequests = requests.filter((r) => ["measurement_done", "closed", "client_refused"].includes(r.status));
 
   const selectedContent = selected && (
@@ -426,7 +429,7 @@ const MeasurerDashboard = () => {
               <Card
                 key={r.id}
                 className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 overflow-hidden ${
-                  selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-amber-400"
+                  selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-destructive bg-destructive/5"
                 }`}
                 onClick={() => handleSelectRequest(r)}
               >
@@ -452,6 +455,11 @@ const MeasurerDashboard = () => {
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Phone size={12} /> <a href={`tel:${r.client_phone?.replace(/\s/g, "")}`} className="text-primary hover:underline">{r.client_phone}</a>
                       </div>
+                      {r.status === "pending" && (
+                        <div className="flex items-center gap-1 text-xs font-medium text-destructive">
+                          <Phone size={12} /> Позвоните заказчику и уточните дату замера
+                        </div>
+                      )}
                       {r.agreed_date && (
                         <div className="flex items-center gap-1 text-xs text-primary font-medium">
                           <Calendar size={12} /> Согласовано: {r.agreed_date.split("T")[0]}
@@ -497,9 +505,12 @@ const MeasurerDashboard = () => {
               {selectedContent}
             </MobileFullScreen>
           ) : (
-            <Card className="border-t-4 border-t-primary bg-card">
-              <CardContent className="p-0">{selectedContent}</CardContent>
-            </Card>
+            <Dialog open={true} onOpenChange={(o) => { if (!o) handleCloseSelected(); }}>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+                <DialogTitle className="sr-only">{selected.number}</DialogTitle>
+                {selectedContent}
+              </DialogContent>
+            </Dialog>
           )
         )}
       </div>
