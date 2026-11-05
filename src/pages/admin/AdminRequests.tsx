@@ -134,7 +134,7 @@ const AdminRequests = () => {
     <DashboardLayout role="admin" userName={user?.name || "Админ"}>
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 animate-fade-up">
             <h1 className="text-2xl font-heading font-bold">Заявки</h1>
             <CityToggle value={city} onChange={(c) => { setCity(c); setFilters(f => ({ ...f, city: c })); }} />
           </div>
@@ -146,7 +146,7 @@ const AdminRequests = () => {
           </button>
         </div>
 
-        <Card className="overflow-hidden border-0 shadow-lg">
+        <Card className="overflow-hidden border-0 shadow-lg animate-fade-up" style={{ animationDelay: "80ms" }}>
           <CardContent className="p-5">
             <RequestFilters
               filters={filters}
@@ -157,9 +157,7 @@ const AdminRequests = () => {
             />
 
             {loading ? (
-              <div className="flex justify-center py-16">
-                <Loader2 className="animate-spin text-primary" size={36} />
-              </div>
+              <TableSkeleton />
             ) : (
               <div className="mt-4">
                 {isMobile ? (
@@ -174,9 +172,7 @@ const AdminRequests = () => {
                         getUserName={getUserName}
                       />
                     ))}
-                    {requests.length === 0 && (
-                      <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
-                    )}
+                    {requests.length === 0 && <EmptyState />}
                   </div>
                 ) : (
                   /* Desktop: table view */
@@ -221,7 +217,8 @@ const AdminRequests = () => {
                               {requestTypeLabels[r.type] || r.type}
                             </td>
                             <td className="py-3.5 pr-4">
-                              <span className={`inline-block px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100 text-gray-500"}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[r.status] || "bg-gray-400"}`} />
                                 {getStatusLabel(r.status as RequestStatus, r.type as RequestType)}
                               </span>
                             </td>
@@ -253,9 +250,7 @@ const AdminRequests = () => {
                         ))}
                       </tbody>
                     </table>
-                    {requests.length === 0 && (
-                      <p className="text-center text-muted-foreground py-12 text-sm">Заявки не найдены</p>
-                    )}
+                    {requests.length === 0 && <EmptyState />}
                   </div>
                 )}
 
