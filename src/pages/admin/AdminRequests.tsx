@@ -34,6 +34,20 @@ const STATUS_DOT: Record<string, string> = {
   client_refused: "bg-red-400",
 };
 
+const AVATAR_HUES = [210, 150, 25, 265, 340, 190, 100, 45];
+const ClientAvatar = ({ name }: { name: string }) => {
+  const initials = name.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
+  const hue = AVATAR_HUES[[...name].reduce((a, c) => a + c.charCodeAt(0), 0) % AVATAR_HUES.length];
+  return (
+    <span
+      className="inline-flex items-center justify-center w-7 h-7 rounded-full text-[10px] font-semibold shrink-0"
+      style={{ backgroundColor: `hsl(${hue} 60% 92%)`, color: `hsl(${hue} 55% 38%)` }}
+    >
+      {initials}
+    </span>
+  );
+};
+
 const TableSkeleton = () => (
   <div className="mt-4 space-y-2">
     {Array.from({ length: 8 }).map((_, i) => (
@@ -192,6 +206,7 @@ const AdminRequests = () => {
                           <th className="pb-3 pr-4">Межком.</th>
                           <th className="pb-3 pr-4">Входные</th>
                           <th className="pb-3 pr-4">Перег.</th>
+                          <th className="pb-3 pr-4">Пеналы</th>
                           <th className="pb-3 pr-4">Сумма</th>
                           <th className="pb-3">Дата</th>
                         </tr>
@@ -204,10 +219,15 @@ const AdminRequests = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.02, duration: 0.2 }}
                             onClick={() => setSelectedRequest(r)}
-                            className="border-b border-border/50 last:border-0 hover:bg-primary/5 transition-colors cursor-pointer group"
+                            className="border-b border-border/50 last:border-0 hover:bg-primary/5 hover:shadow-[inset_3px_0_0_0_hsl(var(--primary))] transition-all cursor-pointer group"
                           >
-                            <td className="py-3.5 pr-4 font-mono text-xs text-primary">{r.number}</td>
-                            <td className="py-3.5 pr-4 font-medium">{r.client_name}</td>
+                            <td className="py-3.5 pr-4 font-mono text-xs text-primary group-hover:font-semibold transition-all">{r.number}</td>
+                            <td className="py-3.5 pr-4 font-medium">
+                              <span className="flex items-center gap-2.5">
+                                <ClientAvatar name={r.client_name} />
+                                <span className="truncate max-w-[160px]">{r.client_name}</span>
+                              </span>
+                            </td>
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground">{r.client_phone}</td>
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground max-w-[200px] truncate">
                               <span className="flex items-center gap-1"><MapPin size={10} className="shrink-0" />{r.client_address || "—"}</span>
@@ -242,6 +262,7 @@ const AdminRequests = () => {
                             <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.interior_doors ?? "—"}</td>
                             <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.entrance_doors ?? "—"}</td>
                             <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.partitions ?? "—"}</td>
+                            <td className="py-3.5 pr-4 text-xs text-center text-muted-foreground">{r.penals ?? "—"}</td>
                             <td className="py-3.5 pr-4 text-xs text-muted-foreground">
                               {r.amount != null ? `${r.amount.toLocaleString("ru-RU")} ₽` : "—"}
                             </td>
