@@ -392,6 +392,23 @@ html { scroll-behavior: smooth; }
   animation: dialog-out 0.16s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
+@keyframes calendar-slide-left {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes calendar-slide-right {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.calendar-slide-left { animation: calendar-slide-left 0.3s cubic-bezier(0.32, 0.72, 0, 1) both; }
+.calendar-slide-right { animation: calendar-slide-right 0.3s cubic-bezier(0.32, 0.72, 0, 1) both; }
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-pop-in { animation: pop-in 0.22s cubic-bezier(0.32, 0.72, 0, 1) both; }
+
 @keyframes shimmer {
   0% { background-position: -400px 0; }
   100% { background-position: 400px 0; }
