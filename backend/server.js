@@ -993,6 +993,45 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       }
     }
 
+    // 2б. Назначение монтажников 2–4
+    const newlyNotified = new Set();
+    if (updates.measurer_id && updates.measurer_id !== request.measurer_id) newlyNotified.add(updates.measurer_id);
+    if (updates.installer_id && updates.installer_id !== request.installer_id) newlyNotified.add(updates.installer_id);
+    for (const key of ['installer_2_id', 'installer_3_id', 'installer_4_id']) {
+      const uid = updates[key];
+      if (uid && uid !== request[key] && !newlyNotified.has(uid)
+          && ![request.installer_id, request.installer_2_id, request.installer_3_id, request.installer_4_id].includes(uid)) {
+        newlyNotified.add(uid);
+        const dateStr = updated.agreed_date ? new Date(updated.agreed_date).toLocaleDateString('ru-RU') : 'не назначена';
+        await notifyUserById(pool, uid,
+          `🔔 <b>Новый монтаж</b>\n\nКлиент: ${updated.client_name}\nТелефон: ${updated.client_phone}\nАдрес: ${updated.client_address}\nДата: ${dateStr}\n\nПодробнее — в личном кабинете.\n\n👉 <a href="${SITE_URL}/login">Войти в кабинет</a>`
+        );
+        await sendPushToUser(uid, {
+          title: 'Новый монтаж',
+          body: `${updated.client_name} — ${updated.client_address}, дата: ${dateStr}`,
+          url: `/installer?highlight=${updated.id}`,
+        });
+      }
+    }
+
+    // 2в. Дата назначена/изменена менеджером → уже назначенным исполнителям
+    if (updates.agreed_date && String(updates.agreed_date) !== String(request.agreed_date) && ['admin', 'manager'].includes(role)) {
+      const dateStr = new Date(updates.agreed_date).toLocaleDateString('ru-RU');
+      const execs = [...new Set([updated.measurer_id, updated.installer_id, updated.installer_2_id, updated.installer_3_id, updated.installer_4_id].filter(Boolean))]
+        .filter(uid => !newlyNotified.has(uid));
+      for (const uid of execs) {
+        const isMeasurer = uid === updated.measurer_id && updated.type === 'measurement';
+        await notifyUserById(pool, uid,
+          `📅 <b>Дата по заявке ${updated.number}: ${dateStr}</b>\n\nКлиент: ${updated.client_name}\nАдрес: ${updated.client_address}\n\n👉 <a href="${SITE_URL}/login">Открыть в кабинете</a>`
+        );
+        await sendPushToUser(uid, {
+          title: `Дата по заявке ${updated.number}`,
+          body: `${dateStr} — ${updated.client_name}, ${updated.client_address}`,
+          url: `/${isMeasurer ? 'measurer' : 'installer'}?highlight=${updated.id}`,
+        });
+      }
+    }
+
     // 3. Дата согласована/перенесена → менеджерам
     if (updates.agreed_date && updates.agreed_date !== request.agreed_date) {
       const action = request.agreed_date ? 'перенесена' : 'согласована';
