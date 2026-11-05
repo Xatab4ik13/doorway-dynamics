@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import api from "@/lib/api";
 
-const VAPID_PUBLIC_KEY = "BBUQCLYtoPQvig1EPwGRNZuT6BcXaeWxU0JNa7gruN7WE4WeiDds_LMFzK15co3T7zLTGlJMXu5OTjdummhMDQE";
+const VAPID_PUBLIC_KEY = "BIkkUtIA0sSU5rizYGc-DkfD6hXe3w89Pqvn1YomvlSvxhwCqfI3VxoMpf7rC6cSa5VyMURL5sEmA8whcIszR5g";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -28,6 +28,29 @@ export function usePushNotifications() {
     navigator.serviceWorker.ready.then(async (reg) => {
       const sub = await reg.pushManager.getSubscription();
       setIsSubscribed(!!sub);
+      // Тихо переподписываем, если подписка сделана старым ключом сервера
+      if (!sub || Notification.permission !== "granted") return;
+      const current = sub.options?.applicationServerKey;
+      const expected = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      const currentBytes = current ? new Uint8Array(current) : null;
+      const same = !!currentBytes && currentBytes.length === expected.length && currentBytes.every((b, i) => b === expected[i]);
+      if (same) return;
+      try {
+        await sub.unsubscribe();
+        const fresh = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: expected as BufferSource,
+        });
+        await api("/api/push/subscribe", {
+          method: "POST",
+          body: { subscription: fresh.toJSON() },
+          auth: true,
+        });
+        setIsSubscribed(true);
+      } catch (err) {
+        console.error("Push resubscribe error:", err);
+        setIsSubscribed(false);
+      }
     });
   }, []);
 
