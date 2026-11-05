@@ -82,7 +82,7 @@ const SavedEstimates = ({ role, userName }: SavedEstimatesProps) => {
     <DashboardLayout role={role} userName={userName}>
       <div className="space-y-5">
         <div className="flex items-center justify-between gap-3 flex-wrap">
-          <h1 className="text-2xl font-heading font-bold">Сохранённые сметы</h1>
+          <h1 className="text-2xl font-heading font-bold animate-fade-up">Сохранённые сметы</h1>
           <button
             onClick={() => navigate(`/${role}/estimates`)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
@@ -124,9 +124,7 @@ const SavedEstimates = ({ role, userName }: SavedEstimatesProps) => {
         </Card>
 
         {loading ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="animate-spin text-muted-foreground" />
-          </div>
+          <div className="space-y-2">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="skeleton-shimmer h-16 rounded-xl" style={{ opacity: 1 - i * 0.15 }} />)}</div>
         ) : filtered.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground py-16">Смет не найдено</p>
         ) : (

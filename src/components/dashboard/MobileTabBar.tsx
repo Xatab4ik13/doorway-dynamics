@@ -198,7 +198,16 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                     active ? "text-primary" : "text-muted-foreground",
                   )}
                 >
-                  <Icon size={26} strokeWidth={active ? 2 : 1.5} />
+                  <span className="relative flex items-center justify-center w-12 h-8">
+                    {active && (
+                      <motion.span
+                        layoutId="tab-active-pill"
+                        className="absolute inset-0 rounded-full bg-primary/10"
+                        transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <Icon size={26} strokeWidth={active ? 2 : 1.5} className="relative z-10" />
+                  </span>
                   <span className={cn("text-[11px] leading-none tracking-tight", active ? "font-semibold" : "font-normal")}>
                     {item.label}
                   </span>
@@ -216,7 +225,16 @@ const MobileTabBar = ({ role }: MobileTabBarProps) => {
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <Icon size={26} strokeWidth={active ? 2 : 1.5} />
+                <span className="relative flex items-center justify-center w-12 h-8">
+                  {active && (
+                    <motion.span
+                      layoutId="tab-active-pill"
+                      className="absolute inset-0 rounded-full bg-primary/10"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  <Icon size={26} strokeWidth={active ? 2 : 1.5} className="relative z-10" />
+                </span>
                 <span className={cn("text-[11px] leading-none tracking-tight", active ? "font-semibold" : "font-normal")}>
                   {item.label}
                 </span>

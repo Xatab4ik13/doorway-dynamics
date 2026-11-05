@@ -120,7 +120,7 @@ const AdminAccounts = () => {
     <DashboardLayout role="admin" userName={authUser?.name || "Админ"}>
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-2xl font-heading font-bold">Аккаунты</h1>
+          <h1 className="text-2xl font-heading font-bold animate-fade-up">Аккаунты</h1>
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"

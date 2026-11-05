@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { articles as localArticles, type Article } from "@/data/articles";
-import { PlusCircle, Trash2, Edit, Eye, Loader2 } from "lucide-react";
+import { PlusCircle, Trash2, Edit, Eye } from "lucide-react";
 import ArticleEditorModal from "@/components/dashboard/ArticleEditorModal";
 import DeleteConfirmModal from "@/components/dashboard/DeleteConfirmModal";
 import { toast } from "sonner";
@@ -128,7 +128,7 @@ const AdminNews = () => {
     <DashboardLayout role="admin" userName={user?.name || "Админ"}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-heading font-bold">Новости</h1>
+          <h1 className="text-2xl font-heading font-bold animate-fade-up">Новости</h1>
           <button onClick={handleCreate}
             className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
             <PlusCircle size={16} /> Создать статью
@@ -136,7 +136,7 @@ const AdminNews = () => {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="animate-spin text-muted-foreground" size={32} /></div>
+          <div className="grid gap-4">{Array.from({ length: 3 }).map((_, i) => <div key={i} className="skeleton-shimmer h-24 rounded-xl" style={{ opacity: 1 - i * 0.2 }} />)}</div>
         ) : (
           <div className="grid gap-4">
             {newsList.map((a) => (

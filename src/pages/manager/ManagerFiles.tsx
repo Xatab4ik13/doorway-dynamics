@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Image, FolderOpen, Search, Download, Eye, ChevronDown, ChevronRight, Loader2, Camera } from "lucide-react";
+import { Image, FolderOpen, Search, Download, Eye, ChevronDown, ChevronRight, Camera } from "lucide-react";
 import { useRequests, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { proxyFileUrl } from "@/lib/fileUrl";
@@ -42,9 +42,7 @@ const ManagerFiles = () => {
   if (loading) {
     return (
       <DashboardLayout role="manager" userName={user?.name || "Менеджер"}>
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="animate-spin text-muted-foreground" size={32} />
-        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">{Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton-shimmer aspect-square rounded-xl" style={{ opacity: 1 - i * 0.08 }} />)}</div>
       </DashboardLayout>
     );
   }
@@ -52,7 +50,7 @@ const ManagerFiles = () => {
   return (
     <DashboardLayout role="manager" userName={user?.name || "Менеджер"}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-heading font-bold">Файлы</h1>
+        <h1 className="text-2xl font-heading font-bold animate-fade-up">Файлы</h1>
 
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm">

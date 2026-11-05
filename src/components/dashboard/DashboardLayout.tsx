@@ -140,14 +140,24 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
             <Link
               key={item.href}
               to={item.href}
-              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              title={item.label}
+              className={`relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors group ${
                 active
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/25"
+                  ? "text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
             >
-              {item.icon}
-              {sidebarOpen && <span>{item.label}</span>}
+              {active && (
+                <motion.span
+                  layoutId="active-nav-pill"
+                  className="absolute inset-0 bg-primary rounded-xl shadow-md shadow-primary/25"
+                  transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                />
+              )}
+              <span className="relative z-10 flex items-center gap-3 [&>svg]:shrink-0 [&>svg]:transition-transform [&>svg]:group-hover:scale-110">
+                {item.icon}
+                {sidebarOpen && <span>{item.label}</span>}
+              </span>
             </Link>
           );
         })}
@@ -157,7 +167,7 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
       <div className="p-4 border-t border-border/50">
         {sidebarOpen && (
           <div className="flex items-center gap-3 mb-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold ring-2 ring-primary/20">
               {displayName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -202,7 +212,12 @@ const DashboardLayout = ({ role, userName = "Пользователь", children
           <div className="flex items-center gap-3">
             <NotificationToggle />
             <div className="h-6 w-px bg-border" />
-            <span className="text-xs text-muted-foreground font-medium">{displayName}</span>
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-[11px] font-bold ring-2 ring-primary/20">
+                {displayName.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-xs text-muted-foreground font-medium">{displayName}</span>
+            </div>
           </div>
         </header>
 
