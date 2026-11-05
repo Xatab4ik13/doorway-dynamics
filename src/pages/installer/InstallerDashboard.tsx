@@ -137,7 +137,22 @@ const InstallerDashboard = () => {
 
   // No separate "start installation" step needed - installer confirms date then completes
 
-  const activeRequests = requests.filter((r) => !["closed", "cancelled"].includes(r.status));
+  const activeRequests = requests
+    .filter((r) => !["closed", "cancelled"].includes(r.status))
+    .sort((a, b) => {
+      const da = a.agreed_date ? new Date(a.agreed_date).getTime() : Infinity;
+      const db = b.agreed_date ? new Date(b.agreed_date).getTime() : Infinity;
+      return da - db;
+    });
+  const dayLabel = (d: string) => {
+    const t = new Date(); t.setHours(0, 0, 0, 0);
+    const x = new Date(d); x.setHours(0, 0, 0, 0);
+    const diff = Math.round((x.getTime() - t.getTime()) / 86400000);
+    if (diff === 0) return "Сегодня";
+    if (diff === 1) return "Завтра";
+    if (diff < 0) return "Просрочено";
+    return x.toLocaleDateString("ru-RU", { weekday: "long" });
+  };
   const doneRequests = requests.filter((r) => r.status === "closed");
 
   const missingFields: string[] = [];
@@ -163,7 +178,7 @@ const InstallerDashboard = () => {
             {activeRequests.map((r) => (
               <Card key={r.id}
                 className={`hover:shadow-md transition-shadow cursor-pointer border-l-4 ${
-                  selected?.id === r.id ? "border-l-primary ring-2 ring-primary/20" : "border-l-orange-400"
+                  selected?.id === r.id ? "border-l-destructive ring-2 ring-destructive/30 bg-destructive/5" : "border-l-destructive bg-destructive/5"
                 }`}
                 onClick={() => handleSelectRequest(r)}>
                 <CardContent className="p-4">
@@ -189,8 +204,19 @@ const InstallerDashboard = () => {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Calendar size={14} /><span className="text-xs">{formatDate(r.created_at)}</span><ChevronRight size={16} />
+                    <div className="flex items-center gap-2 shrink-0">
+                      {r.agreed_date ? (
+                        <div className="text-center rounded-xl border-2 border-destructive bg-background px-3 py-2 min-w-[96px]">
+                          <p className="text-[10px] uppercase tracking-wider text-destructive font-semibold">{dayLabel(r.agreed_date)}</p>
+                          <p className="text-lg font-heading font-bold text-destructive leading-tight">{formatDate(r.agreed_date)}</p>
+                        </div>
+                      ) : (
+                        <div className="text-center rounded-xl border border-dashed border-border px-3 py-2 min-w-[96px]">
+                          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Дата</p>
+                          <p className="text-xs text-muted-foreground">не назначена</p>
+                        </div>
+                      )}
+                      <ChevronRight size={16} className="text-muted-foreground" />
                     </div>
                   </div>
                 </CardContent>
