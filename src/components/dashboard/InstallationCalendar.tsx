@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequests, useUsers } from "@/hooks/useRequests";
 import { statusLabels, statusColors, requestTypeLabels, type RequestStatus, type RequestType } from "@/data/mockDashboard";
@@ -97,8 +97,8 @@ const CalendarInstallerAssign = ({ request, installers, getUserName, onAssign }:
   );
 };
 
-// Request card shown in modals
-const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
+// Request card shown in modals — memo, чтобы не перерисовывать все карточки при любом изменении
+const RequestCard = memo(({ r, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
   r: ApiRequest;
   installers: ApiUser[];
   getUserName: (id?: string) => string | undefined;
@@ -109,7 +109,7 @@ const RequestCard = ({ r, installers, getUserName, onAssign, onRestore, basePath
 }) => {
   return (
   <div
-    className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/50 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer animate-fade-up"
+    className="border border-border/50 rounded-xl p-3 space-y-2 bg-accent/30 hover:bg-accent/60 hover:border-border transition-colors cursor-pointer"
     onClick={() => onOpenDetail?.(r)}
   >
     <div className="flex items-center justify-between">
@@ -371,9 +371,9 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
                   <button
                     key={dateKey}
                     onClick={() => hasAny && setSelectedDate(d)}
-                    className={`relative min-h-[60px] md:min-h-[80px] p-1.5 md:p-2 border-r border-border/20 last:border-r-0 text-left transition-all focus:outline-none focus:ring-1 focus:ring-primary/30 ${
+                    className={`relative min-h-[60px] md:min-h-[80px] p-1.5 md:p-2 border-r border-border/20 last:border-r-0 text-left transition-colors focus:outline-none focus:ring-1 focus:ring-primary/30 ${
                       !inMonth ? "bg-muted/30" : weekend ? "bg-accent/20" : ""
-                    } ${hasAny ? "hover:bg-accent/50 hover:shadow-inner cursor-pointer" : "cursor-default"}`}
+                    } ${hasAny ? "hover:bg-accent/60 cursor-pointer" : "cursor-default"}`}
                   >
                     <span className={`inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 rounded-full text-xs md:text-sm font-medium ${
                       today ? "bg-destructive text-destructive-foreground font-bold shadow-md shadow-destructive/40 ring-2 ring-destructive/20" : !inMonth ? "text-muted-foreground/50" : "text-foreground"
