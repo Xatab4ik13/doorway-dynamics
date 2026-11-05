@@ -52,16 +52,16 @@ const AddressInput = ({
       }
 
       try {
-        const body: any = { query, count: 7 };
+        const body: any = { query, count: 10 };
         if (city) {
-          const regionMap: Record<string, string> = {
-            "Москва": "Московская",
-            "Санкт-Петербург": "Ленинградская",
+          // Поиск по КЛАДР-коду всего региона: город + область (СНТ, КП, деревни)
+          const kladrMap: Record<string, string[]> = {
+            "Москва": ["77", "50"],
+            "Санкт-Петербург": ["78", "47"],
           };
-          body.locations = [
-            { city },
-            ...(regionMap[city] ? [{ region: regionMap[city] }] : []),
-          ];
+          body.locations = kladrMap[city]
+            ? kladrMap[city].map((kladr_id) => ({ kladr_id }))
+            : [{ city }];
         }
 
         const res = await fetch(DADATA_URL, {
