@@ -81,6 +81,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
   const [entrancePanels, setEntrancePanels] = useState<string>(request.entrance_panels != null ? String(request.entrance_panels) : "");
   const [baseboardMeters, setBaseboardMeters] = useState<string>(request.baseboard_meters != null ? String(request.baseboard_meters) : "");
   const [portals, setPortals] = useState<string>(request.portals != null ? String(request.portals) : "");
+  const [penals, setPenals] = useState<string>(request.penals != null ? String(request.penals) : "");
   const [repeating, setRepeating] = useState(false);
   const [statusComment, setStatusComment] = useState(request.status_comment || "");
   const [statusCommentEditing, setStatusCommentEditing] = useState(false);
@@ -316,6 +317,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
       updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
       updates.portals = portals ? parseInt(portals) : null;
+      updates.penals = penals ? parseInt(penals) : null;
 
       // Allow editing closed_at (admin/manager via pencil)
       // 12:00 UTC = 15:00 МСК — дата закрытия не «уезжает» на соседние сутки в отчётах
@@ -339,6 +341,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
       updates.entrance_panels = entrancePanels ? parseInt(entrancePanels) : null;
       updates.baseboard_meters = baseboardMeters ? parseFloat(baseboardMeters) : null;
       updates.portals = portals ? parseInt(portals) : null;
+      updates.penals = penals ? parseInt(penals) : null;
 
       // Remove status/notes for partners
       delete updates.status;
@@ -662,6 +665,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <p className="text-[10px] text-muted-foreground mb-1">Порталы</p>
                       <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
                     </div>
+                    <div className="text-center p-3 rounded-2xl bg-accent/30">
+                      <p className="text-[10px] text-muted-foreground mb-1">Пенал</p>
+                      <input type="number" min="0" value={penals} onChange={(e) => setPenals(e.target.value)} className="w-full text-center text-lg font-bold text-foreground bg-transparent outline-none" placeholder="0" />
+                    </div>
                   </div>
 
                 </div>
@@ -730,7 +737,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       )}
                     </div>
                   )}
-                  {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
+                  {(request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals || request.penals) && (
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">МК</p><p className="text-lg font-bold text-foreground">{request.interior_doors || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Входные</p><p className="text-lg font-bold text-foreground">{request.entrance_doors || 0}</p></div>
@@ -738,6 +745,7 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Панели</p><p className="text-lg font-bold text-foreground">{request.entrance_panels || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Плинтус, м</p><p className="text-lg font-bold text-foreground">{request.baseboard_meters || 0}</p></div>
                       <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Порталы</p><p className="text-lg font-bold text-foreground">{request.portals || 0}</p></div>
+                      <div className="text-center p-3 rounded-2xl bg-accent/30"><p className="text-[10px] text-muted-foreground">Пенал</p><p className="text-lg font-bold text-foreground">{request.penals || 0}</p></div>
                     </div>
                   )}
 
@@ -1328,6 +1336,11 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                         <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                       </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block text-center">Пенал</label>
+                        <input type="number" min="0" value={penals} onChange={(e) => setPenals(e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                      </div>
                     </div>
                   </div>
 
@@ -1369,13 +1382,18 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                       <input type="number" min="0" value={portals} onChange={(e) => setPortals(e.target.value)}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
                     </div>
+                    <div>
+                      <label className="text-[10px] text-muted-foreground mb-1 block text-center">Пенал</label>
+                      <input type="number" min="0" value={penals} onChange={(e) => setPenals(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm text-center focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="0" />
+                    </div>
                   </div>
                 </div>
               )}
 
 
               {/* Door counts read-only for executors */}
-              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals) && (
+              {!canEdit && !canPartnerEdit && (request.interior_doors || request.entrance_doors || request.partitions || request.entrance_panels || request.baseboard_meters || request.portals || request.penals) && (
                 <div className="p-4 rounded-xl bg-accent/30 border border-border">
                   <label className="text-[10px] font-medium text-muted-foreground mb-2 block uppercase tracking-wider">Количество изделий</label>
                   <div className="grid grid-cols-3 gap-2 text-sm text-center">
@@ -1402,6 +1420,10 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                     <div>
                       <p className="text-[10px] text-muted-foreground">Порталы</p>
                       <p className="font-semibold">{request.portals || 0}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Пенал</p>
+                      <p className="font-semibold">{request.penals || 0}</p>
                     </div>
                   </div>
                 </div>

@@ -734,7 +734,7 @@ app.post('/api/requests', auth, async (req, res) => {
 
     const { rows } = await pool.query(
       `INSERT INTO requests (number, partner_id, client_name, client_phone, client_address, city, type, work_description, source, notes, extra_name, extra_phone, photos, interior_doors, entrance_doors, partitions, entrance_panels, baseboard_meters, portals, penals, parent_request_id, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, $17, $18, $19, $20, 'new') RETURNING *`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14, $15, $16, $17, $18, $19, $20, $21, 'new') RETURNING *`,
       [number, partnerId, client_name, client_phone, client_address, city || null, type || 'measurement', work_description || null, source || 'site', comment || null, extra_name || null, extra_phone || null, photos ? JSON.stringify(photos) : '[]', interior_doors || null, entrance_doors || null, partitions || null, entrance_panels || null, baseboard_meters || null, portals || null, penals || null, parent_request_id || null]
     );
 
