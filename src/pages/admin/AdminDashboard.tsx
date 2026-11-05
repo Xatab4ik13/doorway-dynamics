@@ -10,6 +10,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { format, parseISO } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
+import OverdueRequestsCard from "@/components/dashboard/OverdueRequestsCard";
 
 const FUNNEL_FILLS: Record<string, string> = {
   new: "hsl(217, 91%, 50%)",
@@ -134,6 +135,8 @@ const AdminDashboard = () => {
             </Card>
           ))}
         </div>
+
+        <OverdueRequestsCard requests={requests} onOpen={(r) => navigate(`/admin/requests?search=${encodeURIComponent(r.number)}`)} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Weekly chart */}
