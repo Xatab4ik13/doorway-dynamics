@@ -107,6 +107,9 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         else if (quickFilter === "closed") filtered = filtered.filter(r => r.status === "closed");
         else if (quickFilter === "in_progress") filtered = filtered.filter(r => ["pending", "measurer_assigned", "date_agreed", "installation_rescheduled", "measurement_done"].includes(r.status));
         else if (quickFilter === "reclamation") filtered = filtered.filter(r => r.type === "reclamation");
+        else if (quickFilter === "work") filtered = filtered.filter(r => ["measurer_assigned", "installer_assigned", "date_agreed", "installation_rescheduled"].includes(r.status));
+        else if (quickFilter === "done") filtered = filtered.filter(r => ["closed", "measurement_done"].includes(r.status));
+        else if (quickFilter === "reclamation_open") filtered = filtered.filter(r => r.type === "reclamation" && !["closed", "cancelled", "client_refused"].includes(r.status));
 
         const total = filtered.length;
         const start = (page - 1) * limit;
