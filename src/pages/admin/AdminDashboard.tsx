@@ -98,9 +98,9 @@ const AdminDashboard = () => {
     { label: "Всего заявок", value: t?.total ?? 0, icon: <ClipboardList size={20} />, color: "text-blue-600 bg-blue-50", onClick: () => navigate("/admin/requests") },
     { label: "Новые", value: t?.new_count ?? 0, icon: <Clock size={20} />, color: "text-amber-600 bg-amber-50", onClick: () => navigate("/admin/requests?quick=new") },
     { label: "В ожидании", value: t?.pending_count ?? 0, icon: <Pause size={20} />, color: "text-yellow-600 bg-yellow-50", onClick: () => navigate("/admin/requests?quick=pending") },
-    { label: "В работе", value: t?.in_progress ?? 0, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50", onClick: () => navigate("/admin/requests?quick=in_progress") },
-    { label: "Выполнено", value: t?.completed ?? 0, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50", onClick: () => navigate("/admin/requests?quick=closed") },
-    { label: "Рекламации", value: t?.reclamations ?? 0, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50", onClick: () => navigate("/admin/requests?quick=reclamation") },
+    { label: "В работе", value: t?.in_progress ?? 0, icon: <TrendingUp size={20} />, color: "text-purple-600 bg-purple-50", onClick: () => navigate("/admin/requests?quick=work") },
+    { label: "Выполнено", value: t?.completed ?? 0, icon: <CheckCircle size={20} />, color: "text-green-600 bg-green-50", onClick: () => navigate("/admin/requests?quick=done") },
+    { label: "Рекламации", value: t?.reclamations ?? 0, icon: <AlertTriangle size={20} />, color: "text-red-600 bg-red-50", onClick: () => navigate("/admin/requests?quick=reclamation_open") },
   ];
 
   const loading = reqLoading || statsLoading;

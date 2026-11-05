@@ -636,6 +636,9 @@ app.get('/api/requests', auth, async (req, res) => {
     else if (quick === 'in_progress') conds.push(`status NOT IN ('new','closed','cancelled')`);
     else if (quick === 'pending') conds.push(`status = 'pending'`);
     else if (quick === 'reclamation') conds.push(`type = 'reclamation'`);
+    else if (quick === 'work') conds.push(`status IN ('measurer_assigned','installer_assigned','date_agreed','installation_rescheduled')`);
+    else if (quick === 'done') conds.push(`status IN ('closed','measurement_done')`);
+    else if (quick === 'reclamation_open') conds.push(`type = 'reclamation' AND status NOT IN ('closed','cancelled','client_refused')`);
 
     const where = conds.length ? 'WHERE ' + conds.join(' AND ') : '';
     const baseWhere = baseConds.length ? 'WHERE ' + baseConds.join(' AND ') : '';
@@ -2382,7 +2385,7 @@ app.get('/api/dashboard/stats', auth, async (req, res) => {
     return res.status(403).json({ error: 'Доступ запрещён' });
   }
   try {
-    const IN_PROGRESS = ['measurer_assigned', 'date_agreed', 'installation_rescheduled', 'measurement_done'];
+    const IN_PROGRESS = ['measurer_assigned', 'installer_assigned', 'date_agreed', 'installation_rescheduled'];
     const FUNNEL_ORDER = ['new', 'pending', 'measurer_assigned', 'date_agreed', 'measurement_done', 'closed'];
 
     const [totalsRes, weeklyRes, funnelRes] = await Promise.all([
@@ -2392,8 +2395,8 @@ app.get('/api/dashboard/stats', auth, async (req, res) => {
            COUNT(*) FILTER (WHERE status = 'new')::bigint AS new_count,
            COUNT(*) FILTER (WHERE status = 'pending')::bigint AS pending_count,
            COUNT(*) FILTER (WHERE status = ANY($1::text[]))::bigint AS in_progress,
-           COUNT(*) FILTER (WHERE status = 'closed')::bigint AS completed,
-           COUNT(*) FILTER (WHERE type = 'reclamation')::bigint AS reclamations
+           COUNT(*) FILTER (WHERE status IN ('closed', 'measurement_done'))::bigint AS completed,
+           COUNT(*) FILTER (WHERE type = 'reclamation' AND status NOT IN ('closed', 'cancelled', 'client_refused'))::bigint AS reclamations
          FROM requests`,
         [IN_PROGRESS]
       ),
