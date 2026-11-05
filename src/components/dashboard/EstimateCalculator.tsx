@@ -327,12 +327,12 @@ const EstimateCalculator = ({ role, userName }: EstimateCalculatorProps) => {
           </div>
           <div style="flex:1;border-top:1px solid #333;padding-top:8px;">
             <p style="font-size:12px;color:#666;">Исполнитель</p>
-            <p style="font-size:11px;color:#999;margin-top:4px;">ИП Корженевский М.А. / подпись / дата</p>
+            <p style="font-size:11px;color:#999;margin-top:4px;">ИП Савкин Р.И. / подпись / дата</p>
           </div>
         </div>
       </div>
       <div class="footer">
-        <p>ИП Корженевский М.А. · ИНН 971502093793</p>
+        <p>ИП Савкин Р.И. · ИНН 672708949520</p>
       </div>
       </body></html>
     `);
