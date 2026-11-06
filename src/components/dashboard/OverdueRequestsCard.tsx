@@ -7,12 +7,15 @@ import type { ApiRequest } from "@/hooks/useRequests";
 
 const OVERDUE_DAYS = 5;
 
+/** Статусы, которые не считаются незакрытой работой: ожидание клиента, отказ, отмена, закрыта */
+const NOT_OVERDUE_STATUSES = new Set(["closed", "cancelled", "pending", "client_refused"]);
+
 /** Монтаж/рекламация не закрыты более 5 дней (от даты монтажа, иначе от создания) */
 export function getOverdueRequests(requests: ApiRequest[], now = Date.now()) {
   const limit = OVERDUE_DAYS * 24 * 60 * 60 * 1000;
   return requests.filter((r) => {
     if (r.type !== "installation" && r.type !== "reclamation") return false;
-    if (r.status === "closed" || r.status === "cancelled") return false;
+    if (NOT_OVERDUE_STATUSES.has(r.status)) return false;
     const from = r.agreed_date || r.created_at;
     if (!from) return false;
     return now - new Date(from).getTime() > limit;
