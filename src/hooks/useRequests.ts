@@ -58,9 +58,11 @@ export interface ApiUser {
 const POLL_INTERVAL = 10000; // 10 seconds
 const FULL_FETCH_LIMIT = 1000;
 
-export function useRequests(extraQuery?: string) {
+/** actionsOnly: только действия (создать/изменить/удалить) без фоновой загрузки всего списка */
+export function useRequests(extraQuery?: string, opts: { actionsOnly?: boolean } = {}) {
+  const actionsOnly = !!opts.actionsOnly;
   const [requests, setRequests] = useState<ApiRequest[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!actionsOnly);
   const prevCountRef = useRef<number | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval>>();
   const sigRef = useRef("");
@@ -95,6 +97,7 @@ export function useRequests(extraQuery?: string) {
   }, [extraQuery]);
 
   useEffect(() => {
+    if (actionsOnly) return;
     fetchRequests();
     // Не опрашиваем сервер, пока вкладка скрыта; при возврате — сразу обновляем
     pollRef.current = setInterval(() => { if (!document.hidden) fetchRequests(true); }, POLL_INTERVAL);
@@ -104,7 +107,7 @@ export function useRequests(extraQuery?: string) {
       if (pollRef.current) clearInterval(pollRef.current);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [fetchRequests]);
+  }, [fetchRequests, actionsOnly]);
 
   const updateRequest = useCallback(async (id: string, updates: Partial<ApiRequest>) => {
     try {
