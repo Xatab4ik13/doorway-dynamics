@@ -140,11 +140,8 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
       prevTotalRef.current = response.total;
 
       // Не трогаем state, если данные не изменились — лишних перерисовок нет
-      const sig = response.total + "|" + response.data.length + "|" + response.data.reduce((m, r) => {
-        const t = (r as any).updated_at || r.created_at || "";
-        return t > m ? t : m;
-      }, "");
-      if (sigRef.current !== sig) {
+      const sig = JSON.stringify(response);
+      if (!silent || sigRef.current !== sig) {
         sigRef.current = sig;
         setResult(response);
       }
