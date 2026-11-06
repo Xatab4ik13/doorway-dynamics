@@ -82,11 +82,8 @@ export function useRequests(extraQuery?: string) {
       prevCountRef.current = data.length;
 
       // Не трогаем state, если данные не изменились — лишних перерисовок нет
-      const sig = data.length + "|" + data.reduce((m, r) => {
-        const t = (r as any).updated_at || r.created_at || "";
-        return t > m ? t : m;
-      }, "");
-      if (sigRef.current !== sig) {
+      const sig = JSON.stringify(data);
+      if (!silent || sigRef.current !== sig) {
         sigRef.current = sig;
         setRequests(data);
       }
