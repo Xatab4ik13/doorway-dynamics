@@ -144,7 +144,7 @@ export function usePaginatedRequests(filters: FilterState, options: UsePaginated
         const t = (r as any).updated_at || r.created_at || "";
         return t > m ? t : m;
       }, "");
-      if (sigRef.current !== sig) {
+      if (!silent || sigRef.current !== sig) {
         sigRef.current = sig;
         setResult(response);
       }
