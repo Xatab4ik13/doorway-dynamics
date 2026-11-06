@@ -15,6 +15,7 @@ import { uploadFile } from "@/lib/api";
 import { proxyFileUrl } from "@/lib/fileUrl";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import RequestComments from "@/components/dashboard/RequestComments";
 
 const InstallerDashboard = () => {
   const { user } = useAuth();
@@ -182,9 +183,9 @@ const InstallerDashboard = () => {
                 }`}
                 onClick={() => handleSelectRequest(r)}>
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
+                  <div className="flex items-start justify-between gap-3 min-w-0">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
                           {statusLabels[r.status as RequestStatus] || r.status}
@@ -206,17 +207,17 @@ const InstallerDashboard = () => {
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {r.agreed_date ? (
-                        <div className="text-center rounded-xl border-2 border-destructive bg-background px-3 py-2 min-w-[96px]">
+                        <div className="text-center rounded-xl border-2 border-destructive bg-background px-2 sm:px-3 py-2 min-w-[84px] sm:min-w-[96px]">
                           <p className="text-[10px] uppercase tracking-wider text-destructive font-semibold">{dayLabel(r.agreed_date)}</p>
-                          <p className="text-lg font-heading font-bold text-destructive leading-tight">{formatDate(r.agreed_date)}</p>
+                          <p className="text-base sm:text-lg font-heading font-bold text-destructive leading-tight whitespace-nowrap">{formatDate(r.agreed_date)}</p>
                         </div>
                       ) : (
-                        <div className="text-center rounded-xl border border-dashed border-border px-3 py-2 min-w-[96px]">
+                        <div className="text-center rounded-xl border border-dashed border-border px-2 sm:px-3 py-2 min-w-[84px] sm:min-w-[96px]">
                           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Дата</p>
                           <p className="text-xs text-muted-foreground">не назначена</p>
                         </div>
                       )}
-                      <ChevronRight size={16} className="text-muted-foreground" />
+                      <ChevronRight size={16} className="text-muted-foreground hidden sm:block" />
                     </div>
                   </div>
                 </CardContent>
@@ -230,12 +231,12 @@ const InstallerDashboard = () => {
                 </h2>
                 {doneRequests.map((r) => (
                   <Card key={r.id} className="border-l-4 border-l-green-400 opacity-70">
-                    <CardContent className="p-4 flex items-center justify-between">
-                      <div>
+                    <CardContent className="p-4 flex items-center justify-between gap-2 min-w-0">
+                      <div className="min-w-0">
                         <p className="font-mono text-xs text-muted-foreground">{r.number}</p>
                         <p className="font-medium text-sm">{r.client_name}</p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status as RequestStatus] || "bg-gray-100"}`}>
                         {statusLabels[r.status as RequestStatus] || r.status}
                       </span>
                     </CardContent>
@@ -294,6 +295,10 @@ const InstallerDashboard = () => {
                         <p className="text-sm leading-relaxed">{selected.work_description}</p>
                       </div>
                     )}
+                    <div className="border border-border rounded-xl p-4">
+                      <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">Комментарии</p>
+                      <RequestComments requestId={selected.id} currentUserId={user?.id} currentUserRole="installer" defaultStage="installation" />
+                    </div>
 
                     <div className="border border-border rounded-xl p-4">
                       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
@@ -499,6 +504,10 @@ const InstallerDashboard = () => {
                     <p className="text-sm leading-relaxed">{selected.work_description}</p>
                   </div>
                 )}
+                <div className="border border-border rounded-xl p-4">
+                  <p className="text-[10px] font-medium text-muted-foreground mb-2 uppercase tracking-wider">Комментарии</p>
+                  <RequestComments requestId={selected.id} currentUserId={user?.id} currentUserRole="installer" defaultStage="installation" />
+                </div>
 
                 <div className="border border-border rounded-xl p-4">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
