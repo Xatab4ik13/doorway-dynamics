@@ -506,7 +506,7 @@ const MeasurerDashboard = () => {
             </MobileFullScreen>
           ) : (
             <Dialog open={true} onOpenChange={(o) => { if (!o) handleCloseSelected(); }}>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+              <DialogContent className="dashboard-theme max-w-2xl max-h-[90vh] overflow-y-auto p-0">
                 <DialogTitle className="sr-only">{selected.number}</DialogTitle>
                 {selectedContent}
               </DialogContent>
