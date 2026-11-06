@@ -458,7 +458,7 @@ const InstallerDashboard = () => {
             </MobileFullScreen>
           ) : (
             <Dialog open={true} onOpenChange={(o) => { if (!o) setSelected(null); }}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+            <DialogContent className="dashboard-theme max-w-2xl max-h-[90vh] overflow-y-auto p-0">
             <DialogTitle className="sr-only">{selected.number}</DialogTitle>
             <Card className="border-0 shadow-none bg-card">
               <CardContent className="p-6 space-y-5">
