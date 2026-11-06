@@ -79,7 +79,7 @@ const AdminRequests = () => {
   const [city, setCity] = useState<CityFilter>("Москва");
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва", search: searchFromUrl, sourceFilter: "all" });
   const { requests, total, page, totalPages, limit, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter: quickFromUrl });
-  const { createRequest, deleteRequest, updateRequest } = useRequests();
+  const { createRequest, deleteRequest, updateRequest } = useRequests(undefined, { actionsOnly: true });
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
