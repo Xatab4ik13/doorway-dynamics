@@ -34,7 +34,8 @@ const ManagerDashboard = () => {
   const [filters, setFilters] = useState<FilterState>({ ...defaultFilters, city: "Москва" });
   const [quickFilter, setQuickFilter] = useState("all");
   const { requests, total, page, totalPages, limit, counts, loading, setPage, refetch } = usePaginatedRequests(filters, { quickFilter });
-  const { requests: allRequests, createRequest, updateRequest } = useRequests();
+  // Полный список нужен только для блока «Незакрытые заказы» — обновляем раз в минуту
+  const { requests: allRequests, createRequest, updateRequest } = useRequests(undefined, { pollMs: 60000 });
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 

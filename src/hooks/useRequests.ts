@@ -59,8 +59,9 @@ const POLL_INTERVAL = 10000; // 10 seconds
 const FULL_FETCH_LIMIT = 1000;
 
 /** actionsOnly: только действия (создать/изменить/удалить) без фоновой загрузки всего списка */
-export function useRequests(extraQuery?: string, opts: { actionsOnly?: boolean } = {}) {
+export function useRequests(extraQuery?: string, opts: { actionsOnly?: boolean; pollMs?: number } = {}) {
   const actionsOnly = !!opts.actionsOnly;
+  const pollMs = opts.pollMs ?? POLL_INTERVAL;
   const [requests, setRequests] = useState<ApiRequest[]>([]);
   const [loading, setLoading] = useState(!actionsOnly);
   const prevCountRef = useRef<number | null>(null);
@@ -100,14 +101,14 @@ export function useRequests(extraQuery?: string, opts: { actionsOnly?: boolean }
     if (actionsOnly) return;
     fetchRequests();
     // Не опрашиваем сервер, пока вкладка скрыта; при возврате — сразу обновляем
-    pollRef.current = setInterval(() => { if (!document.hidden) fetchRequests(true); }, POLL_INTERVAL);
+    pollRef.current = setInterval(() => { if (!document.hidden) fetchRequests(true); }, pollMs);
     const onVisible = () => { if (!document.hidden) fetchRequests(true); };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [fetchRequests, actionsOnly]);
+  }, [fetchRequests, actionsOnly, pollMs]);
 
   const updateRequest = useCallback(async (id: string, updates: Partial<ApiRequest>) => {
     try {
