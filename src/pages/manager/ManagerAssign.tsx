@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels } from "@/data/mockDashboard";
-import { UserCheck, ArrowRight, Check } from "lucide-react";
+import { UserCheck, ArrowRight, Check, Link2, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 const ManagerAssign = () => {
   const { user } = useAuth();
@@ -13,6 +14,8 @@ const ManagerAssign = () => {
   const { getByRole, loading: usersLoading } = useUsers();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [selectedExecutorId, setSelectedExecutorId] = useState<string>("");
+  const [sendingToDoorium, setSendingToDoorium] = useState(false);
+  const [syncingDoorium, setSyncingDoorium] = useState(false);
 
   useEffect(() => { document.title = "Распределение — Менеджер"; }, []);
 
@@ -117,6 +120,40 @@ const ManagerAssign = () => {
                       <p className="font-semibold">{selectedRequest.client_name}</p>
                       <p className="text-sm text-muted-foreground">{selectedRequest.client_address}</p>
                       <p className="text-sm text-muted-foreground">{selectedRequest.client_phone}</p>
+                      <div className="flex gap-2 mt-3">
+                        {!selectedRequest.external_id && (
+                          <button
+                            onClick={async () => {
+                              setSendingToDoorium(true);
+                              try {
+                                const result = await api(`/api/bridge/send/${selectedRequest.id}`, { method: "POST", auth: true });
+                                setSelectedRequest(prev => prev ? { ...prev, external_id: result.external_id, external_system: 'doorium' } : null);
+                                toast.success("Заявка отправлена в Doorium");
+                              } catch (e: any) { toast.error(e.message || "Ошибка отправки"); } finally { setSendingToDoorium(false); }
+                            }}
+                            disabled={sendingToDoorium}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-accent transition-colors disabled:opacity-50"
+                          >
+                            {sendingToDoorium ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />} В Doorium
+                          </button>
+                        )}
+                        {selectedRequest.external_id && selectedRequest.external_system === "doorium" && (
+                          <button
+                            onClick={async () => {
+                              setSyncingDoorium(true);
+                              try {
+                                const result = await api(`/api/bridge/sync/${selectedRequest.id}`, { method: "POST", auth: true });
+                                setSelectedRequest(prev => prev ? { ...prev, ...result } : null);
+                                toast.success("Статус синхронизирован");
+                              } catch (e: any) { toast.error(e.message || "Ошибка синхронизации"); } finally { setSyncingDoorium(false); }
+                            }}
+                            disabled={syncingDoorium}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium hover:bg-accent transition-colors disabled:opacity-50"
+                          >
+                            {syncingDoorium ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />} Синхр. Doorium
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div>
