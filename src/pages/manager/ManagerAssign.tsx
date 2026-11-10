@@ -14,6 +14,8 @@ const ManagerAssign = () => {
   const { getByRole, loading: usersLoading } = useUsers();
   const [selectedRequest, setSelectedRequest] = useState<ApiRequest | null>(null);
   const [selectedExecutorId, setSelectedExecutorId] = useState<string>("");
+  const [sendingToDoorium, setSendingToDoorium] = useState(false);
+  const [syncingDoorium, setSyncingDoorium] = useState(false);
 
   useEffect(() => { document.title = "Распределение — Менеджер"; }, []);
 
