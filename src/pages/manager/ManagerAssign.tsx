@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { statusLabels, statusColors, requestTypeLabels } from "@/data/mockDashboard";
-import { UserCheck, ArrowRight, Check } from "lucide-react";
+import { UserCheck, ArrowRight, Check, Link2, RefreshCw, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRequests, useUsers, type ApiRequest } from "@/hooks/useRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import api from "@/lib/api";
 
 const ManagerAssign = () => {
   const { user } = useAuth();
