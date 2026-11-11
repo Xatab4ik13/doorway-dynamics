@@ -7,7 +7,7 @@ import SearchableUserSelect from "@/components/dashboard/SearchableUserSelect";
 import RequestDetailModal from "@/components/dashboard/RequestDetailModal";
 import MobileFullScreen from "@/components/dashboard/MobileFullScreen";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus, Check, Loader2, DoorOpen, DoorClosed, Ruler, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Phone, User, Calendar as CalendarIcon, Wrench, FileText, MessageSquare, UserPlus, Check, Loader2, DoorOpen, DoorClosed, Ruler, ExternalLink, Link2, RefreshCw } from "lucide-react";
 import {
   format,
   startOfMonth,
@@ -22,6 +22,7 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 import { toast } from "sonner";
+import { api } from "@/lib/api";
 
 // В календаре только активные работы: отменённые, отказы, закрытые
 // и заявки «в ожидании» не показываем — они живут в списке заявок.
@@ -97,8 +98,27 @@ const CalendarInstallerAssign = ({ request, installers, getUserName, onAssign }:
   );
 };
 
+// Кнопка «В Doorium» / «Синхр. Doorium» прямо в карточке дня
+const CalendarDooriumButton = ({ r, onDoorium }: { r: ApiRequest; onDoorium: (r: ApiRequest) => Promise<void> }) => {
+  const [busy, setBusy] = useState(false);
+  const linked = !!r.external_id && r.external_system === "doorium";
+  if (r.external_id && !linked) return null;
+  return (
+    <div className="pt-1 border-t border-border/30" onClick={(e) => e.stopPropagation()}>
+      <button
+        onClick={async () => { setBusy(true); try { await onDoorium(r); } finally { setBusy(false); } }}
+        disabled={busy}
+        className="h-7 px-2.5 rounded-lg bg-violet-100 text-violet-700 text-xs font-medium hover:bg-violet-200 transition-colors disabled:opacity-50 flex items-center gap-1"
+      >
+        {busy ? <Loader2 size={12} className="animate-spin" /> : linked ? <RefreshCw size={12} /> : <Link2 size={12} />}
+        {linked ? "Синхр. Doorium" : "В Doorium"}
+      </button>
+    </div>
+  );
+};
+
 // Request card shown in modals — memo, чтобы не перерисовывать все карточки при любом изменении
-const RequestCard = memo(({ r, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
+const RequestCard = memo(({ r, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail, onDoorium }: {
   r: ApiRequest;
   installers: ApiUser[];
   getUserName: (id?: string) => string | undefined;
@@ -106,6 +126,7 @@ const RequestCard = memo(({ r, installers, getUserName, onAssign, onRestore, bas
   onRestore: (id: string) => Promise<void>;
   basePath?: string;
   onOpenDetail?: (r: ApiRequest) => void;
+  onDoorium?: (r: ApiRequest) => Promise<void>;
 }) => {
   return (
   <div
@@ -196,6 +217,8 @@ const RequestCard = memo(({ r, installers, getUserName, onAssign, onRestore, bas
       <CalendarInstallerAssign request={r} installers={installers} getUserName={getUserName} onAssign={onAssign} />
     )}
 
+    {onDoorium && <CalendarDooriumButton r={r} onDoorium={onDoorium} />}
+
     {r.status_comment && (
       <div className="text-xs bg-amber-50 text-amber-700 rounded-lg px-2 py-1.5">
         💬 {r.status_comment}
@@ -230,7 +253,20 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [detailRequest, setDetailRequest] = useState<ApiRequest | null>(null);
   // scheduled=1 — забираем только заявки с датой, иначе старые не попадают в лимит 1000
-  const { requests, loading, updateRequest } = useRequests("scheduled=1");
+  const { requests, loading, updateRequest, fetchRequests } = useRequests("scheduled=1");
+  const canDoorium = viewerRole === "admin" || viewerRole === "manager";
+  const handleDoorium = useCallback(async (r: ApiRequest) => {
+    const linked = !!r.external_id && r.external_system === "doorium";
+    try {
+      const result = await api(`/api/bridge/${linked ? "sync" : "send"}/${r.id}`, { method: "POST", auth: true });
+      setDetailRequest(prev => prev && prev.id === r.id ? { ...prev, ...result } : prev);
+      toast.success(linked ? "Синхронизировано с Doorium" : "Заявка отправлена в Doorium");
+      fetchRequests();
+    } catch (e: any) {
+      toast.error(e?.message || "Ошибка Doorium");
+      throw e;
+    }
+  }, [fetchRequests]);
   const { getUserName, getByRole } = useUsers();
   const installers = useMemo(() => getByRole("installer"), [getByRole]);
 
@@ -455,23 +491,23 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
               <div className="p-4 space-y-4">
                 {selectedDayData.interiorInstalls.length > 0 && (
                   <Section title="Межкомнатные" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
-                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                 )}
                 {selectedDayData.entranceInstalls.length > 0 && (
                   <Section title="Входные" icon={<DoorClosed size={14} />} color="text-blue-500" requests={selectedDayData.entranceInstalls}
-                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                 )}
                 {selectedDayData.mixedInstalls.length > 0 && (
                   <Section title="Смешанные" icon={<Wrench size={14} />} color="text-violet-500" requests={selectedDayData.mixedInstalls}
-                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                 )}
                 {selectedDayData.measurements.length > 0 && (
                   <Section title="Замеры" icon={<Ruler size={14} />} color="text-amber-500" requests={selectedDayData.measurements}
-                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                 )}
                 {selectedDayData.reclamations.length > 0 && (
                   <Section title="Рекламации" icon={<MessageSquare size={14} />} color="text-rose-500" requests={selectedDayData.reclamations}
-                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                    installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                 )}
               </div>
             )}
@@ -484,6 +520,8 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
               onClose={() => setDetailRequest(null)}
               onSave={handleSaveRequest}
               viewerRole={viewerRole}
+              onSendToDoorium={canDoorium ? handleDoorium : undefined}
+              onSyncDoorium={canDoorium ? handleDoorium : undefined}
             />
           )}
         </>
@@ -512,23 +550,23 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
                 <div className="flex gap-4 flex-1 overflow-x-auto overflow-y-hidden pr-1" style={{ height: "calc(90vh - 80px)" }}>
                   {selectedDayData.interiorInstalls.length > 0 && (
                     <Section title="Межкомнатные двери" icon={<DoorOpen size={14} />} color="text-emerald-500" requests={selectedDayData.interiorInstalls}
-                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                   )}
                   {selectedDayData.entranceInstalls.length > 0 && (
                     <Section title="Входные двери" icon={<DoorClosed size={14} />} color="text-blue-500" requests={selectedDayData.entranceInstalls}
-                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                   )}
                   {selectedDayData.mixedInstalls.length > 0 && (
                     <Section title="Межкомн. + Входные" icon={<Wrench size={14} />} color="text-violet-500" requests={selectedDayData.mixedInstalls}
-                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                   )}
                   {selectedDayData.measurements.length > 0 && (
                     <Section title="Замеры" icon={<Ruler size={14} />} color="text-amber-500" requests={selectedDayData.measurements}
-                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                   )}
                   {selectedDayData.reclamations.length > 0 && (
                     <Section title="Рекламации" icon={<MessageSquare size={14} />} color="text-rose-500" requests={selectedDayData.reclamations}
-                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} />
+                      installers={installers} getUserName={getUserName} onAssign={handleAssignInstaller} onRestore={handleRestoreDateAgreed} basePath={basePath} onOpenDetail={setDetailRequest} onDoorium={canDoorium ? handleDoorium : undefined} />
                   )}
                 </div>
               )}
@@ -541,6 +579,8 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
               onClose={() => setDetailRequest(null)}
               onSave={handleSaveRequest}
               viewerRole={viewerRole}
+              onSendToDoorium={canDoorium ? handleDoorium : undefined}
+              onSyncDoorium={canDoorium ? handleDoorium : undefined}
             />
           )}
         </>
@@ -550,7 +590,7 @@ const InstallationCalendar = ({ cityFilter, basePath, viewerRole = "admin" }: In
 };
 
 // Collapsible section for each category
-const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail }: {
+const Section = ({ title, icon, color, requests, installers, getUserName, onAssign, onRestore, basePath, onOpenDetail, onDoorium }: {
   title: string;
   icon: React.ReactNode;
   color: string;
@@ -561,6 +601,7 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
   onRestore: (id: string) => Promise<void>;
   basePath?: string;
   onOpenDetail?: (r: ApiRequest) => void;
+  onDoorium?: (r: ApiRequest) => Promise<void>;
 }) => (
   <div className="flex-1 min-w-[300px] flex flex-col h-full">
     <div className={`flex items-center gap-2 mb-2 font-semibold text-sm ${color} shrink-0`}>
@@ -570,7 +611,7 @@ const Section = ({ title, icon, color, requests, installers, getUserName, onAssi
     </div>
     <div className="space-y-2 overflow-y-auto flex-1 pr-1">
       {requests.map((r) => (
-        <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} basePath={basePath} onOpenDetail={onOpenDetail} />
+        <RequestCard key={r.id} r={r} installers={installers} getUserName={getUserName} onAssign={onAssign} onRestore={onRestore} basePath={basePath} onOpenDetail={onOpenDetail} onDoorium={onDoorium} />
       ))}
     </div>
   </div>
