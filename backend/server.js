@@ -817,6 +817,52 @@ app.get('/api/requests/:id', auth, async (req, res) => {
 });
 
 // Обновить заявку (с валидацией и уведомлениями)
+// Push saved request fields (including notes) to Doorium. Never throws.
+async function bridgeAutoSyncToDoorium(updated) {
+    if (!(updated && updated.external_id && updated.external_system === 'doorium' && DOORIUM_API_URL && DOORIUM_API_KEY)) return;
+    {
+      try {
+        const syncPayload = {
+          source_id: updated.id,
+          source_number: updated.number,
+          status: statusToDoorium[updated.status] || updated.status,
+          agreed_date: updated.agreed_date || null,
+          amount: updated.amount || null,
+          status_comment: updated.status_comment || null,
+          notes: updated.notes || null,
+          work_description: updated.work_description || null,
+          client_name: updated.client_name || null,
+          client_phone: updated.client_phone || null,
+          client_address: updated.client_address || null,
+          city: updated.city || null,
+          extra_name: updated.extra_name || null,
+          extra_phone: updated.extra_phone || null,
+          interior_doors: updated.interior_doors ?? null,
+          entrance_doors: updated.entrance_doors ?? null,
+          partitions: updated.partitions ?? null,
+          photos: updated.photos || null,
+        };
+        const syncRes = await fetch(`${DOORIUM_API_URL}/api/bridge/update/${updated.external_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Bridge-Key': DOORIUM_API_KEY,
+          },
+          body: JSON.stringify(syncPayload),
+        });
+        if (!syncRes.ok) {
+          const errBody = await syncRes.text();
+          console.error(`bridge auto-sync failed [${syncRes.status}]:`, errBody);
+        } else {
+          console.log(`bridge auto-sync OK for request ${updated.number} → Doorium ${updated.external_id}`);
+        }
+      } catch (syncErr) {
+        console.error('bridge auto-sync error:', syncErr.message);
+      }
+    }
+
+}
+
 app.put('/api/requests/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
@@ -944,6 +990,9 @@ app.put('/api/requests/:id', auth, async (req, res) => {
       values
     );
     const updated = result.rows[0];
+
+    // Мост в Doorium — сразу после сохранения, до уведомлений
+    await bridgeAutoSyncToDoorium(updated);
 
     // === УВЕДОМЛЕНИЯ ===
 
@@ -1085,48 +1134,6 @@ app.put('/api/requests/:id', auth, async (req, res) => {
         body: `Новый статус: ${statusLabels[updates.status] || updates.status}`,
         url: `/partner?search=${encodeURIComponent(updated.number)}`,
       });
-    }
-
-    // === AUTO-SYNC: push changes to Doorium if this request is linked ===
-    if (updated.external_id && updated.external_system === 'doorium' && DOORIUM_API_URL && DOORIUM_API_KEY) {
-      try {
-        const syncPayload = {
-          source_id: updated.id,
-          source_number: updated.number,
-          status: statusToDoorium[updated.status] || updated.status,
-          agreed_date: updated.agreed_date || null,
-          amount: updated.amount || null,
-          status_comment: updated.status_comment || null,
-          notes: updated.notes || null,
-          work_description: updated.work_description || null,
-          client_name: updated.client_name || null,
-          client_phone: updated.client_phone || null,
-          client_address: updated.client_address || null,
-          city: updated.city || null,
-          extra_name: updated.extra_name || null,
-          extra_phone: updated.extra_phone || null,
-          interior_doors: updated.interior_doors ?? null,
-          entrance_doors: updated.entrance_doors ?? null,
-          partitions: updated.partitions ?? null,
-          photos: updated.photos || null,
-        };
-        const syncRes = await fetch(`${DOORIUM_API_URL}/api/bridge/update/${updated.external_id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Bridge-Key': DOORIUM_API_KEY,
-          },
-          body: JSON.stringify(syncPayload),
-        });
-        if (!syncRes.ok) {
-          const errBody = await syncRes.text();
-          console.error(`Bridge auto-sync failed [${syncRes.status}]:`, errBody);
-        } else {
-          console.log(`Bridge auto-sync OK for request ${updated.number} → Doorium ${updated.external_id}`);
-        }
-      } catch (syncErr) {
-        console.error('Bridge auto-sync error:', syncErr.message);
-      }
     }
 
     res.json(updated);
@@ -1915,6 +1922,11 @@ app.post('/api/bridge/sync/:id', auth, async (req, res) => {
       updates.push(`status_comment = $${idx++}`);
       params.push(result.status_comment);
     }
+    // Map notes (absent = keep current; '' or null = save as is)
+    if (result.notes !== undefined) {
+      updates.push(`notes = $${idx++}`);
+      params.push(result.notes);
+    }
 
     if (updates.length > 0) {
       updates.push(`updated_at = NOW()`);
@@ -1972,8 +1984,8 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
         const mappedStatus = statusFromDoorium[status] || status || 'new';
         await pool.query(
           `UPDATE requests SET status = $1, agreed_date = $2, amount = $3, 
-           status_comment = $4, notes = $5, updated_at = NOW() WHERE id = $6`,
-          [mappedStatus, agreed_date || null, amount || null, null, notes || null, existingId]
+           status_comment = $4, notes = CASE WHEN $7::boolean THEN $5 ELSE notes END, updated_at = NOW() WHERE id = $6`,
+          [mappedStatus, agreed_date || null, amount || null, null, notes === undefined ? null : notes, existingId, notes !== undefined]
         );
         const updated = await pool.query('SELECT * FROM requests WHERE id = $1', [existingId]);
         return res.json({ id: existingId, number: updated.rows[0].number, updated: true });
@@ -2011,7 +2023,7 @@ app.post('/api/bridge/receive', bridgeAuth, async (req, res) => {
       [
         number, client_name, client_phone, client_address || null, city || null,
         type || 'installation', work_description || null, extra_name || null, extra_phone,
-        autoPartnerId ? 'partner' : 'site', photos ? JSON.stringify(photos) : '[]', mappedStatus, notes || null,
+        autoPartnerId ? 'partner' : 'site', photos ? JSON.stringify(photos) : '[]', mappedStatus, notes ?? null,
         agreed_date || null, interior_doors || null, entrance_doors || null, partitions || null,
         amount || null, source_id || null, source_system || null, autoPartnerId,
       ]
@@ -2045,6 +2057,7 @@ app.get('/api/bridge/status/:externalId', bridgeAuth, async (req, res) => {
         agreed_date: r.agreed_date,
         amount: r.amount,
         status_comment: r.status_comment,
+        notes: r.notes,
       });
     }
     const r = rows[0];
@@ -2053,6 +2066,7 @@ app.get('/api/bridge/status/:externalId', bridgeAuth, async (req, res) => {
       agreed_date: r.agreed_date,
       amount: r.amount,
       status_comment: r.status_comment,
+      notes: r.notes,
     });
   } catch (err) {
     console.error('Bridge status error:', err);
