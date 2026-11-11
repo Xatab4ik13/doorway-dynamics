@@ -819,12 +819,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
                   <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} className={inputClass} placeholder="0" />
                 </div>
               )}
-              {request.notes && (
+              {canEdit && onSave ? (
+                <div className="mb-2">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1"><MessageSquare size={12} /> Заметки</p>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${inputClass} resize-y min-h-[80px]`} placeholder="Заметки по заявке..." />
+                </div>
+              ) : request.notes ? (
                 <div className="p-3 rounded-xl bg-accent/30 border border-border mb-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Отчёт исполнителя</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Заметки</p>
                   <p className="text-sm whitespace-pre-wrap">{request.notes}</p>
                 </div>
-              )}
+              ) : null}
               <div>
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Комментарии</p>
                 <RequestComments
@@ -1472,12 +1477,17 @@ const RequestDetailModal = ({ request, onClose, onSave, onDelete, onSendToInstal
               )}
 
 
-              {request.notes && (
+              {canEdit && onSave ? (
+                <div className="mb-2">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 flex items-center gap-1"><MessageSquare size={12} /> Заметки</p>
+                  <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={`${inputClass} resize-y min-h-[80px]`} placeholder="Заметки по заявке..." />
+                </div>
+              ) : request.notes ? (
                 <div className="p-3 rounded-xl bg-accent/30 border border-border mb-2">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Отчёт исполнителя</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Заметки</p>
                   <p className="text-sm whitespace-pre-wrap">{request.notes}</p>
                 </div>
-              )}
+              ) : null}
               {/* Comments */}
               <div className="space-y-2">
                 <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
